@@ -4,6 +4,7 @@ mod tests;
 
 use std::collections::HashMap;
 use std::error::Error;
+use serde_json::Value;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
