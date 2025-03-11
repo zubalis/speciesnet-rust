@@ -5,6 +5,8 @@ use std::fs::File;
 use std::io::{self, BufRead, Error};
 use std::path::Path;
 
+pub mod geofence;
+
 struct Label {
     name: String
 }
