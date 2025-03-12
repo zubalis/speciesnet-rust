@@ -7,6 +7,7 @@ name = "RustTensorflow"
 version = "0.1.0"
 dependencies = [
  "image",
+ "once_cell",
  "serde_json",
  "tensorflow",
  "thiserror",
@@ -495,6 +496,12 @@ checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
 ]
+
+[[package]]
+name = "once_cell"
+version = "1.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cde51589ab56b20a6f686b2c68f7a0bd6add753d697abf720d63f8db3ab7b1ad"
 
 [[package]]
 name = "openssl-probe"
