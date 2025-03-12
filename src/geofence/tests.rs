@@ -1,4 +1,5 @@
-use super::should_geofence;
+use super::{should_geofence};
+use crate::geofence::taxonomy::{TaxonomyError};
 use once_cell::sync::Lazy;
 use serde_json::{from_value, json};
 use std::collections::HashMap;
@@ -48,7 +49,7 @@ static SAND_CAT: &'static str =
     "e588253d-d61d-4149-a96c-8c245927a80f;mammalia;carnivora;felidae;felis;margarita;sand cat";
 static SAND_CAT_FC: &'static str = "mammalia;carnivora;felidae;felis;margarita";
 
-static GEOFENCE_JSON: Lazy<HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>> =
+static GEOFENCE_MAP: Lazy<HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>> =
     Lazy::new(|| {
         let json = json!(
             {
@@ -97,64 +98,78 @@ static GEOFENCE_JSON: Lazy<HashMap<String, HashMap<String, HashMap<String, Vec<S
 #[test]
 fn test_should_geofence_fn() -> Result<(), Box<dyn Error>> {
     // Test country is None
-    assert_eq!(should_geofence(LION, None, None, &GEOFENCE_JSON)?, false);
+    assert_eq!(should_geofence(LION, None, None, &GEOFENCE_MAP)?, false);
 
     // Test label not in geofence json
     assert_eq!(
-        should_geofence(PUMA, Some("USA"), None, &GEOFENCE_JSON)?,
+        should_geofence(PUMA, Some("USA"), None, &GEOFENCE_MAP)?,
         false
     );
     assert_eq!(
-        should_geofence(PUMA, Some("USA"), Some("CA"), &GEOFENCE_JSON)?,
+        should_geofence(PUMA, Some("USA"), Some("CA"), &GEOFENCE_MAP)?,
         false
     );
 
     // Test `allow` rule in geofence json
     assert_eq!(
-        should_geofence(LION, Some("GBR"), None, &GEOFENCE_JSON)?,
+        should_geofence(LION, Some("GBR"), None, &GEOFENCE_MAP)?,
         true
     );
     assert_eq!(
-        should_geofence(LION, Some("KEN"), None, &GEOFENCE_JSON)?,
+        should_geofence(LION, Some("KEN"), None, &GEOFENCE_MAP)?,
         false
     );
     assert_eq!(
-        should_geofence(PANTHERA_GENUS, Some("USA"), None, &GEOFENCE_JSON)?,
+        should_geofence(PANTHERA_GENUS, Some("USA"), None, &GEOFENCE_MAP)?,
         false
     );
     assert_eq!(
-        should_geofence(PANTHERA_GENUS, Some("USA"), Some("NY"), &GEOFENCE_JSON)?,
+        should_geofence(PANTHERA_GENUS, Some("USA"), Some("NY"), &GEOFENCE_MAP)?,
         true
     );
     assert_eq!(
-        should_geofence(PANTHERA_GENUS, Some("USA"), Some("CA"), &GEOFENCE_JSON)?,
+        should_geofence(PANTHERA_GENUS, Some("USA"), Some("CA"), &GEOFENCE_MAP)?,
         false
     );
 
     // Test `block` rule in geofence json
     assert_eq!(
-        should_geofence(FELIDAE_FAMILY, Some("FRA"), None, &GEOFENCE_JSON)?,
+        should_geofence(FELIDAE_FAMILY, Some("FRA"), None, &GEOFENCE_MAP)?,
         true
     );
     assert_eq!(
-        should_geofence(FELIDAE_FAMILY, Some("TZA"), None, &GEOFENCE_JSON)?,
+        should_geofence(FELIDAE_FAMILY, Some("TZA"), None, &GEOFENCE_MAP)?,
         false
     );
     assert_eq!(
-        should_geofence(FELIDAE_FAMILY, Some("USA"), Some("CA"), &GEOFENCE_JSON)?,
+        should_geofence(FELIDAE_FAMILY, Some("USA"), Some("CA"), &GEOFENCE_MAP)?,
         false
     );
     assert_eq!(
-        should_geofence(FELIDAE_FAMILY, Some("USA"), Some("NY"), &GEOFENCE_JSON)?,
+        should_geofence(FELIDAE_FAMILY, Some("USA"), Some("NY"), &GEOFENCE_MAP)?,
         true
     );
     assert_eq!(
-        should_geofence(SAND_CAT, Some("GBR"), None, &GEOFENCE_JSON)?,
+        should_geofence(SAND_CAT, Some("GBR"), None, &GEOFENCE_MAP)?,
         false
     );
     assert_eq!(
-        should_geofence(SAND_CAT, Some("AUS"), None, &GEOFENCE_JSON)?,
+        should_geofence(SAND_CAT, Some("AUS"), None, &GEOFENCE_MAP)?,
         true
     );
+
+    // Test invalid labels
+    {
+        let invalid_label = "uuid;class;order;family;genus;species";
+        let invalid_label_parts = invalid_label.split(";").collect::<Vec<_>>();
+        assert_eq!(
+            should_geofence(invalid_label, Some("AUS"), None, &GEOFENCE_MAP),
+            Err(TaxonomyError::InvalidLabel(
+                invalid_label_parts.len().to_string(),
+                invalid_label.to_string()
+            ))
+        );
+    }
+
     Ok(())
 }

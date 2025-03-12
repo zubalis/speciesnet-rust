@@ -1,6 +1,9 @@
+#[cfg(test)]
+mod tests;
+
 use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, PartialEq)]
 pub enum TaxonomyError {
     #[error("Expected label made of 7 parts, but found only {0}: {1}")]
     InvalidLabel(String, String)
