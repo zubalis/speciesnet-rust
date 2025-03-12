@@ -4,49 +4,49 @@ use serde_json::{from_value, json};
 use std::collections::HashMap;
 use std::error::Error;
 
-static BLANK: &'static str = "f1856211-cfb7-4a5b-9158-c0f72fd09ee6;;;;;;blank";
-static BLANK_FC: &'static str = ";;;;";
-static HUMAN: &'static str =
+const BLANK: &str = "f1856211-cfb7-4a5b-9158-c0f72fd09ee6;;;;;;blank";
+const BLANK_FC: &str = ";;;;";
+const HUMAN: &str =
     "990ae9dd-7a59-4344-afcb-1b7b21368000;mammalia;primates;hominidae;homo;sapiens;human";
-static HUMAN_FC: &'static str = "mammalia;primates;hominidae;homo;sapiens";
-static VEHICLE: &'static str = "e2895ed5-780b-48f6-8a11-9e27cb594511;;;;;;vehicle";
-static VEHICLE_FC: &'static str = ";;;;";
-static LION: &'static str =
+const HUMAN_FC: &str = "mammalia;primates;hominidae;homo;sapiens";
+const VEHICLE: &str = "e2895ed5-780b-48f6-8a11-9e27cb594511;;;;;;vehicle";
+const VEHICLE_FC: &str = ";;;;";
+const LION: &str =
     "ddf59264-185a-4d35-b647-2785792bdf54;mammalia;carnivora;felidae;panthera;leo;lion";
-static LION_FC: &'static str = "mammalia;carnivora;felidae;panthera;leo";
-static PANTHERA_GENUS: &'static str =
+const LION_FC: &str = "mammalia;carnivora;felidae;panthera;leo";
+const PANTHERA_GENUS: &str =
     "fbb23d07-6677-43db-b650-f99ac452c50f;mammalia;carnivora;felidae;panthera;;panthera species";
-static PANTHERA_GENUS_FC: &'static str = "mammalia;carnivora;felidae;panthera;";
-static FELIDAE_FAMILY: &'static str =
+const PANTHERA_GENUS_FC: &str = "mammalia;carnivora;felidae;panthera;";
+const FELIDAE_FAMILY: &str =
     "df8514b0-10a5-411f-8ed6-0f415e8153a3;mammalia;carnivora;felidae;;;cat family";
-static FELIDAE_FAMILY_FC: &'static str = "mammalia;carnivora;felidae;;";
-static CARNIVORA_ORDER: &'static str =
+const FELIDAE_FAMILY_FC: &str = "mammalia;carnivora;felidae;;";
+const CARNIVORA_ORDER: &str =
     "eeeb5d26-2a47-4d01-a3de-10b33ec0aee4;mammalia;carnivora;;;;carnivorous mammal";
-static CARNIVORA_ORDER_FC: &'static str = "mammalia;carnivora;;;";
-static MAMMALIA_CLASS: &'static str = "f2d233e3-80e3-433d-9687-e29ecc7a467a;mammalia;;;;;mammal";
-static MAMMALIA_CLASS_FC: &'static str = "mammalia;;;;";
-static ANIMAL_KINGDOM: &'static str = "1f689929-883d-4dae-958c-3d57ab5b6c16;;;;;;animal";
-static ANIMAL_KINGDOM_FC: &'static str = ";;;;";
-static BROWN_BEAR: &'static str =
+const CARNIVORA_ORDER_FC: &str = "mammalia;carnivora;;;";
+const MAMMALIA_CLASS: &str = "f2d233e3-80e3-433d-9687-e29ecc7a467a;mammalia;;;;;mammal";
+const MAMMALIA_CLASS_FC: &str = "mammalia;;;;";
+const ANIMAL_KINGDOM: &str = "1f689929-883d-4dae-958c-3d57ab5b6c16;;;;;;animal";
+const ANIMAL_KINGDOM_FC: &str = ";;;;";
+const BROWN_BEAR: &str =
     "330bb1e9-84d6-4e41-afa9-938aee17ea29;mammalia;carnivora;ursidae;ursus;arctos;brown bear";
-static BROWN_BEAR_FC: &'static str = "mammalia;carnivora;ursidae;ursus;arctos";
-static POLAR_BEAR: &'static str =
+const BROWN_BEAR_FC: &str = "mammalia;carnivora;ursidae;ursus;arctos";
+const POLAR_BEAR: &str =
     "e7f83bf6-df2c-4ce0-97fc-2f233df23ec4;mammalia;carnivora;ursidae;ursus;maritimus;polar bear";
-static POLAR_BEAR_FC: &'static str = "mammalia;carnivora;ursidae;ursus;maritimus";
-static GIANT_PANDA: &'static str = "85662682-67c1-4ecb-ba05-ba12e2df6b65;mammalia;carnivora;ursidae;ailuropoda;melanoleuca;giant panda";
-static GIANT_PANDA_FC: &'static str = "mammalia;carnivora;ursidae;ailuropoda;melanoleuca";
-static URSUS_GENUS: &'static str =
+const POLAR_BEAR_FC: &str = "mammalia;carnivora;ursidae;ursus;maritimus";
+const GIANT_PANDA: &str = "85662682-67c1-4ecb-ba05-ba12e2df6b65;mammalia;carnivora;ursidae;ailuropoda;melanoleuca;giant panda";
+const GIANT_PANDA_FC: &str = "mammalia;carnivora;ursidae;ailuropoda;melanoleuca";
+const URSUS_GENUS: &str =
     "5a0f5e3f-c634-4b86-910a-b105cb526a24;mammalia;carnivora;ursidae;ursus;;ursus species";
-static URSUS_GENUS_FC: &'static str = "mammalia;carnivora;ursidae;ursus;";
-static URSIDAE_FAMILY: &'static str =
+const URSUS_GENUS_FC: &str = "mammalia;carnivora;ursidae;ursus;";
+const URSIDAE_FAMILY: &str =
     "ec1a70f4-41c0-4aba-9150-292fb2b7a324;mammalia;carnivora;ursidae;;;bear family";
-static URSIDAE_FAMILY_FC: &'static str = "mammalia;carnivora;ursidae;;";
-static PUMA: &'static str =
+const URSIDAE_FAMILY_FC: &str = "mammalia;carnivora;ursidae;;";
+const PUMA: &str =
     "9c564562-9429-405c-8529-04cff7752282;mammalia;carnivora;felidae;puma;concolor;puma";
-static PUMA_FC: &'static str = "mammalia;carnivora;felidae;puma;concolor";
-static SAND_CAT: &'static str =
+const PUMA_FC: &str = "mammalia;carnivora;felidae;puma;concolor";
+const SAND_CAT: &str =
     "e588253d-d61d-4149-a96c-8c245927a80f;mammalia;carnivora;felidae;felis;margarita;sand cat";
-static SAND_CAT_FC: &'static str = "mammalia;carnivora;felidae;felis;margarita";
+const SAND_CAT_FC: &str = "mammalia;carnivora;felidae;felis;margarita";
 
 static TAXONOMY_MAP: Lazy<HashMap<String, String>> = Lazy::new(|| {
     let json = json!(
