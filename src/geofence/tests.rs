@@ -1,6 +1,6 @@
-use super::{should_geofence};
-use crate::geofence::taxonomy::{TaxonomyError};
-use once_cell::sync::Lazy;
+use std::cell::LazyCell;
+use super::should_geofence;
+use crate::geofence::taxonomy::TaxonomyError;
 use serde_json::{from_value, json};
 use std::collections::HashMap;
 use std::error::Error;
@@ -49,8 +49,8 @@ const SAND_CAT: &str =
     "e588253d-d61d-4149-a96c-8c245927a80f;mammalia;carnivora;felidae;felis;margarita;sand cat";
 const SAND_CAT_FC: &str = "mammalia;carnivora;felidae;felis;margarita";
 
-const GEOFENCE_MAP: Lazy<HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>> =
-    Lazy::new(|| {
+const GEOFENCE_MAP: LazyCell<HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>> =
+    LazyCell::new(|| {
         let json = json!(
             {
                 LION_FC: {

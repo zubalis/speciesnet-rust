@@ -1,5 +1,5 @@
+use std::cell::LazyCell;
 use super::{TaxonomyError, get_full_class_string};
-use once_cell::sync::Lazy;
 use serde_json::{from_value, json};
 use std::collections::HashMap;
 use std::error::Error;
@@ -48,7 +48,7 @@ const SAND_CAT: &str =
     "e588253d-d61d-4149-a96c-8c245927a80f;mammalia;carnivora;felidae;felis;margarita;sand cat";
 const SAND_CAT_FC: &str = "mammalia;carnivora;felidae;felis;margarita";
 
-static TAXONOMY_MAP: Lazy<HashMap<String, String>> = Lazy::new(|| {
+const TAXONOMY_MAP: LazyCell<HashMap<String, String>> = LazyCell::new(|| {
     let json = json!(
         {
             BLANK_FC: BLANK,
