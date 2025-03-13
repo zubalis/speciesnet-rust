@@ -3,6 +3,10 @@ name = "RustTensorflow"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "speciesnet_rust"
+path = "src/lib.rs"
+
 [dependencies]
 tensorflow = "0.21"
 image = "0.24"

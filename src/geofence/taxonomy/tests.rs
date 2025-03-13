@@ -1,6 +1,6 @@
-use std::cell::LazyCell;
-use super::{TaxonomyError, get_full_class_string};
+use super::{TaxonomyError, get_ancestor_at_level, get_full_class_string};
 use serde_json::{from_value, json};
+use std::cell::LazyCell;
 use std::collections::HashMap;
 use std::error::Error;
 
@@ -106,6 +106,286 @@ fn test_get_full_class_string_fn() -> Result<(), Box<dyn Error>> {
             Err(TaxonomyError::InvalidLabel(
                 invalid_label_parts.len().to_string(),
                 invalid_label.to_string()
+            ))
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn test_get_ancestor_at_level_fn() -> Result<(), Box<dyn Error>> {
+    // Test all ancestors of LION
+    assert_eq!(
+        get_ancestor_at_level(LION, "species", &TAXONOMY_MAP)?,
+        Some(LION.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(LION, "genus", &TAXONOMY_MAP)?,
+        Some(PANTHERA_GENUS.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(LION, "family", &TAXONOMY_MAP)?,
+        Some(FELIDAE_FAMILY.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(LION, "order", &TAXONOMY_MAP)?,
+        Some(CARNIVORA_ORDER.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(LION, "class", &TAXONOMY_MAP)?,
+        Some(MAMMALIA_CLASS.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(LION, "kingdom", &TAXONOMY_MAP)?,
+        Some(ANIMAL_KINGDOM.to_string())
+    );
+
+    // Test all ancestors of PANTHERA_GENUS
+    assert_eq!(
+        get_ancestor_at_level(PANTHERA_GENUS, "species", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(PANTHERA_GENUS, "genus", &TAXONOMY_MAP)?,
+        Some(PANTHERA_GENUS.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(PANTHERA_GENUS, "family", &TAXONOMY_MAP)?,
+        Some(FELIDAE_FAMILY.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(PANTHERA_GENUS, "order", &TAXONOMY_MAP)?,
+        Some(CARNIVORA_ORDER.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(PANTHERA_GENUS, "class", &TAXONOMY_MAP)?,
+        Some(MAMMALIA_CLASS.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(PANTHERA_GENUS, "kingdom", &TAXONOMY_MAP)?,
+        Some(ANIMAL_KINGDOM.to_string())
+    );
+
+    // Test all ancestors of FELIDAE_FAMILY
+    assert_eq!(
+        get_ancestor_at_level(FELIDAE_FAMILY, "species", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(FELIDAE_FAMILY, "genus", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(FELIDAE_FAMILY, "family", &TAXONOMY_MAP)?,
+        Some(FELIDAE_FAMILY.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(FELIDAE_FAMILY, "order", &TAXONOMY_MAP)?,
+        Some(CARNIVORA_ORDER.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(FELIDAE_FAMILY, "class", &TAXONOMY_MAP)?,
+        Some(MAMMALIA_CLASS.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(FELIDAE_FAMILY, "kingdom", &TAXONOMY_MAP)?,
+        Some(ANIMAL_KINGDOM.to_string())
+    );
+
+    // Test all ancestors of CARNIVORA_ORDER
+    assert_eq!(
+        get_ancestor_at_level(CARNIVORA_ORDER, "species", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(CARNIVORA_ORDER, "genus", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(CARNIVORA_ORDER, "family", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(CARNIVORA_ORDER, "order", &TAXONOMY_MAP)?,
+        Some(CARNIVORA_ORDER.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(CARNIVORA_ORDER, "class", &TAXONOMY_MAP)?,
+        Some(MAMMALIA_CLASS.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(CARNIVORA_ORDER, "kingdom", &TAXONOMY_MAP)?,
+        Some(ANIMAL_KINGDOM.to_string())
+    );
+
+    // Test all ancestors of MAMMALIA_CLASS
+    assert_eq!(
+        get_ancestor_at_level(MAMMALIA_CLASS, "species", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(MAMMALIA_CLASS, "genus", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(MAMMALIA_CLASS, "family", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(MAMMALIA_CLASS, "order", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(MAMMALIA_CLASS, "class", &TAXONOMY_MAP)?,
+        Some(MAMMALIA_CLASS.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(MAMMALIA_CLASS, "kingdom", &TAXONOMY_MAP)?,
+        Some(ANIMAL_KINGDOM.to_string())
+    );
+
+    // Test all ancestors of ANIMAL_KINGDOM
+    assert_eq!(
+        get_ancestor_at_level(ANIMAL_KINGDOM, "species", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(ANIMAL_KINGDOM, "genus", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(ANIMAL_KINGDOM, "family", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(ANIMAL_KINGDOM, "order", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(ANIMAL_KINGDOM, "class", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(ANIMAL_KINGDOM, "kingdom", &TAXONOMY_MAP)?,
+        Some(ANIMAL_KINGDOM.to_string())
+    );
+
+    // Test all ancestors of BLANK
+    assert_eq!(
+        get_ancestor_at_level(BLANK, "species", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(get_ancestor_at_level(BLANK, "genus", &TAXONOMY_MAP)?, None);
+    assert_eq!(get_ancestor_at_level(BLANK, "family", &TAXONOMY_MAP)?, None);
+    assert_eq!(get_ancestor_at_level(BLANK, "order", &TAXONOMY_MAP)?, None);
+    assert_eq!(get_ancestor_at_level(BLANK, "class", &TAXONOMY_MAP)?, None);
+    assert_eq!(
+        get_ancestor_at_level(BLANK, "kingdom", &TAXONOMY_MAP)?,
+        None
+    );
+
+    // Test all ancestors of HUMAN, when its genus, family and order are missing from
+    // the mock taxonomy mapping
+    assert_eq!(
+        get_ancestor_at_level(HUMAN, "species", &TAXONOMY_MAP)?,
+        Some(HUMAN.to_string())
+    );
+    assert_eq!(get_ancestor_at_level(HUMAN, "genus", &TAXONOMY_MAP)?, None);
+    assert_eq!(get_ancestor_at_level(HUMAN, "family", &TAXONOMY_MAP)?, None);
+    assert_eq!(get_ancestor_at_level(HUMAN, "order", &TAXONOMY_MAP)?, None);
+    assert_eq!(
+        get_ancestor_at_level(HUMAN, "class", &TAXONOMY_MAP)?,
+        Some(MAMMALIA_CLASS.to_string())
+    );
+    assert_eq!(
+        get_ancestor_at_level(HUMAN, "kingdom", &TAXONOMY_MAP)?,
+        Some(ANIMAL_KINGDOM.to_string())
+    );
+
+    // Test all ancestors of VEHICLE
+    assert_eq!(
+        get_ancestor_at_level(VEHICLE, "species", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(VEHICLE, "genus", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(VEHICLE, "family", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(VEHICLE, "order", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(VEHICLE, "class", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(VEHICLE, "kingdom", &TAXONOMY_MAP)?,
+        None
+    );
+
+    // Test all ancestors of an unseen species
+    let unseen_species = "uuid;class;order;family;genus;species;common_name";
+    assert_eq!(
+        get_ancestor_at_level(unseen_species, "species", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(unseen_species, "genus", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(unseen_species, "family", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(unseen_species, "order", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(unseen_species, "class", &TAXONOMY_MAP)?,
+        None
+    );
+    assert_eq!(
+        get_ancestor_at_level(unseen_species, "kingdom", &TAXONOMY_MAP)?,
+        Some(ANIMAL_KINGDOM.to_string())
+    );
+
+    // Test invalid labels
+    {
+        let invalid_label = "uuid;class;order;family;genus;species";
+        let invalid_label_parts = invalid_label.split(";").collect::<Vec<_>>();
+        assert_eq!(
+            get_ancestor_at_level(invalid_label, "kingdom", &TAXONOMY_MAP),
+            Err(TaxonomyError::InvalidLabel(
+                invalid_label_parts.len().to_string(),
+                invalid_label.to_string()
+            ))
+        );
+    }
+    {
+        let invalid_label = "uuid;class;order;family;genus;species;common_name;extra";
+        let invalid_label_parts = invalid_label.split(";").collect::<Vec<_>>();
+        assert_eq!(
+            get_ancestor_at_level(invalid_label, "kingdom", &TAXONOMY_MAP),
+            Err(TaxonomyError::InvalidLabel(
+                invalid_label_parts.len().to_string(),
+                invalid_label.to_string()
+            ))
+        );
+    }
+
+    // Test invalid taxonomy level name
+    {
+        let invalid_taxonomy_level = "incorrect_name";
+        assert_eq!(
+            get_ancestor_at_level(LION, invalid_taxonomy_level, &TAXONOMY_MAP),
+            Err(TaxonomyError::InvalidTaxonomyLevel(
+                invalid_taxonomy_level.to_string()
             ))
         );
     }

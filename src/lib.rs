@@ -6,6 +6,7 @@ use std::io::{self, BufRead, Error};
 use std::path::Path;
 
 pub mod geofence;
+pub mod constants;
 
 struct Label {
     name: String

@@ -97,64 +97,67 @@ const GEOFENCE_MAP: LazyCell<HashMap<String, HashMap<String, HashMap<String, Vec
 
 #[test]
 fn test_should_geofence_fn() -> Result<(), Box<dyn Error>> {
+    // Test disable geofencing
+    assert_eq!(should_geofence(LION, None, None, &GEOFENCE_MAP, false)?, false);
+
     // Test country is None
-    assert_eq!(should_geofence(LION, None, None, &GEOFENCE_MAP)?, false);
+    assert_eq!(should_geofence(LION, None, None, &GEOFENCE_MAP, true)?, false);
 
     // Test label not in geofence json
     assert_eq!(
-        should_geofence(PUMA, Some("USA"), None, &GEOFENCE_MAP)?,
+        should_geofence(PUMA, Some("USA"), None, &GEOFENCE_MAP, true)?,
         false
     );
     assert_eq!(
-        should_geofence(PUMA, Some("USA"), Some("CA"), &GEOFENCE_MAP)?,
+        should_geofence(PUMA, Some("USA"), Some("CA"), &GEOFENCE_MAP, true)?,
         false
     );
 
     // Test `allow` rule in geofence json
     assert_eq!(
-        should_geofence(LION, Some("GBR"), None, &GEOFENCE_MAP)?,
+        should_geofence(LION, Some("GBR"), None, &GEOFENCE_MAP, true)?,
         true
     );
     assert_eq!(
-        should_geofence(LION, Some("KEN"), None, &GEOFENCE_MAP)?,
+        should_geofence(LION, Some("KEN"), None, &GEOFENCE_MAP, true)?,
         false
     );
     assert_eq!(
-        should_geofence(PANTHERA_GENUS, Some("USA"), None, &GEOFENCE_MAP)?,
+        should_geofence(PANTHERA_GENUS, Some("USA"), None, &GEOFENCE_MAP, true)?,
         false
     );
     assert_eq!(
-        should_geofence(PANTHERA_GENUS, Some("USA"), Some("NY"), &GEOFENCE_MAP)?,
+        should_geofence(PANTHERA_GENUS, Some("USA"), Some("NY"), &GEOFENCE_MAP, true)?,
         true
     );
     assert_eq!(
-        should_geofence(PANTHERA_GENUS, Some("USA"), Some("CA"), &GEOFENCE_MAP)?,
+        should_geofence(PANTHERA_GENUS, Some("USA"), Some("CA"), &GEOFENCE_MAP, true)?,
         false
     );
 
     // Test `block` rule in geofence json
     assert_eq!(
-        should_geofence(FELIDAE_FAMILY, Some("FRA"), None, &GEOFENCE_MAP)?,
+        should_geofence(FELIDAE_FAMILY, Some("FRA"), None, &GEOFENCE_MAP, true)?,
         true
     );
     assert_eq!(
-        should_geofence(FELIDAE_FAMILY, Some("TZA"), None, &GEOFENCE_MAP)?,
+        should_geofence(FELIDAE_FAMILY, Some("TZA"), None, &GEOFENCE_MAP, true)?,
         false
     );
     assert_eq!(
-        should_geofence(FELIDAE_FAMILY, Some("USA"), Some("CA"), &GEOFENCE_MAP)?,
+        should_geofence(FELIDAE_FAMILY, Some("USA"), Some("CA"), &GEOFENCE_MAP, true)?,
         false
     );
     assert_eq!(
-        should_geofence(FELIDAE_FAMILY, Some("USA"), Some("NY"), &GEOFENCE_MAP)?,
+        should_geofence(FELIDAE_FAMILY, Some("USA"), Some("NY"), &GEOFENCE_MAP, true)?,
         true
     );
     assert_eq!(
-        should_geofence(SAND_CAT, Some("GBR"), None, &GEOFENCE_MAP)?,
+        should_geofence(SAND_CAT, Some("GBR"), None, &GEOFENCE_MAP, true)?,
         false
     );
     assert_eq!(
-        should_geofence(SAND_CAT, Some("AUS"), None, &GEOFENCE_MAP)?,
+        should_geofence(SAND_CAT, Some("AUS"), None, &GEOFENCE_MAP, true)?,
         true
     );
 
@@ -163,7 +166,7 @@ fn test_should_geofence_fn() -> Result<(), Box<dyn Error>> {
         let invalid_label = "uuid;class;order;family;genus;species";
         let invalid_label_parts = invalid_label.split(";").collect::<Vec<_>>();
         assert_eq!(
-            should_geofence(invalid_label, Some("AUS"), None, &GEOFENCE_MAP),
+            should_geofence(invalid_label, Some("AUS"), None, &GEOFENCE_MAP, true),
             Err(TaxonomyError::InvalidLabel(
                 invalid_label_parts.len().to_string(),
                 invalid_label.to_string()
