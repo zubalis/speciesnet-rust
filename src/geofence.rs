@@ -2,16 +2,16 @@ pub mod taxonomy;
 #[cfg(test)]
 mod tests;
 
+use crate::geofence::taxonomy::{TaxonomyError, get_ancestor_at_level};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 use std::iter::zip;
 use thiserror::Error;
-use crate::geofence::taxonomy::TaxonomyError;
 
 #[derive(Debug, Error, PartialEq)]
 pub enum GeofenceError {
     #[error("{0}")]
-    InvalidValue(String)
+    InvalidValue(String),
 }
 
 ///
@@ -152,26 +152,66 @@ fn roll_up_labels_to_first_matching_level(
     country: Option<&str>,
     admin1_region: Option<&str>,
     target_taxonomy_levels: &Vec<&str>,
-    non_blank_threshold: f32,
+    non_blank_threshold: &f32,
     taxonomy_map: &HashMap<String, String>,
     geofence_map: &HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>,
     enable_geofence: bool,
-) -> Result<(String, f32, String), GeofenceError> {
-    // let expected_target_taxonomy_levels: HashSet<_> = ["species", "genus", "family", "order", "class", "kingdom"].into_iter().collect();
-    // let set_target_taxonomy_levels = target_taxonomy_levels.into_iter().collect::<HashSet<&str>>();
-    // let has_unknown_taxonomy = set_target_taxonomy_levels.difference(&expected_target_taxonomy_levels).into_iter().collect::<HashSet<&str>>();
-    // if !has_unknown_taxonomy.is_empty() {
-    //     return Err(GeofenceError::InvalidValue(format!("Unexpected target taxonomy level(s): {}. Expected only from the set: {}", has_unknown_taxonomy, expected_target_taxonomy_levels)));
-    // };
-    //
-    // for taxonomy_level in target_taxonomy_levels {
-    //     let accumulated_scores = HashMap::new();
-    //     for (label, score) in labels.into_iter().zip(scores.into_iter()) {
-    //
-    //     }
-    // }
+) -> Result<Option<(String, f32, String)>, Box<dyn Error>> {
+    // Find if there is invalid taxonomy level
+    let expected_target_taxonomy_levels =
+        vec!["species", "genus", "family", "order", "class", "kingdom"];
+    let set_expected_target_taxonomy_levels: HashSet<_> =
+        expected_target_taxonomy_levels.iter().collect();
+    let set_target_taxonomy_levels: HashSet<_> = target_taxonomy_levels.iter().collect();
+    let has_unknown_taxonomy: HashSet<_> = set_target_taxonomy_levels
+        .difference(&set_expected_target_taxonomy_levels)
+        .into_iter()
+        .collect();
+    if !has_unknown_taxonomy.is_empty() {
+        return Err(GeofenceError::InvalidValue(format!(
+            "Unexpected target taxonomy level(s): {:?}. Expected only from the set: {:?}",
+            has_unknown_taxonomy, expected_target_taxonomy_levels
+        ))
+        .into());
+    };
 
-    Ok(("".to_string(), 0.1, "".to_string()))
+    for taxonomy_level in target_taxonomy_levels {
+        let mut accumulated_scores = HashMap::new();
+        for (label, score) in labels.into_iter().zip(scores.into_iter()) {
+            let roll_up_label = get_ancestor_at_level(label, taxonomy_level, taxonomy_map)?;
+            if let Some(r_label) = roll_up_label {
+                let new_score = accumulated_scores.get(&r_label).unwrap_or(&0.0f32) + score;
+                accumulated_scores.insert(r_label, new_score);
+            }
+        }
+
+        let mut max_rollup_label = "";
+        let mut max_rollup_score = 0.0f32;
+        for (r_label, r_score) in &accumulated_scores {
+            if r_score > &max_rollup_score
+                && !should_geofence(
+                    r_label,
+                    country,
+                    admin1_region,
+                    geofence_map,
+                    enable_geofence,
+                )?
+            {
+                max_rollup_label = r_label;
+                max_rollup_score = *r_score;
+            }
+        }
+
+        if max_rollup_score > *non_blank_threshold && !max_rollup_label.is_empty() {
+            return Ok(Some((
+                max_rollup_label.to_string(),
+                max_rollup_score,
+                format!("classifier+rollup_to_{}", taxonomy_level),
+            )));
+        }
+    }
+
+    Ok(None)
 }
 
 fn geofence_classification() {}

@@ -1,7 +1,8 @@
-use std::cell::LazyCell;
-use super::should_geofence;
+use super::{roll_up_labels_to_first_matching_level, should_geofence};
+use crate::geofence::GeofenceError::InvalidValue;
 use crate::geofence::taxonomy::TaxonomyError;
 use serde_json::{from_value, json};
+use std::cell::LazyCell;
 use std::collections::HashMap;
 use std::error::Error;
 
@@ -95,13 +96,42 @@ const GEOFENCE_MAP: LazyCell<HashMap<String, HashMap<String, HashMap<String, Vec
         unwrap_json
     });
 
+const TAXONOMY_MAP: LazyCell<HashMap<String, String>> = LazyCell::new(|| {
+    let json = json!(
+        {
+            BLANK_FC: BLANK,
+            HUMAN_FC: HUMAN,
+            VEHICLE_FC: VEHICLE,
+            LION_FC: LION,
+            PANTHERA_GENUS_FC: PANTHERA_GENUS,
+            FELIDAE_FAMILY_FC: FELIDAE_FAMILY,
+            CARNIVORA_ORDER_FC: CARNIVORA_ORDER,
+            MAMMALIA_CLASS_FC: MAMMALIA_CLASS,
+            ANIMAL_KINGDOM_FC: ANIMAL_KINGDOM,
+            BROWN_BEAR_FC: BROWN_BEAR,
+            POLAR_BEAR_FC: POLAR_BEAR,
+            GIANT_PANDA_FC: GIANT_PANDA,
+            URSUS_GENUS_FC: URSUS_GENUS,
+            URSIDAE_FAMILY_FC: URSIDAE_FAMILY,
+        }
+    );
+    let taxonomy_json = from_value(json).unwrap();
+    taxonomy_json
+});
+
 #[test]
 fn test_should_geofence_fn() -> Result<(), Box<dyn Error>> {
     // Test disable geofencing
-    assert_eq!(should_geofence(LION, None, None, &GEOFENCE_MAP, false)?, false);
+    assert_eq!(
+        should_geofence(LION, None, None, &GEOFENCE_MAP, false)?,
+        false
+    );
 
     // Test country is None
-    assert_eq!(should_geofence(LION, None, None, &GEOFENCE_MAP, true)?, false);
+    assert_eq!(
+        should_geofence(LION, None, None, &GEOFENCE_MAP, true)?,
+        false
+    );
 
     // Test label not in geofence json
     assert_eq!(
@@ -174,5 +204,256 @@ fn test_should_geofence_fn() -> Result<(), Box<dyn Error>> {
         );
     }
 
+    Ok(())
+}
+
+#[test]
+fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>> {
+    let labels = vec![
+        BROWN_BEAR,
+        POLAR_BEAR,
+        GIANT_PANDA,
+        BLANK,
+        LION,
+        HUMAN,
+        ANIMAL_KINGDOM,
+    ];
+    // Test rollups to species level
+    let rollup_fn = |scores| {
+        roll_up_labels_to_first_matching_level(
+            &labels,
+            &scores,
+            None,
+            None,
+            &vec!["species"],
+            &0.9,
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    assert_eq!(rollup_fn(vec![0.8, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0])?, None);
+    assert_eq!(rollup_fn(vec![0.9, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0])?, None);
+    assert_eq!(
+        rollup_fn(vec![1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])?,
+        Some((
+            BROWN_BEAR.to_string(),
+            1.0,
+            "classifier+rollup_to_species".to_string()
+        ))
+    );
+
+    // Test rollups to genus level
+    let rollup_fn = |scores| {
+        roll_up_labels_to_first_matching_level(
+            &labels,
+            &scores,
+            None,
+            None,
+            &vec!["genus"],
+            &0.9,
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    assert_eq!(
+        rollup_fn(vec![0.6, 0.2, 0.01, 0.01, 0.01, 0.01, 0.01])?,
+        None
+    );
+    assert_eq!(
+        rollup_fn(vec![0.7, 0.25, 0.01, 0.01, 0.01, 0.01, 0.01])?,
+        Some((
+            URSUS_GENUS.to_string(),
+            0.95,
+            "classifier+rollup_to_genus".to_string()
+        ))
+    );
+
+    // Test rollups to family level
+    let rollup_fn = |scores| {
+        roll_up_labels_to_first_matching_level(
+            &labels,
+            &scores,
+            None,
+            None,
+            &vec!["family"],
+            &0.8,
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    assert_eq!(rollup_fn(vec![0.4, 0.1, 0.1, 0.1, 0.1, 0.0, 0.0])?, None);
+    assert_eq!(
+        rollup_fn(vec![0.4, 0.21, 0.2, 0.0, 0.0, 0.0, 0.0])?,
+        Some((
+            URSIDAE_FAMILY.to_string(),
+            0.81,
+            "classifier+rollup_to_family".to_string()
+        ))
+    );
+
+    // Test rollups to order level
+    let rollup_fn = |scores| {
+        roll_up_labels_to_first_matching_level(
+            &labels,
+            &scores,
+            None,
+            None,
+            &vec!["order"],
+            &0.8,
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    assert_eq!(rollup_fn(vec![0.3, 0.2, 0.1, 0.1, 0.1, 0.0, 0.0])?, None);
+    // expect result using sum to avoid floating point accuracy error
+    assert_eq!(
+        rollup_fn(vec![0.3, 0.2, 0.1, 0.1, 0.23, 0.0, 0.0])?,
+        Some((
+            CARNIVORA_ORDER.to_string(),
+            [0.3, 0.2, 0.1, 0.23].iter().sum(),
+            "classifier+rollup_to_order".to_string()
+        ))
+    );
+
+    // Test rollups to class level
+    let rollup_fn = |scores| {
+        roll_up_labels_to_first_matching_level(
+            &labels,
+            &scores,
+            None,
+            None,
+            &vec!["class"],
+            &0.8,
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    assert_eq!(rollup_fn(vec![0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.0])?, None);
+    // expect result using sum to avoid floating point accuracy error
+    assert_eq!(
+        rollup_fn(vec![0.2, 0.2, 0.1, 0.1, 0.22, 0.1, 0.0])?,
+        Some((
+            MAMMALIA_CLASS.to_string(),
+            [0.2, 0.2, 0.1, 0.1, 0.22].iter().sum(),
+            "classifier+rollup_to_class".to_string()
+        ))
+    );
+
+    // Test rollups to kingdom level
+    let rollup_fn = |scores| {
+        roll_up_labels_to_first_matching_level(
+            &labels,
+            &scores,
+            None,
+            None,
+            &vec!["kingdom"],
+            &0.81,
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    assert_eq!(rollup_fn(vec![0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1])?, None);
+    // expect result using sum to avoid floating point accuracy error
+    assert_eq!(
+        rollup_fn(vec![0.2, 0.2, 0.1, 0.1, 0.23, 0.1, 0.1])?,
+        Some((
+            ANIMAL_KINGDOM.to_string(),
+            [0.2, 0.2, 0.1, 0.1, 0.23, 0.1].iter().sum(),
+            "classifier+rollup_to_kingdom".to_string()
+        ))
+    );
+
+    // Test rollups when multiple taxonomy levels are specified
+    let rollup_fn = |scores| {
+        roll_up_labels_to_first_matching_level(
+            &labels,
+            &scores,
+            None,
+            None,
+            &vec!["genus", "family", "order", "class", "kingdom"],
+            &0.75,
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    // expect result using sum to avoid floating point accuracy error
+    assert_eq!(
+        rollup_fn(vec![0.6, 0.1, 0.1, 0.1, 0.1, 0.0, 0.0])?,
+        Some((
+            URSIDAE_FAMILY.to_string(),
+            [0.6, 0.1, 0.1].iter().sum(),
+            "classifier+rollup_to_family".to_string()
+        ))
+    );
+
+    // Test rollups when multiple score sums pass the non blank threshold
+    let rollup_fn = |scores| {
+        roll_up_labels_to_first_matching_level(
+            &labels,
+            &scores,
+            None,
+            None,
+            &vec!["species"],
+            &0.1,
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    assert_eq!(
+        rollup_fn(vec![0.2, 0.3, 0.15, 0.0, 0.35, 0.0, 0.0])?,
+        Some((
+            LION.to_string(),
+            0.35,
+            "classifier+rollup_to_species".to_string()
+        ))
+    );
+
+    // Test rollups with geofencing
+    let rollup_fn = |scores| {
+        roll_up_labels_to_first_matching_level(
+            &labels,
+            &scores,
+            Some("GBR"),
+            None,
+            &vec!["species", "genus", "family", "order", "class"],
+            &0.4,
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    // expect result using sum to avoid floating point accuracy error
+    assert_eq!(
+        rollup_fn(vec![0.1, 0.2, 0.2, 0.45, 0.0, 0.0, 0.0])?,
+        Some((
+            CARNIVORA_ORDER.to_string(),
+            [0.1, 0.2, 0.2].iter().sum(),
+            "classifier+rollup_to_order".to_string()
+        ))
+    );
+
+    // Test rollups to invalid levels
+    let rollup_fn = |scores| {
+        roll_up_labels_to_first_matching_level(
+            &labels,
+            &scores,
+            Some("GBR"),
+            None,
+            &vec!["invalid_level"],
+            &0.3,
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    assert!(rollup_fn(vec![0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]).is_err());
     Ok(())
 }
