@@ -2,6 +2,7 @@ pub mod taxonomy;
 #[cfg(test)]
 mod tests;
 
+use crate::constants::classification;
 use crate::geofence::taxonomy::{TaxonomyError, get_ancestor_at_level};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
@@ -214,4 +215,71 @@ fn roll_up_labels_to_first_matching_level(
     Ok(None)
 }
 
-fn geofence_classification() {}
+///
+/// Geofences animal prediction in a country or admin1_region
+///
+/// Under the hood, this also rolls up the labels every time it encounters a
+/// geofenced label.
+///
+/// # Parameters:
+///   - labels:
+///       List of classification labels
+///   - scores:
+///       List of classification scores
+///   - country:
+///       Country code (in ISO 3166-1 alpha-3 format)
+///       Optional
+///   - admin1_region:
+///       First-level administrative division (in ISO 3166-2 format)
+///       Optional
+///   - taxonomy_map:
+///       Map that map taxa to labels.
+///   - geofence_map:
+///       Map that has full class species string as keys, array of `allow` as values
+///   - enable_geofence:
+///       Whether geofencing is enabled
+///
+fn geofence_animal_classification(
+    labels: &Vec<&str>,
+    scores: &Vec<f32>,
+    country: Option<&str>,
+    admin1_region: Option<&str>,
+    taxonomy_map: &HashMap<String, String>,
+    geofence_map: &HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>,
+    enable_geofence: bool,
+) -> Result<Option<(String, f32, String)>, Box<dyn Error>> {
+    if should_geofence(
+        labels[0],
+        country,
+        admin1_region,
+        geofence_map,
+        enable_geofence,
+    )? {
+        let rollup = roll_up_labels_to_first_matching_level(
+            labels,
+            scores,
+            country,
+            admin1_region,
+            &vec!["family", "order", "class", "kingdom"],
+            &(scores[0] - 1e-10),
+            taxonomy_map,
+            geofence_map,
+            enable_geofence,
+        )?;
+        if let Some((r_label, r_score, r_source)) = rollup {
+            Ok(Some((r_label, r_score, format!("classifier+geofence+{}", &r_source[11..]))))
+        } else {
+            Ok(Some((
+                classification::UNKNOWN.to_string(),
+                scores[0],
+                "classifier+geofence+rollup_failed".to_string(),
+            )))
+        }
+    } else {
+        Ok(Some((
+            labels[0].to_string(),
+            scores[0],
+            "classifier".to_string(),
+        )))
+    }
+}

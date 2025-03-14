@@ -1,5 +1,5 @@
-use super::{roll_up_labels_to_first_matching_level, should_geofence};
-use crate::geofence::GeofenceError::InvalidValue;
+use super::{geofence_animal_classification, roll_up_labels_to_first_matching_level, should_geofence};
+use crate::constants::classification;
 use crate::geofence::taxonomy::TaxonomyError;
 use serde_json::{from_value, json};
 use std::cell::LazyCell;
@@ -49,6 +49,8 @@ const PUMA_FC: &str = "mammalia;carnivora;felidae;puma;concolor";
 const SAND_CAT: &str =
     "e588253d-d61d-4149-a96c-8c245927a80f;mammalia;carnivora;felidae;felis;margarita;sand cat";
 const SAND_CAT_FC: &str = "mammalia;carnivora;felidae;felis;margarita";
+const UNKNOWN: &str = "unknown;unknown;abc;def;;;";
+const UNKNOWN_FC: &str = "unknown;abc;def;;";
 
 const GEOFENCE_MAP: LazyCell<HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>> =
     LazyCell::new(|| {
@@ -89,6 +91,11 @@ const GEOFENCE_MAP: LazyCell<HashMap<String, HashMap<String, HashMap<String, Vec
                         "GBR": [],
                     },
                 },
+                UNKNOWN_FC: {
+                    "block": {
+                        "USA": [],
+                    }
+                }
             }
         );
         let unwrap_json: HashMap<String, HashMap<String, HashMap<String, Vec<String>>>> =
@@ -455,5 +462,74 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
         )
     };
     assert!(rollup_fn(vec![0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]).is_err());
+    Ok(())
+}
+
+#[test]
+fn test_geofence_animal_classification_fn() -> Result<(), Box<dyn Error>> {
+    let labels = vec![
+        LION,
+        POLAR_BEAR,
+        BLANK,
+        FELIDAE_FAMILY,
+    ];
+
+    let unknown_labels = vec![
+        UNKNOWN
+    ];
+
+    // Test when no geofencing is needed
+    let geofence_classification_fn = |scores| {
+        geofence_animal_classification(
+            &labels,
+            &scores,
+            Some("TZA"),
+            None,
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    assert_eq!(geofence_classification_fn(vec![0.4, 0.3, 0.2, 0.1])?, Some((LION.to_string(), 0.4, "classifier".to_string())));
+
+    //Test with geofencing and rollup to family level or above
+    let geofence_classification_fn = |scores| {
+        geofence_animal_classification(
+            &labels,
+            &scores,
+            Some("USA"),
+            None,
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    assert_eq!(geofence_classification_fn(vec![0.4, 0.3, 0.2, 0.1])?, Some((FELIDAE_FAMILY.to_string(), 0.5, "classifier+geofence+rollup_to_family".to_string())));
+    let geofence_classification_fn = |scores| {
+        geofence_animal_classification(
+            &labels,
+            &scores,
+            Some("USA"),
+            Some("NY"),
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    assert_eq!(geofence_classification_fn(vec![0.4, 0.3, 0.2, 0.1])?, Some((CARNIVORA_ORDER.to_string(), [0.4, 0.3, 0.1].iter().sum(), "classifier+geofence+rollup_to_order".to_string())));
+
+    // Test with geofencing and rollup to unknown
+    let geofence_classification_fn = |scores| {
+        geofence_animal_classification(
+            &unknown_labels,
+            &scores,
+            Some("USA"),
+            None,
+            &TAXONOMY_MAP,
+            &GEOFENCE_MAP,
+            true,
+        )
+    };
+    assert_eq!(geofence_classification_fn(vec![0.4])?, Some((classification::UNKNOWN.to_string(), 0.4, "classifier+geofence+rollup_failed".to_string())));
     Ok(())
 }
