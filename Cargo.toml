@@ -1,13 +1,14 @@
 [package]
-name = "RustTensorflow"
+name = "speciesnet-classifier"
 version = "0.1.0"
 edition = "2024"
 
-[build]
-include = ["assets/*"]
+# looks like this key does not exist in Cargo manifest...
+# [build]
+# include = ["assets/*"]
 
 [lib]
-name = "speciesnet_rust"
+name = "speciesnet_classifier"
 path = "src/lib.rs"
 
 [dependencies]

@@ -3,16 +3,6 @@
 version = 4
 
 [[package]]
-name = "RustTensorflow"
-version = "0.1.0"
-dependencies = [
- "image",
- "serde_json",
- "tensorflow",
- "thiserror",
-]
-
-[[package]]
 name = "adler2"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -750,6 +740,16 @@ checksum = "c970269d99b64e60ec3bd6ad27270092a5394c4e309314b18ae3fe575695fbe8"
 dependencies = [
  "libc",
  "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "speciesnet-classifier"
+version = "0.1.0"
+dependencies = [
+ "image",
+ "serde_json",
+ "tensorflow",
+ "thiserror",
 ]
 
 [[package]]
