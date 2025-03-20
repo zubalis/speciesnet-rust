@@ -1,4 +1,4 @@
-use super::{geofence_animal_classification, roll_up_labels_to_first_matching_level, should_geofence};
+use super::{geofence_animal_classification, roll_up_labels_to_first_matching_level, should_geofence, GeofenceResult};
 use crate::constants::classification;
 use crate::geofence::taxonomy::TaxonomyError;
 use serde_json::{from_value, json};
@@ -217,13 +217,13 @@ fn test_should_geofence_fn() -> Result<(), Box<dyn Error>> {
 #[test]
 fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>> {
     let labels = vec![
-        BROWN_BEAR,
-        POLAR_BEAR,
-        GIANT_PANDA,
-        BLANK,
-        LION,
-        HUMAN,
-        ANIMAL_KINGDOM,
+        BROWN_BEAR.to_string(),
+        POLAR_BEAR.to_string(),
+        GIANT_PANDA.to_string(),
+        BLANK.to_string(),
+        LION.to_string(),
+        HUMAN.to_string(),
+        ANIMAL_KINGDOM.to_string(),
     ];
     // Test rollups to species level
     let rollup_fn = |scores| {
@@ -232,7 +232,7 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
             &scores,
             None,
             None,
-            &vec!["species"],
+            &vec!["species".to_string()],
             &0.9,
             &TAXONOMY_MAP,
             &GEOFENCE_MAP,
@@ -257,7 +257,7 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
             &scores,
             None,
             None,
-            &vec!["genus"],
+            &vec!["genus".to_string()],
             &0.9,
             &TAXONOMY_MAP,
             &GEOFENCE_MAP,
@@ -284,7 +284,7 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
             &scores,
             None,
             None,
-            &vec!["family"],
+            &vec!["family".to_string()],
             &0.8,
             &TAXONOMY_MAP,
             &GEOFENCE_MAP,
@@ -308,7 +308,7 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
             &scores,
             None,
             None,
-            &vec!["order"],
+            &vec!["order".to_string()],
             &0.8,
             &TAXONOMY_MAP,
             &GEOFENCE_MAP,
@@ -333,7 +333,7 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
             &scores,
             None,
             None,
-            &vec!["class"],
+            &vec!["class".to_string()],
             &0.8,
             &TAXONOMY_MAP,
             &GEOFENCE_MAP,
@@ -358,7 +358,7 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
             &scores,
             None,
             None,
-            &vec!["kingdom"],
+            &vec!["kingdom".to_string()],
             &0.81,
             &TAXONOMY_MAP,
             &GEOFENCE_MAP,
@@ -383,7 +383,7 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
             &scores,
             None,
             None,
-            &vec!["genus", "family", "order", "class", "kingdom"],
+            &vec!["genus".to_string(), "family".to_string(), "order".to_string(), "class".to_string(), "kingdom".to_string()],
             &0.75,
             &TAXONOMY_MAP,
             &GEOFENCE_MAP,
@@ -407,7 +407,7 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
             &scores,
             None,
             None,
-            &vec!["species"],
+            &vec!["species".to_string()],
             &0.1,
             &TAXONOMY_MAP,
             &GEOFENCE_MAP,
@@ -430,7 +430,7 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
             &scores,
             Some("GBR"),
             None,
-            &vec!["species", "genus", "family", "order", "class"],
+            &vec!["species".to_string(), "genus".to_string(), "family".to_string(), "order".to_string(), "class".to_string()],
             &0.4,
             &TAXONOMY_MAP,
             &GEOFENCE_MAP,
@@ -454,7 +454,7 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
             &scores,
             Some("GBR"),
             None,
-            &vec!["invalid_level"],
+            &vec!["invalid_level".to_string()],
             &0.3,
             &TAXONOMY_MAP,
             &GEOFENCE_MAP,
@@ -468,14 +468,14 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
 #[test]
 fn test_geofence_animal_classification_fn() -> Result<(), Box<dyn Error>> {
     let labels = vec![
-        LION,
-        POLAR_BEAR,
-        BLANK,
-        FELIDAE_FAMILY,
+        LION.to_string(),
+        POLAR_BEAR.to_string(),
+        BLANK.to_string(),
+        FELIDAE_FAMILY.to_string(),
     ];
 
     let unknown_labels = vec![
-        UNKNOWN
+        UNKNOWN.to_string()
     ];
 
     // Test when no geofencing is needed
@@ -490,7 +490,11 @@ fn test_geofence_animal_classification_fn() -> Result<(), Box<dyn Error>> {
             true,
         )
     };
-    assert_eq!(geofence_classification_fn(vec![0.4, 0.3, 0.2, 0.1])?, Some((LION.to_string(), 0.4, "classifier".to_string())));
+    assert_eq!(geofence_classification_fn(vec![0.4, 0.3, 0.2, 0.1])?, Some(GeofenceResult {
+        label: LION.to_string(),
+        score: 0.4,
+        source: "classifier".to_string()
+    }));
 
     //Test with geofencing and rollup to family level or above
     let geofence_classification_fn = |scores| {
@@ -504,7 +508,11 @@ fn test_geofence_animal_classification_fn() -> Result<(), Box<dyn Error>> {
             true,
         )
     };
-    assert_eq!(geofence_classification_fn(vec![0.4, 0.3, 0.2, 0.1])?, Some((FELIDAE_FAMILY.to_string(), 0.5, "classifier+geofence+rollup_to_family".to_string())));
+    assert_eq!(geofence_classification_fn(vec![0.4, 0.3, 0.2, 0.1])?, Some(GeofenceResult {
+        label: FELIDAE_FAMILY.to_string(),
+        score: 0.5,
+        source: "classifier+geofence+rollup_to_family".to_string()
+    }));
     let geofence_classification_fn = |scores| {
         geofence_animal_classification(
             &labels,
@@ -516,7 +524,11 @@ fn test_geofence_animal_classification_fn() -> Result<(), Box<dyn Error>> {
             true,
         )
     };
-    assert_eq!(geofence_classification_fn(vec![0.4, 0.3, 0.2, 0.1])?, Some((CARNIVORA_ORDER.to_string(), [0.4, 0.3, 0.1].iter().sum(), "classifier+geofence+rollup_to_order".to_string())));
+    assert_eq!(geofence_classification_fn(vec![0.4, 0.3, 0.2, 0.1])?, Some(GeofenceResult {
+        label: CARNIVORA_ORDER.to_string(),
+        score: [0.4, 0.3, 0.1].iter().sum(),
+        source: "classifier+geofence+rollup_to_order".to_string()
+    }));
 
     // Test with geofencing and rollup to unknown
     let geofence_classification_fn = |scores| {
@@ -530,6 +542,10 @@ fn test_geofence_animal_classification_fn() -> Result<(), Box<dyn Error>> {
             true,
         )
     };
-    assert_eq!(geofence_classification_fn(vec![0.4])?, Some((classification::UNKNOWN.to_string(), 0.4, "classifier+geofence+rollup_failed".to_string())));
+    assert_eq!(geofence_classification_fn(vec![0.4, 0.3, 0.2, 0.1])?, Some(GeofenceResult {
+        label: classification::UNKNOWN.to_string(),
+        score: 0.4,
+        source: "classifier+geofence+rollup_failed".to_string()
+    }));
     Ok(())
 }

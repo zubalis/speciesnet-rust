@@ -6,13 +6,19 @@ use crate::constants::classification;
 use crate::geofence::taxonomy::{TaxonomyError, get_ancestor_at_level};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
-use std::iter::zip;
 use thiserror::Error;
 
 #[derive(Debug, Error, PartialEq)]
 pub enum GeofenceError {
     #[error("{0}")]
     InvalidValue(String),
+}
+
+#[derive(Debug, PartialEq)]
+pub struct GeofenceResult {
+    label: String,
+    score: f32,
+    source: String,
 }
 
 ///
@@ -148,11 +154,11 @@ fn should_geofence(
 ///       Whether geofencing is enabled
 ///
 fn roll_up_labels_to_first_matching_level(
-    labels: &Vec<&str>,
+    labels: &Vec<String>,
     scores: &Vec<f32>,
     country: Option<&str>,
     admin1_region: Option<&str>,
-    target_taxonomy_levels: &Vec<&str>,
+    target_taxonomy_levels: &Vec<String>,
     non_blank_threshold: &f32,
     taxonomy_map: &HashMap<String, String>,
     geofence_map: &HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>,
@@ -160,7 +166,7 @@ fn roll_up_labels_to_first_matching_level(
 ) -> Result<Option<(String, f32, String)>, Box<dyn Error>> {
     // Find if there is invalid taxonomy level
     let expected_target_taxonomy_levels =
-        vec!["species", "genus", "family", "order", "class", "kingdom"];
+        vec!["species".to_string(), "genus".to_string(), "family".to_string(), "order".to_string(), "class".to_string(), "kingdom".to_string()];
     let set_expected_target_taxonomy_levels: HashSet<_> =
         expected_target_taxonomy_levels.iter().collect();
     let set_target_taxonomy_levels: HashSet<_> = target_taxonomy_levels.iter().collect();
@@ -239,17 +245,17 @@ fn roll_up_labels_to_first_matching_level(
 ///   - enable_geofence:
 ///       Whether geofencing is enabled
 ///
-fn geofence_animal_classification(
-    labels: &Vec<&str>,
+pub fn geofence_animal_classification(
+    labels: &Vec<String>,
     scores: &Vec<f32>,
     country: Option<&str>,
     admin1_region: Option<&str>,
     taxonomy_map: &HashMap<String, String>,
     geofence_map: &HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>,
     enable_geofence: bool,
-) -> Result<Option<(String, f32, String)>, Box<dyn Error>> {
+) -> Result<Option<GeofenceResult>, Box<dyn Error>> {
     if should_geofence(
-        labels[0],
+        &labels[0],
         country,
         admin1_region,
         geofence_map,
@@ -260,26 +266,30 @@ fn geofence_animal_classification(
             scores,
             country,
             admin1_region,
-            &vec!["family", "order", "class", "kingdom"],
+            &vec!["family".to_string(), "order".to_string(), "class".to_string(), "kingdom".to_string()],
             &(scores[0] - 1e-10),
             taxonomy_map,
             geofence_map,
             enable_geofence,
         )?;
         if let Some((r_label, r_score, r_source)) = rollup {
-            Ok(Some((r_label, r_score, format!("classifier+geofence+{}", &r_source[11..]))))
+            Ok(Some(GeofenceResult {
+                label: r_label,
+                score: r_score,
+                source: format!("classifier+geofence+{}", &r_source[11..])
+            }))
         } else {
-            Ok(Some((
-                classification::UNKNOWN.to_string(),
-                scores[0],
-                "classifier+geofence+rollup_failed".to_string(),
-            )))
+            Ok(Some(GeofenceResult {
+                label: classification::UNKNOWN.to_string(),
+                score: scores[0],
+                source: "classifier+geofence+rollup_failed".to_string(),
+            }))
         }
     } else {
-        Ok(Some((
-            labels[0].to_string(),
-            scores[0],
-            "classifier".to_string(),
-        )))
+        Ok(Some(GeofenceResult {
+            label: labels[0].to_string(),
+            score: scores[0],
+            source: "classifier".to_string(),
+        }))
     }
 }

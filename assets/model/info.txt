@@ -1,0 +1,9 @@
+{
+    "version": "4.0.0b",
+    "type": "full_image",
+    "classifier": "full_image_88545560_22x8_v12_epoch_00153.keras",
+    "classifier_labels": "full_image_88545560_22x8_v12_epoch_00153.labels.txt",
+    "detector": "https://github.com/agentmorris/MegaDetector/releases/download/v5.0/md_v5a.0.0.pt",
+    "taxonomy": "taxonomy_release.txt",
+    "geofence": "geofence_release.2025.02.27.0702.json"
+}
