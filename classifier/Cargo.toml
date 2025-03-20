@@ -1,0 +1,18 @@
+[package]
+name = "speciesnet-classifier"
+version = "0.1.0"
+edition = "2024"
+
+# looks like this key does not exist in Cargo manifest...
+# [build]
+# include = ["assets/*"]
+
+[lib]
+name = "speciesnet_classifier"
+path = "src/lib.rs"
+
+[dependencies]
+tensorflow = "0.21"
+image = "0.24"
+thiserror = "1"
+serde_json = "1.0"
