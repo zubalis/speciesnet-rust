@@ -30,6 +30,7 @@ impl SpeciesNet {
     where
         P: AsRef<Path>,
     {
+        // TODO: File filtration for image only.
         let file_paths = if file_or_folder.as_ref().is_dir() {
             debug!("Gathering files inside folder");
             read_dir(&file_or_folder)?
