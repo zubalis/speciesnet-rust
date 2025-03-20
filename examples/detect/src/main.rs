@@ -12,7 +12,7 @@ fn main() -> anyhow::Result<()> {
     let font = FontArc::try_from_slice(include_bytes!("../Exo2-Light.ttf"))?;
 
     let image_path = "../../assets/images/african_elephants.jpg";
-    let speciesnet = SpeciesNet::new("../../assets/model/mega_detector_v5_cpu.pt")?;
+    let speciesnet = SpeciesNet::new("../../assets/model/md_v5a.0.0_traced.pt")?;
 
     let results = speciesnet.detect(image_path)?;
     let mut loaded_image = ImageReader::open(image_path)?.decode()?.to_rgb8();
