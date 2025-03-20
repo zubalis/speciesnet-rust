@@ -111,26 +111,11 @@ impl BoundingBox {
         Ok(Self { x1, y1, x2, y2 })
     }
 
-    //def scale_boxes(img1_shape, boxes, img0_shape, ratio_pad=None):
-    //    # Rescale boxes (xyxy) from img1_shape to img0_shape
-    //    if ratio_pad is None:  # calculate from img0_shape
-    //        gain = min(img1_shape[0] / img0_shape[0], img1_shape[1] / img0_shape[1])  # gain  = old / new
-    //        pad = (img1_shape[1] - img0_shape[1] * gain) / 2, (img1_shape[0] - img0_shape[0] * gain) / 2  # wh padding
-    //    else:
-    //        gain = ratio_pad[0][0]
-    //        pad = ratio_pad[1]
-    //
-    //    boxes[..., [0, 2]] -= pad[0]  # x padding
-    //    boxes[..., [1, 3]] -= pad[1]  # y padding
-    //    boxes[..., :4] /= gain
-    //    clip_boxes(boxes, img0_shape)
-    //    return boxes
-    //boxes[..., 0].clamp_(0, shape[1])  # x1
-    //boxes[..., 1].clamp_(0, shape[0])  # y1
-    //boxes[..., 2].clamp_(0, shape[1])  # x2
-    //boxes[..., 3].clamp_(0, shape[0])  # y2
-
-    /// Scale the bounding box coordinates to a given width and height.
+    /// Scale the bounding box coordinates to a given width and height. This function is a
+    /// combination of [YOLOv5's scale_boxes] and [YOLOv5's clip_boxes] function.
+    ///
+    /// [YOLOv5's scale_boxes]: https://github.com/ultralytics/yolov5/blob/8cc449636da76757a71385a2b57dc977db58b81e/utils/general.py#L953-L966
+    /// [YOLOv5's clip_boxes]: https://github.com/ultralytics/yolov5/blob/8cc449636da76757a71385a2b57dc977db58b81e/utils/general.py#L988-L997
     pub fn scale_to(
         mut self,
         scaled_down_width: u32,
