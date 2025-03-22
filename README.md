@@ -64,3 +64,29 @@ cargo run
 ```
 
 One image will be saved out of it with the bounding boxes and confidence drawn on it.
+
+### Running the CLI
+
+Run the whole pipeline
+
+```
+cargo run --bin speciesnet -- --instances-json assets/images/input.json --predictions-json assets/images/output_ensemble_test.json
+```
+
+Running only the detector
+
+```
+cargo run --bin speciesnet -- --instances-json assets/images/input.json --predictions-json assets/images/output_detector_test.json --detector-only
+```
+
+Running only the classifer
+
+```
+cargo run --bin speciesnet -- --instances-json assets/images/input.json --predictions-json assets/images/output_classifier_test.json --classifier-only --detections-json assets/images/output_detector.json
+```
+
+Running only the ensemble
+
+```
+cargo run --bin speciesnet -- --instances-json assets/images/input.json --predictions-json assets/images/output_ensemble_test.json --ensemble-only --detections-json assets/images/output_detector.json --classifications-json assets/images/output_classifier.json
+```

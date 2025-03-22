@@ -1,0 +1,14 @@
+{
+    "instances": [
+        {
+            "filepath": "african_elephants.jpg",
+            "country": "KEN",
+            "admin1_region": null
+        },
+        {
+            "filepath": "bear.jpg",
+            "country": "USA",
+            "admin1_region": "CA"
+        }
+    ]
+}

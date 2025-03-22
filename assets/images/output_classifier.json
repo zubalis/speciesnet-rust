@@ -1,0 +1,42 @@
+{
+    "predictions": [
+        {
+            "filepath": "african_elephants.jpg",
+            "classifications": {
+                "classes": [
+                    "55631055-3e0e-4b7a-9612-dedebe9f78b0;mammalia;proboscidea;elephantidae;loxodonta;africana;african elephant",
+                    "dc5dbe17-a8ca-40a6-ac6a-3b6b1d63e6d6;mammalia;cetartiodactyla;bovidae;eudorcas;thomsonii;thomson's gazelle",
+                    "8c48ed75-e275-4188-a6b1-55929d298e85;mammalia;cetartiodactyla;bovidae;nanger;granti;grant's gazelle",
+                    "9732cefb-6a08-49f6-b61e-b9a9054368c4;mammalia;cetartiodactyla;bovidae;syncerus;caffer;african buffalo",
+                    "ccd7d6d7-8eb2-4fdb-a6d6-f1970847e449;mammalia;cetartiodactyla;suidae;phacochoerus;africanus;common warthog"
+                ],
+                "scores": [
+                    0.9922401905059814,
+                    0.0009239429491572082,
+                    0.0008468334563076496,
+                    0.0005627183709293604,
+                    0.0003995113947894424
+                ]
+            }
+        },
+        {
+            "filepath": "bear.jpg",
+            "classifications": {
+                "classes": [
+                    "436ddfdd-bc43-44c3-a25d-34671d3430a0;mammalia;carnivora;ursidae;ursus;americanus;american black bear",
+                    "330bb1e9-84d6-4e41-afa9-938aee17ea29;mammalia;carnivora;ursidae;ursus;arctos;brown bear",
+                    "ec1a70f4-41c0-4aba-9150-292fb2b7a324;mammalia;carnivora;ursidae;;;bear family",
+                    "febff896-db40-4ac8-bcfe-5bb99a600950;mammalia;cetartiodactyla;cervidae;odocoileus;hemionus;mule deer",
+                    "ee8d5a89-f82e-4323-80e2-0ffc9487ebaf;mammalia;carnivora;canidae;canis;lupus;grey wolf"
+                ],
+                "scores": [
+                    0.9938981533050537,
+                    0.001804668572731316,
+                    0.0017977870302274823,
+                    0.0007998028304427862,
+                    0.000216640968574211
+                ]
+            }
+        }
+    ]
+}
