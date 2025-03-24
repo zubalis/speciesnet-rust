@@ -1,4 +1,4 @@
-use std::{cmp::min, fmt::Display, ops::RangeFrom};
+use std::fmt::Display;
 
 use tch::{IndexOp, Tensor};
 
@@ -27,8 +27,6 @@ impl Display for BoundingBox {
 }
 
 impl BoundingBox {
-    /// Bounding box range to limit the bounding box coordinates into the positive space only.
-    const BOUNDING_BOX_RANGE: RangeFrom<f64> = (0.0..);
     /// Expected tensor size for converting values to this struct from [`Tensor`].
     const EXPECTED_TENSOR_SIZE: i64 = 4;
 
@@ -72,7 +70,7 @@ impl BoundingBox {
     pub fn from_xyxy_tensor(tensor: &Tensor) -> Result<Self, Error> {
         let tensor_size = tensor.size1()?;
 
-        if tensor_size < 4 {
+        if tensor_size < Self::EXPECTED_TENSOR_SIZE {
             return Err(Error::InvalidTensorSize(tensor_size));
         }
 
@@ -94,7 +92,7 @@ impl BoundingBox {
     pub fn from_xywh_tensor(tensor: &Tensor) -> Result<Self, Error> {
         let tensor_size = tensor.size1()?;
 
-        if tensor_size < 4 {
+        if tensor_size < Self::EXPECTED_TENSOR_SIZE {
             return Err(Error::InvalidTensorSize(tensor_size));
         }
 
@@ -132,6 +130,7 @@ impl BoundingBox {
             (scaled_down_width as f32 - (width as f32 * gain)) / 2.0,
         );
 
+        // The clamp part is the clip_boxes function.
         let x1 = ((self.x1 - pad.0 as f64) / gain as f64).clamp(0.0, width as f64);
         let x2 = ((self.x2 - pad.0 as f64) / gain as f64).clamp(0.0, width as f64);
 
