@@ -28,6 +28,11 @@ impl Display for Detection {
 }
 
 impl Detection {
+    /// Initialize the [`Detection`] struct.
+    ///
+    /// # Panics
+    ///
+    /// The initialization could panic if the confidence is not in between `0` and `1`.
     pub fn new(
         file_path: PathBuf,
         category: Category,
@@ -44,6 +49,7 @@ impl Detection {
         }
     }
 
+    /// Returns the file path of the detection.
     pub fn file_path(&self) -> &Path {
         &self.file_path
     }
@@ -53,14 +59,17 @@ impl Detection {
         self.category.to_string()
     }
 
+    /// Returns the [`BoundingBox`] of the detection.
     pub fn bounding_box(&self) -> &BoundingBox {
         &self.bounding_box
     }
 
+    /// Returns the [`Category`] of the detection.
     pub fn category(&self) -> &Category {
         &self.category
     }
 
+    /// Returns the confidence value of the detection.
     pub fn confidence(&self) -> f64 {
         self.confidence
     }
