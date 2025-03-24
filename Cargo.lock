@@ -1621,6 +1621,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "speciesnet-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "env_logger",
+ "log",
+ "serde",
+ "serde_json",
+ "speciesnet",
+ "speciesnet-core",
+ "walkdir",
+]
+
+[[package]]
 name = "speciesnet-core"
 version = "0.1.0"
 dependencies = [
