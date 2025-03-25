@@ -1,3 +1,5 @@
+#![allow(clippy::redundant_closure)]
+
 pub mod taxonomy;
 #[cfg(test)]
 mod tests;
@@ -6,6 +8,10 @@ use crate::constants::classification;
 use crate::geofence::taxonomy::{TaxonomyError, get_ancestor_at_level};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
+use std::fs::File;
+use std::path::Path;
+use csv::Reader;
+use serde::Deserialize;
 use thiserror::Error;
 
 #[derive(Debug, Error, PartialEq)]
@@ -19,6 +25,14 @@ pub struct GeofenceResult {
     label: String,
     score: f32,
     source: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GeofenceFix {
+    species: String,
+    rule: String,
+    country_code: String,
+    admin1_region_code: Option<String>,
 }
 
 ///
@@ -62,64 +76,43 @@ fn should_geofence(
     };
 
     // Get `allow` countries from given geofence_map
-    match geofence_from_full_string.get("allow") {
-        Some(allowed_countries) => {
-            // Do geofence if given country not in allowed country
-            if !allowed_countries.is_empty() {
-                if !allowed_countries.contains_key(_country) {
-                    return Ok(true);
-                } else {
-                    // Get states from given country
-                    match allowed_countries.get(_country) {
-                        Some(allowed_admin1_region) => {
-                            match admin1_region {
-                                Some(ar) => {
-                                    // Do geofence if admin1_region not in allowed admin1_region.
-                                    if !allowed_admin1_region.is_empty()
-                                        && !allowed_admin1_region.contains(&ar.to_string())
-                                    {
-                                        return Ok(true);
-                                    }
-                                }
-                                None => (),
-                            };
+    if let Some(allowed_countries) = geofence_from_full_string.get("allow") {
+        // Do geofence if given country not in allowed country
+        if !allowed_countries.is_empty() {
+            if !allowed_countries.contains_key(_country) {
+                return Ok(true);
+            } else {
+                // Get states from given country
+                if let Some(allowed_admin1_region) = allowed_countries.get(_country) {
+                    if let Some(ar) = admin1_region {
+                        // Do geofence if admin1_region not in allowed admin1_region.
+                        if !allowed_admin1_region.is_empty()
+                            && !allowed_admin1_region.contains(&ar.to_string())
+                        {
+                            return Ok(true);
                         }
-                        None => (),
-                    }
+                    };
                 }
             }
         }
-        None => (),
     }
 
     // Get `block` countries from given geofence_map
-    match geofence_from_full_string.get("block") {
-        Some(blocked_countries) => {
-            // Do geofence if given country in blocked country
-            if !blocked_countries.is_empty() {
-                if blocked_countries.contains_key(_country) {
-                    match blocked_countries.get(_country) {
-                        Some(blocked_admin1_regions) => {
-                            if blocked_admin1_regions.is_empty() {
-                                return Ok(true);
-                            }
-                            match admin1_region {
-                                Some(ar) => {
-                                    // Do geofence if given admin1_region in blocked admin1_region
-                                    if blocked_admin1_regions.contains(&ar.to_string()) {
-                                        return Ok(true);
-                                    };
-                                    ()
-                                }
-                                None => (),
-                            };
-                        }
-                        None => (),
-                    }
+    if let Some(blocked_countries) = geofence_from_full_string.get("block") {
+        // Do geofence if given country in blocked country
+        if !blocked_countries.is_empty() && blocked_countries.contains_key(_country) {
+            if let Some(blocked_admin1_regions) = blocked_countries.get(_country) {
+                if blocked_admin1_regions.is_empty() {
+                    return Ok(true);
                 }
+                if let Some(ar) = admin1_region {
+                    // Do geofence if given admin1_region in blocked admin1_region
+                    if blocked_admin1_regions.contains(&ar.to_string()) {
+                        return Ok(true);
+                    };
+                };
             }
         }
-        None => (),
     }
     Ok(false)
 }
@@ -154,8 +147,8 @@ fn should_geofence(
 ///       Whether geofencing is enabled
 ///
 fn roll_up_labels_to_first_matching_level(
-    labels: &Vec<String>,
-    scores: &Vec<f32>,
+    labels: &[String],
+    scores: &[f32],
     country: Option<&str>,
     admin1_region: Option<&str>,
     target_taxonomy_levels: &Vec<String>,
@@ -172,7 +165,6 @@ fn roll_up_labels_to_first_matching_level(
     let set_target_taxonomy_levels: HashSet<_> = target_taxonomy_levels.iter().collect();
     let has_unknown_taxonomy: HashSet<_> = set_target_taxonomy_levels
         .difference(&set_expected_target_taxonomy_levels)
-        .into_iter()
         .collect();
     if !has_unknown_taxonomy.is_empty() {
         return Err(GeofenceError::InvalidValue(format!(
@@ -184,7 +176,7 @@ fn roll_up_labels_to_first_matching_level(
 
     for taxonomy_level in target_taxonomy_levels {
         let mut accumulated_scores = HashMap::new();
-        for (label, score) in labels.into_iter().zip(scores.into_iter()) {
+        for (label, score) in labels.iter().zip(scores.iter()) {
             let roll_up_label = get_ancestor_at_level(label, taxonomy_level, taxonomy_map)?;
             if let Some(r_label) = roll_up_label {
                 let new_score = accumulated_scores.get(&r_label).unwrap_or(&0.0f32) + score;
@@ -246,8 +238,8 @@ fn roll_up_labels_to_first_matching_level(
 ///       Whether geofencing is enabled
 ///
 pub fn geofence_animal_classification(
-    labels: &Vec<String>,
-    scores: &Vec<f32>,
+    labels: &[String],
+    scores: &[f32],
     country: Option<&str>,
     admin1_region: Option<&str>,
     taxonomy_map: &HashMap<String, String>,
@@ -292,4 +284,119 @@ pub fn geofence_animal_classification(
             source: "classifier".to_string(),
         }))
     }
+}
+
+pub fn fix_geofence_base<P: AsRef<Path>>(
+    base_map: &HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>,
+    csv_path: P,
+)-> Result<HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>, Box<dyn Error>> {
+    let mut geofence = base_map.clone();
+
+    let file = File::open(csv_path)?;
+    let mut reader = Reader::from_reader(file);
+
+    for result in reader.deserialize() {
+        let fix: GeofenceFix = result?;
+        let label = fix.species.to_lowercase();
+        let label_parts: Vec<String> = label.split(";").map(|x| x.to_string()).collect();
+        if label_parts.len() != 5 {
+            return Err(GeofenceError::InvalidValue("Fixes should provide only species-level rules.".to_string()).into());
+        }
+        let rule = fix.rule.to_lowercase();
+        if !["allow", "block"].contains(&rule.as_str()) {
+            return Err(GeofenceError::InvalidValue("Rule types should be either `allow` or `block`.".to_string()).into());
+        }
+        let country = fix.country_code;
+        let state = fix.admin1_region_code.unwrap_or("".to_string());
+        if rule == "allow" {
+            if !geofence.contains_key(&label) {
+                continue;
+            }
+            if geofence.get(&label).and_then(|v| v.get("allow")).is_none() {
+                continue;
+            }
+            if state.is_empty() {
+                if let Some(map) = geofence
+                    .get_mut(&label)
+                    .and_then(|v| v.get_mut("allow")) {
+                    map.entry(country).or_insert_with(|| vec![]);
+                }
+
+            } else {
+                let allow_map = geofence
+                    .get_mut(&label)
+                    .and_then(|v| v.get_mut("allow"))
+                    .and_then(|v| v.get_mut(&country));
+                match allow_map {
+                    Some(rule) => {
+                        if rule.is_empty() {
+                            continue;
+                        } else {
+                            let set: HashSet<String> = rule.clone().into_iter().collect();
+                            let new_set: HashSet<String> = vec![state].into_iter().collect();
+                            *rule = set.union(&new_set).cloned().collect();
+                        }
+                    },
+                    None => {
+                        geofence
+                            .entry(label)
+                            .or_default()
+                            .entry("allow".to_string())
+                            .or_default()
+                            .entry(country.clone())
+                            .or_insert_with(|| vec![state]);
+                    }
+                }
+            }
+        } else {
+            if !geofence.contains_key(&label) || geofence.get(&label).and_then(|v| v.get("block")).is_none() {
+                geofence
+                    .entry(label.clone())
+                    .or_default()
+                    .entry("block".to_string())
+                    .or_default()
+                    .entry(country.clone())
+                    .or_insert_with(|| {
+                        if state.is_empty() {
+                            vec![]
+                        } else {
+                            vec![state.clone()]
+                        }
+                    });
+            }
+            if state.is_empty() {
+                if let Some(map) = geofence
+                    .get_mut(&label)
+                    .and_then(|v| v.get_mut("block")) {
+                    map.entry(country).or_insert_with(|| vec![]);
+                }
+            } else {
+                let allow_map = geofence
+                    .get_mut(&label)
+                    .and_then(|v| v.get_mut("block"))
+                    .and_then(|v| v.get_mut(&country));
+                match allow_map {
+                    Some(rule) => {
+                        if rule.is_empty() {
+                            continue;
+                        } else {
+                            let set: HashSet<String> = rule.clone().into_iter().collect();
+                            let new_set: HashSet<String> = vec![state].into_iter().collect();
+                            *rule = set.union(&new_set).cloned().collect();
+                        }
+                    },
+                    None => {
+                        geofence
+                            .entry(label)
+                            .or_default()
+                            .entry("block".to_string())
+                            .or_default()
+                            .entry(country.clone())
+                            .or_insert_with(|| vec![state]);
+                    }
+                }
+            }
+        }
+    }
+    Ok(geofence)
 }

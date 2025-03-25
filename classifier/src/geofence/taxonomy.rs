@@ -45,7 +45,7 @@ pub fn get_ancestor_at_level(
         ));
     }
 
-    let mut ancestor_parts: Vec<&str> = Vec::new();
+    let mut ancestor_parts: Vec<&str>;
     match taxonomy_level {
         "species" => {
             ancestor_parts = label_parts[1..6].to_vec();

@@ -6,7 +6,6 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::path::Path;
 use tensorflow::{Graph, SavedModelBundle, SessionOptions, SessionRunArgs, Tensor};
-use crate::image::ProceededImages;
 
 pub struct ClassifierConfig {
     pub model_path: String,
@@ -71,7 +70,7 @@ impl Classifier {
     }
 }
 
-pub fn softmax(scores: &Vec<f32>) -> Vec<f32> {
+pub fn softmax(scores: &[f32]) -> Vec<f32> {
     let exp_values: Vec<f32> = scores.iter().map(|&score| score.exp()).collect();
     let sum_exp_values: f32 = exp_values.iter().sum();
     exp_values
@@ -81,8 +80,8 @@ pub fn softmax(scores: &Vec<f32>) -> Vec<f32> {
 }
 
 pub fn map_labels_to_classifications(
-    labels: &Vec<String>,
-    classifications: &Vec<f32>,
+    labels: &[String],
+    classifications: &[f32],
 ) -> Vec<Classification> {
     labels
         .iter()
@@ -107,21 +106,21 @@ pub fn pick_top_n_from(
     sorted_classifications
 }
 
-pub fn to_chunks(outputs: &Vec<f32>, chunk_size: usize) -> Vec<Vec<f32>> {
+pub fn to_chunks(outputs: &[f32], chunk_size: usize) -> Vec<Vec<f32>> {
     outputs.chunks(chunk_size)
         .map(|chunk| chunk.to_vec())  // Convert slice to Vec<T>
         .collect()
 }
 
-pub fn transform(file_paths: &Vec<String>, outputs: &Vec<f32>, labels: &Vec<String>) -> HashMap<String, ClassificationBundle> {
+pub fn transform(file_paths: &[String], outputs: &[f32], labels: &[String]) -> HashMap<String, ClassificationBundle> {
     let chunks = to_chunks(outputs, labels.len());
     let mut bundle = HashMap::new();
     for (chunk, path) in chunks.iter().zip(file_paths.iter()) {
         let softmax_chunk = softmax(chunk);
-        let mapped_chunks = map_labels_to_classifications(&labels, &softmax_chunk);
+        let mapped_chunks = map_labels_to_classifications(labels, &softmax_chunk);
         let top5_chunks = pick_top_n_from(mapped_chunks, 5);
         let labels = top5_chunks.iter().map(|c| c.label.clone()).collect();
-        let scores = top5_chunks.iter().map(|c| c.score.clone()).collect();
+        let scores = top5_chunks.iter().map(|c| c.score).collect();
         bundle.insert(path.clone(), ClassificationBundle {
             file_path: path.clone(),
             labels,

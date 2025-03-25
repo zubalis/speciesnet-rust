@@ -1,0 +1,5 @@
+species,rule,country_code,admin1_region_code
+mammalia;carnivora;felidae;panthera;leo,block,THA,
+mammalia;carnivora;felidae;panthera;leo,block,TZA,
+mammalia;carnivora;felidae;panthera;leo,allow,USA,
+mammalia;carnivora;felidae;panthera;leo,block,USA,JFC
