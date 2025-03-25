@@ -1,4 +1,4 @@
-use std::{fs::read_dir, path::Path};
+use std::path::{Path, PathBuf};
 
 use log::debug;
 use rayon::prelude::*;
@@ -26,29 +26,10 @@ impl SpeciesNet {
 
     /// Performs the detection by MegaDetector Model from given file or folder. Returns a list of
     /// detections.
-    pub fn detect<P>(&self, file_or_folder: P) -> Result<Vec<Detection>, Error>
-    where
-        P: AsRef<Path>,
-    {
-        // TODO: File filtration for image only.
-        let file_paths = if file_or_folder.as_ref().is_dir() {
-            debug!("Gathering files inside folder");
-            read_dir(&file_or_folder)?
-                .map(|e| {
-                    let entry = e?;
-                    let path = entry.path();
-
-                    Ok(path)
-                })
-                .collect::<Result<Vec<_>, Error>>()
-        } else {
-            Ok(vec![file_or_folder.as_ref().to_path_buf()])
-        };
-
+    pub fn detect(&self, list_of_files: &[PathBuf]) -> Result<Vec<Detection>, Error> {
         debug!("Starting the rayon multithread for files.");
-        let file_paths = file_paths?;
 
-        let detections = file_paths
+        let detections = list_of_files
             .par_iter()
             .map(|fp| {
                 let preprocessed_image = preprocess(fp)?;
