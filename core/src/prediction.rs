@@ -46,4 +46,8 @@ impl Prediction {
             model_version: None,
         }
     }
+
+    pub fn detections(&self) -> &Option<Vec<Detection>> {
+        &self.detections
+    }
 }
