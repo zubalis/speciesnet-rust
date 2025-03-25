@@ -1,9 +1,13 @@
-use std::path::PathBuf;
+use std::{fs::File, io::BufWriter, path::PathBuf};
 
 use clap::{Args, CommandFactory, Parser, error::ErrorKind};
+use inputs::prepare_image_inputs;
 use log::debug;
+use speciesnet::SpeciesNet;
+use speciesnet_core::prediction::Predictions;
 
 mod file_extension;
+mod inputs;
 
 #[derive(Debug, Args)]
 #[group(required = true, multiple = false)]
@@ -108,10 +112,27 @@ fn main() -> anyhow::Result<()> {
     }
 
     // Parse the input files into list of files.
-    
+    let images = prepare_image_inputs(&args.input_type)?;
+    let speciesnet = SpeciesNet::new(&args.detector_model)?;
 
+    if args.run_type.detector_only {
+        let detector_results = speciesnet.detect(&images)?;
+        let predictions = Predictions::from(detector_results);
 
-    debug!("args is {:?}", args);
+        debug!(
+            "Saving the detected results to {}.",
+            args.predictions_json.display()
+        );
 
+        let writer = BufWriter::new(File::create(&args.predictions_json)?);
+        serde_json::to_writer(writer, &predictions)?;
+
+        debug!(
+            "Predictions file has been successfully saved to {}.",
+            args.predictions_json.display()
+        );
+    }
+
+    debug!("Program finished.");
     Ok(())
 }

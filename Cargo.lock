@@ -495,8 +495,6 @@ dependencies = [
  "image 0.25.5",
  "imageproc",
  "speciesnet",
- "speciesnet-core",
- "speciesnet-detector",
 ]
 
 [[package]]
@@ -1663,6 +1661,8 @@ name = "speciesnet-core"
 version = "0.1.0"
 dependencies = [
  "image 0.25.5",
+ "serde",
+ "serde_json",
  "tch",
  "thiserror 2.0.12",
 ]
