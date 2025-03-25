@@ -12,4 +12,6 @@ pub enum Error {
         "Category index out of range, expected passed category to be within (1..=3), received {0}"
     )]
     CategoryIndexOutOfRange(f64),
+    #[error("Failed to parse value {0} to Category.")]
+    CategoryParseError(String),
 }

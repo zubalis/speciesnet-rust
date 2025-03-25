@@ -3,10 +3,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use serde::Deserialize;
+
 use crate::{bounding_box::BoundingBox, category::Category};
 
 /// The detection produced from running the model.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Detection {
     file_path: PathBuf,
     category: Category,
