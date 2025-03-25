@@ -45,7 +45,7 @@ impl SpeciesNetDetector {
         let tensor = tensor.unsqueeze(0);
 
         debug!(
-            "Origina dimensions ({}, {})",
+            "Original dimensions ({}, {})",
             original_width, original_height
         );
         let predictions = self.model.forward_is(&[IValue::Tensor(tensor)])?;
@@ -78,12 +78,14 @@ impl SpeciesNetDetector {
                     let confidence: f64 = nms_result.f_i((result, 4))?.f_double_value(&[])?;
                     let category: i64 = nms_result.f_i((result, 5))?.f_int64_value(&[])? + 1;
 
-                    let bbox = BoundingBox::from_xyxy_tensor(&xyxy_tensor)?.scale_to(
-                        resized_width,
-                        resized_height,
-                        original_width,
-                        original_height,
-                    );
+                    let bbox = BoundingBox::from_xyxy_tensor(&xyxy_tensor)?
+                        .scale_to(
+                            resized_width,
+                            resized_height,
+                            original_width,
+                            original_height,
+                        )
+                        .normalize(original_width, original_height);
 
                     detections.push(Detection::new(
                         path.clone(),

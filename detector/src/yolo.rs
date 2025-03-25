@@ -109,7 +109,11 @@ pub fn xyxy_to_xywhn(
     let tensor_size = tensor.size2()?;
 
     if tensor_size.1 != 4 {
-        return Err(Error::TchError(TchError::Shape("Invalid tensor size at the 2nd dimension, expected 4. Run the `unsqueeze` function to get 2d tensor.".to_string())));
+        return Err(
+            Error::TchError(
+                TchError::Shape("Invalid tensor size at the 2nd dimension, expected 4. Run the `unsqueeze` function to get 2d tensor.".to_string())
+            )
+        );
     }
 
     let xywhn_tensor = Tensor::f_stack(

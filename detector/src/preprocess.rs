@@ -188,6 +188,8 @@ impl LetterboxOptions {
     }
 }
 
+/// Loads the image and runs the image through a preprocessor where the image gets resized and
+/// compensated for their missing strides.
 pub fn preprocess<P>(image_path: P) -> Result<PreprocessedImage, Error>
 where
     P: AsRef<Path>,
