@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use log::debug;
 use rayon::prelude::*;
-use speciesnet_core::Detection;
+use speciesnet_core::prediction::Prediction;
 use speciesnet_detector::{SpeciesNetDetector, preprocess::preprocess};
 
 use crate::error::Error;
@@ -26,7 +26,7 @@ impl SpeciesNet {
 
     /// Performs the detection by MegaDetector Model from given file or folder. Returns a list of
     /// detections.
-    pub fn detect(&self, list_of_files: &[PathBuf]) -> Result<Vec<Detection>, Error> {
+    pub fn detect(&self, list_of_files: &[PathBuf]) -> Result<Vec<Prediction>, Error> {
         debug!("Starting the rayon multithread for files.");
 
         let detections = list_of_files
@@ -37,9 +37,12 @@ impl SpeciesNet {
 
                 Ok(detections)
             })
-            .collect::<Result<Vec<Vec<_>>, Error>>()?;
+            .collect::<Result<Vec<Option<Prediction>>, Error>>()?;
 
-        Ok(detections.into_iter().flatten().collect::<Vec<Detection>>())
+        Ok(detections
+            .into_iter()
+            .flatten()
+            .collect::<Vec<Prediction>>())
     }
 
     /// Performs the classification by the cameratrap model.

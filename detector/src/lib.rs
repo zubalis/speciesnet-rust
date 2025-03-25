@@ -1,8 +1,8 @@
 use std::{path::Path, sync::Arc};
 
-use log::{debug, info};
+use log::debug;
 use preprocess::PreprocessedImage;
-use speciesnet_core::{BoundingBox, Detection};
+use speciesnet_core::{BoundingBox, Detection, prediction::Prediction};
 use tch::{CModule, Device, IValue, IndexOp};
 use yolo::non_max_suppression;
 
@@ -34,7 +34,10 @@ impl SpeciesNetDetector {
         })
     }
 
-    pub fn predict(&self, preprocessed_image: PreprocessedImage) -> Result<Vec<Detection>, Error> {
+    pub fn predict(
+        &self,
+        preprocessed_image: PreprocessedImage,
+    ) -> Result<Option<Prediction>, Error> {
         // Converting the image to tensor.
         // We supposed to be able to just use the [`TryFrom`] implementation of rust tensor's image
         // feature but for some reason it does not work.
@@ -55,19 +58,19 @@ impl SpeciesNetDetector {
             // we only care about the first one.
             tch::IValue::Tuple(ivalues) => {
                 if ivalues.is_empty() {
-                    return Ok(vec![]);
+                    return Ok(None);
                 }
 
                 // A check has been done above that it does have some amount of value.
                 let first_result = ivalues.first().unwrap();
 
                 let IValue::Tensor(predictions) = first_result else {
-                    return Ok(vec![]);
+                    return Ok(None);
                 };
 
                 let nmsed_results = non_max_suppression(predictions, Some(0.01))?;
                 let Some(nms_result) = nmsed_results.first() else {
-                    return Ok(vec![]);
+                    return Ok(None);
                 };
 
                 let (detections_count, _detection_size) = nms_result.size2()?;
@@ -87,15 +90,10 @@ impl SpeciesNetDetector {
                         )
                         .normalize(original_width, original_height);
 
-                    detections.push(Detection::new(
-                        path.clone(),
-                        category.try_into()?,
-                        confidence,
-                        bbox,
-                    ));
+                    detections.push(Detection::new(category.try_into()?, confidence, bbox));
                 }
 
-                Ok(detections)
+                Ok(Some(Prediction::from_detections(path, detections)))
             }
             _ => {
                 debug!(
@@ -103,7 +101,7 @@ impl SpeciesNetDetector {
                     path.display()
                 );
 
-                Ok(vec![])
+                Ok(None)
             }
         }
     }
