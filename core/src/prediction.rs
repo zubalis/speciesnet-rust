@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::Detection;
 
@@ -11,12 +11,12 @@ pub struct Predictions {
 }
 
 /// The possible output of each predictions found during the run.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Prediction {
     file_path: PathBuf,
     country: Option<String>,
     admin1_region: Option<String>,
-    detections: Vec<Detection>,
+    detections: Option<Vec<Detection>>,
     prediction: Option<String>,
     prediction_score: Option<f64>,
     model_version: Option<String>,

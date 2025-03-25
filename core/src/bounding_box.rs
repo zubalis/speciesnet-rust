@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use serde::{Deserialize, de};
+use serde::{Deserialize, Serialize, de, ser::SerializeSeq};
 use tch::{IndexOp, Tensor};
 
 use crate::error::Error;
@@ -36,7 +36,7 @@ impl<'de> Deserialize<'de> for BoundingBox {
 
         // The length of the given array must be 4 as the bounding box is saved in the json file as
         // `(min_x, min_y, width, height)`.
-        if variant.len() != 4 {
+        if variant.len() != BoundingBox::EXPECTED_TENSOR_SIZE as usize {
             return Err(de::Error::invalid_length(
                 variant.len(),
                 &"an array with length of 4.",
@@ -56,6 +56,23 @@ impl<'de> Deserialize<'de> for BoundingBox {
             *width as f64,
             *height as f64,
         ))
+    }
+}
+
+impl Serialize for BoundingBox {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut seq = serializer.serialize_seq(Some(BoundingBox::EXPECTED_TENSOR_SIZE as usize))?;
+        let (min_x, min_y, width, height) = self.as_megadetector_bounding_box();
+
+        seq.serialize_element(&min_x)?;
+        seq.serialize_element(&min_y)?;
+        seq.serialize_element(&width)?;
+        seq.serialize_element(&height)?;
+
+        seq.end()
     }
 }
 
@@ -150,13 +167,13 @@ impl BoundingBox {
 
     /// Returns the values of the coordinates in a form on `(min_x, min_y, width, height)` tuple
     /// format.
-    pub fn as_megadetector_bounding_box(&self) -> [f64; 4] {
+    pub fn as_megadetector_bounding_box(&self) -> (f64, f64, f64, f64) {
         let min_x = self.x1;
         let min_y = self.y1;
         let width = self.x2 - self.x1;
         let height = self.y2 - self.y1;
 
-        [min_x, min_y, width, height]
+        (min_x, min_y, width, height)
     }
 
     /// Normalize the values to be under `0..1` by the given width and height.

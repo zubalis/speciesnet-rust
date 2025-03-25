@@ -1,7 +1,7 @@
 use std::{fmt::Display, str::FromStr};
 
 use serde::{
-    Deserialize,
+    Deserialize, Serialize,
     de::{self, Visitor},
 };
 
@@ -54,6 +54,16 @@ impl<'de> Deserialize<'de> for Category {
         }
 
         deserializer.deserialize_identifier(CategoryVisitor)
+    }
+}
+
+impl Serialize for Category {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let serialized_str = serializer.serialize_str(&self.to_string())?;
+        Ok(serialized_str)
     }
 }
 
