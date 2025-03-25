@@ -1,11 +1,11 @@
 use std::fmt::Display;
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, ser::SerializeStruct};
 
 use crate::{bounding_box::BoundingBox, category::Category};
 
 /// The detection produced from running the model.
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Detection {
     category: Category,
     confidence: f64,
@@ -19,6 +19,22 @@ impl Display for Detection {
             "Category: {}, Confidence: {}, Bounding box: {}",
             self.category, self.confidence, self.bounding_box
         )
+    }
+}
+
+impl Serialize for Detection {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut s = serializer.serialize_struct("Detection", 4)?;
+
+        s.serialize_field("category", &self.category.index())?;
+        s.serialize_field("label", &self.category)?;
+        s.serialize_field("confidence", &self.confidence)?;
+        s.serialize_field("bbox", &self.bounding_box)?;
+
+        s.end()
     }
 }
 

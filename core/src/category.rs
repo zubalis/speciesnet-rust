@@ -119,3 +119,13 @@ impl Display for Category {
         )
     }
 }
+
+impl Category {
+    pub fn index(&self) -> String {
+        match self {
+            Self::Animal => "1".to_string(),
+            Self::Human => "2".to_string(),
+            Self::Vehicle => "3".to_string(),
+        }
+    }
+}
