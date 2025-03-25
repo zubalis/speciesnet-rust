@@ -25,6 +25,7 @@ impl Predictions {
 /// The possible output of each predictions found during the run.
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Prediction {
+    #[serde(rename = "filepath")]
     file_path: PathBuf,
     country: Option<String>,
     admin1_region: Option<String>,
