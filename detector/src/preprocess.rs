@@ -98,7 +98,7 @@ impl Default for LetterboxOptionsBuilder {
             shape: Shape::Square(640),
             scale_up: true,
             auto: true,
-            stride: 32,
+            stride: 64,
             scale_fill: false,
             color: Rgb([114, 114, 114]),
         }
