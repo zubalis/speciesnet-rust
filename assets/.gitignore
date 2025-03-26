@@ -1,2 +1,3 @@
 libtorch
 model/*.pt
+model/variables
