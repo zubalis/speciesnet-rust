@@ -91,7 +91,7 @@ pub fn get_ancestor_at_level(
             ancestor_parts = label_parts[1..2].to_vec();
             let mut blank_vec = vec!["", "", "", ""];
             ancestor_parts.append(&mut blank_vec);
-            match ancestor_parts.get(0) {
+            match ancestor_parts.first() {
                 Some(ancestor) => {
                     if ancestor.is_empty() {
                         return Ok(None);

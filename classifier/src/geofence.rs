@@ -307,15 +307,13 @@ pub fn fix_geofence_base<P: AsRef<Path>>(
         if label_parts.len() != 5 {
             return Err(Error::GeofenceInvalidValue(
                 "Fixes should provide only species-level rules.".to_string(),
-            )
-            .into());
+            ));
         }
         let rule = fix.rule.to_lowercase();
         if !["allow", "block"].contains(&rule.as_str()) {
             return Err(Error::GeofenceInvalidValue(
                 "Rule types should be either `allow` or `block`.".to_string(),
-            )
-            .into());
+            ));
         }
         let country = fix.country_code;
         let state = fix.admin1_region_code.unwrap_or("".to_string());

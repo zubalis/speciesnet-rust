@@ -17,7 +17,7 @@ pub struct SuccessImages {
 }
 
 #[derive(Debug)]
-struct FailedImage {
+pub struct FailedImage {
     path: PathBuf,
     error_message: String,
 }

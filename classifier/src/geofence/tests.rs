@@ -1,8 +1,10 @@
-use std::cell::LazyCell;
+#![allow(clippy::bool_assert_comparison)]
+
 use std::collections::HashMap;
 use std::env::current_dir;
+use std::sync::LazyLock;
 
-use serde_json::{from_value, json};
+use serde_json::json;
 
 use crate::{constants::classification, error::Error};
 
@@ -57,8 +59,8 @@ const SAND_CAT_FC: &str = "mammalia;carnivora;felidae;felis;margarita";
 const UNKNOWN: &str = "unknown;unknown;abc;def;;;";
 const UNKNOWN_FC: &str = "unknown;abc;def;;";
 
-const GEOFENCE_MAP: LazyCell<HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>> =
-    LazyCell::new(|| {
+static GEOFENCE_MAP: LazyLock<HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>> =
+    LazyLock::new(|| {
         let json = json!(
             {
                 LION_FC: {
@@ -103,12 +105,11 @@ const GEOFENCE_MAP: LazyCell<HashMap<String, HashMap<String, HashMap<String, Vec
                 }
             }
         );
-        let unwrap_json: HashMap<String, HashMap<String, HashMap<String, Vec<String>>>> =
-            from_value(json).unwrap();
-        unwrap_json
+
+        serde_json::from_value(json).unwrap()
     });
 
-const TAXONOMY_MAP: LazyCell<HashMap<String, String>> = LazyCell::new(|| {
+static TAXONOMY_MAP: LazyLock<HashMap<String, String>> = LazyLock::new(|| {
     let json = json!(
         {
             BLANK_FC: BLANK,
@@ -127,8 +128,8 @@ const TAXONOMY_MAP: LazyCell<HashMap<String, String>> = LazyCell::new(|| {
             URSIDAE_FAMILY_FC: URSIDAE_FAMILY,
         }
     );
-    let taxonomy_json = from_value(json).unwrap();
-    taxonomy_json
+
+    serde_json::from_value(json).unwrap()
 });
 
 #[test]
@@ -209,7 +210,12 @@ fn test_should_geofence_fn() -> Result<(), Error> {
         let invalid_label_parts = invalid_label.split(";").collect::<Vec<_>>();
         assert!(matches!(
             should_geofence(invalid_label, Some("AUS"), None, &GEOFENCE_MAP, true),
-            Err(Error::InvalidLabel( label_parts, label)) if label_parts == invalid_label_parts.len().to_string() && label == invalid_label.to_string()
+            Err(
+                Error::InvalidLabel(
+                    label_parts,
+                    label
+                )
+            ) if label_parts == invalid_label_parts.len().to_string() && label == *invalid_label
         ));
     }
 
@@ -568,6 +574,7 @@ fn test_geofence_animal_classification_fn() -> Result<(), Error> {
             source: "classifier+geofence+rollup_failed".to_string()
         })
     );
+
     Ok(())
 }
 

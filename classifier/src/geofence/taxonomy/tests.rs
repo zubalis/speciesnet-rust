@@ -1,7 +1,7 @@
-use std::cell::LazyCell;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
-use serde_json::{from_value, json};
+use serde_json::json;
 
 use crate::error::Error;
 
@@ -51,7 +51,7 @@ const SAND_CAT: &str =
     "e588253d-d61d-4149-a96c-8c245927a80f;mammalia;carnivora;felidae;felis;margarita;sand cat";
 const SAND_CAT_FC: &str = "mammalia;carnivora;felidae;felis;margarita";
 
-const TAXONOMY_MAP: LazyCell<HashMap<String, String>> = LazyCell::new(|| {
+static TAXONOMY_MAP: LazyLock<HashMap<String, String>> = LazyLock::new(|| {
     let json = json!(
         {
             BLANK_FC: BLANK,
@@ -70,8 +70,8 @@ const TAXONOMY_MAP: LazyCell<HashMap<String, String>> = LazyCell::new(|| {
             URSIDAE_FAMILY_FC: URSIDAE_FAMILY,
         }
     );
-    let taxonomy_json = from_value(json).unwrap();
-    taxonomy_json
+
+    serde_json::from_value(json).unwrap()
 });
 
 #[test]
@@ -98,7 +98,7 @@ fn test_get_full_class_string_fn() -> Result<(), Error> {
             get_full_class_string(invalid_label),
             Err(Error::InvalidLabel(
                 parts_len, label
-            )) if parts_len == invalid_label_parts.len().to_string() && label == invalid_label.to_string()
+            )) if parts_len == invalid_label_parts.len().to_string() && label == *invalid_label
         ));
     }
 
@@ -112,7 +112,7 @@ fn test_get_full_class_string_fn() -> Result<(), Error> {
             result,
             Err(Error::InvalidLabel(parts_len, label))
             if parts_len == invalid_label_parts.len().to_string()
-                && label == invalid_label.to_string()
+                && label == *invalid_label
         ));
     }
 
@@ -399,7 +399,7 @@ fn test_get_ancestor_at_level_fn() -> Result<(), Error> {
 
         assert!(matches!(
             result,
-            Err(Error::InvalidTaxonomyLevel(level)) if level == invalid_taxonomy_level.to_string()
+            Err(Error::InvalidTaxonomyLevel(level)) if level == *invalid_taxonomy_level
         ));
     }
 
