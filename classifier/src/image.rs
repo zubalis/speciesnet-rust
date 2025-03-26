@@ -1,4 +1,5 @@
 use std::error::Error;
+use std::path::PathBuf;
 use tensorflow::{Tensor};
 use image::{io::Reader};
 
@@ -10,19 +11,19 @@ pub struct ProceededImages {
 
 #[derive(Debug)]
 pub struct SuccessImages {
-    pub paths: Vec<String>,
+    pub paths: Vec<PathBuf>,
     pub image_tensor: Tensor<f32>,
 }
 
 #[derive(Debug)]
 struct FailedImage {
-    path: String,
+    path: PathBuf,
     error_message: String,
 }
 
-pub fn load_and_preprocess_images(image_paths: Vec<String>) -> Result<ProceededImages, Box<dyn Error>> {
+pub fn load_and_preprocess_images(image_paths: &[PathBuf]) -> Result<ProceededImages, Box<dyn Error>> {
     let mut success_images: Vec<Vec<f32>> = Vec::new();
-    let mut success_images_paths: Vec<String> = Vec::new();
+    let mut success_images_paths: Vec<PathBuf> = Vec::new();
     let mut failed_images: Vec<FailedImage> = Vec::new();
 
     for image_path in image_paths.iter() {
@@ -37,7 +38,7 @@ pub fn load_and_preprocess_images(image_paths: Vec<String>) -> Result<ProceededI
                         .collect();
 
                     success_images.push(pixels);
-                    success_images_paths.push(image_path.to_string());
+                    success_images_paths.push(image_path.clone());
                 }
                 Err(e) => failed_images.push(FailedImage {
                     path: image_path.clone(),

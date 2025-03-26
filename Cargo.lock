@@ -1623,6 +1623,7 @@ dependencies = [
  "rayon",
  "serde",
  "serde_json",
+ "speciesnet-classifier",
  "speciesnet-core",
  "speciesnet-detector",
  "thiserror 2.0.12",

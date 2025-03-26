@@ -4,24 +4,28 @@ use log::debug;
 use rayon::prelude::*;
 use speciesnet_core::prediction::Prediction;
 use speciesnet_detector::{SpeciesNetDetector, preprocess::preprocess};
+use speciesnet_classifier::{SpeciesNetClassifier};
 
 use crate::error::Error;
 
 #[derive(Debug, Clone)]
 pub struct SpeciesNet {
     detector: SpeciesNetDetector,
+    classifier: SpeciesNetClassifier
 }
 
 impl SpeciesNet {
     /// Initialize the detector and the classifier by loading them into memory.
-    pub fn new<P>(detector_model_path: P) -> Result<Self, Error>
+    pub fn new<P>(detector_model_path: P, classifier_model_dir_path: P) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
         let detector = SpeciesNetDetector::new(detector_model_path)?;
         debug!("Detector initialized.");
+        let classifier = SpeciesNetClassifier::new(classifier_model_dir_path)?;
+        debug!("Classifier initialized.");
 
-        Ok(Self { detector })
+        Ok(Self { detector, classifier })
     }
 
     /// Performs the detection by MegaDetector Model from given file or folder. Returns a list of

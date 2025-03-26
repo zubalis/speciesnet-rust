@@ -3,7 +3,8 @@ use std::env::current_dir;
 use std::error::Error;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use speciesnet_classifier::classifier::{transform, Classifier, ClassifierConfig};
+use speciesnet_classifier::classifier::{transform};
+use speciesnet_classifier::{SpeciesNetClassifier};
 use speciesnet_classifier::geofence::geofence_animal_classification;
 use speciesnet_classifier::geofence::taxonomy::get_full_class_string;
 use speciesnet_classifier::image::load_and_preprocess_images;
@@ -11,17 +12,12 @@ use speciesnet_classifier::image::load_and_preprocess_images;
 #[test]
 fn test_entire_process() -> Result<(), Box<dyn Error>> {
     /// Load model
-    let model_path = current_dir()?.join("..").join("assets").join("model").canonicalize()?.to_str().unwrap().to_string();
-    let config = ClassifierConfig {
-        model_path,
-        input_layer: "serving_default_rescaling_input".to_string(),
-        output_layer: "StatefulPartitionedCall".to_string(),
-    };
-    let classifier = Classifier::new(config)?;
+    let model_dir_path = current_dir()?.join("..").join("assets").join("model");
+    let classifier = SpeciesNetClassifier::new(model_dir_path)?;
 
     /// Load inputs and preprocess them
-    let img_path = current_dir()?.join("..").join("assets").join("images").join("african_elephants.jpg").canonicalize()?.to_str().unwrap().to_string();
-    let inputs = load_and_preprocess_images(vec![img_path])?;
+    let img_path = current_dir()?.join("..").join("assets").join("images").join("african_elephants.jpg");
+    let inputs = load_and_preprocess_images(&[img_path])?;
 
     /// Run classify inputs
     let outputs = classifier.classify(&inputs.success_images.image_tensor);

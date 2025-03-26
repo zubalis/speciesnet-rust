@@ -3,25 +3,11 @@ mod tests;
 
 use std::cmp::Ordering::Equal;
 use std::collections::HashMap;
-use std::error::Error;
-use std::path::Path;
-use tensorflow::{Graph, SavedModelBundle, SessionOptions, SessionRunArgs, Tensor};
-
-pub struct ClassifierConfig {
-    pub model_path: String,
-    pub input_layer: String,
-    pub output_layer: String,
-}
-pub struct Classifier {
-    bundle: SavedModelBundle,
-    graph: Graph,
-    input_layer: String,
-    output_layer: String,
-}
+use std::path::PathBuf;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ClassificationBundle {
-    pub file_path: String,
+    pub file_path: PathBuf,
     pub labels: Vec<String>,
     pub scores: Vec<f32>,
 }
@@ -29,45 +15,6 @@ pub struct ClassificationBundle {
 pub struct Classification {
     label: String,
     score: f32,
-}
-
-impl Classifier {
-    /// Create classifier from given config
-    pub fn new(config: ClassifierConfig) -> Result<Self, Box<dyn Error>> {
-        let model_path = Path::new(&config.model_path);
-        let mut graph = Graph::new();
-        let bundle = SavedModelBundle::load(
-            &SessionOptions::new(),
-            &["serve"],
-            &mut graph,
-            model_path,
-        )?;
-        Ok(Classifier {
-            bundle,
-            graph,
-            input_layer: config.input_layer,
-            output_layer: config.output_layer,
-        })
-    }
-
-    /// run a classification from given input
-    pub fn classify(&self, input_tensor: &Tensor<f32>) -> Result<Vec<f32>, Box<dyn Error>> {
-        let session = &self.bundle.session;
-        let mut args = SessionRunArgs::new();
-
-        let input_op = self.graph.operation_by_name_required(&self.input_layer)?;
-        let output_op = self.graph.operation_by_name_required(&self.output_layer)?;
-
-        args.add_feed(&input_op, 0, &input_tensor);
-
-        let output_token = args.request_fetch(&output_op, 0);
-        session.run(&mut args)?;
-
-        let output_tensor: Tensor<f32> = args.fetch(output_token)?;
-        let o_vec = output_tensor.to_vec();
-
-        Ok(o_vec)
-    }
 }
 
 pub fn softmax(scores: &[f32]) -> Vec<f32> {
@@ -112,7 +59,7 @@ pub fn to_chunks(outputs: &[f32], chunk_size: usize) -> Vec<Vec<f32>> {
         .collect()
 }
 
-pub fn transform(file_paths: &[String], outputs: &[f32], labels: &[String]) -> HashMap<String, ClassificationBundle> {
+pub fn transform(file_paths: &[PathBuf], outputs: &[f32], labels: &[String]) -> HashMap<PathBuf, ClassificationBundle> {
     let chunks = to_chunks(outputs, labels.len());
     let mut bundle = HashMap::new();
     for (chunk, path) in chunks.iter().zip(file_paths.iter()) {

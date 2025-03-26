@@ -1,4 +1,5 @@
 use std::cell::LazyCell;
+use std::path::PathBuf;
 use crate::classifier::{map_labels_to_classifications, pick_top_n_from, softmax, to_chunks, transform, Classification};
 
 const LABELS: LazyCell<Vec<String>> = LazyCell::new(|| {
@@ -101,9 +102,9 @@ fn test_to_chunk_fn() {
 #[test]
 fn test_transform_fn() {
     let file_paths = vec![
-        "path/to/file/1.png".to_string(),
-        "path/to/file/2.png".to_string(),
-        "path/to/file/3.png".to_string(),
+        PathBuf::from("path/to/file/1.png"),
+        PathBuf::from("path/to/file/2.png"),
+        PathBuf::from("path/to/file/3.png"),
     ];
     let scores: Vec<f32> = vec![
         4.0, 2.0, 1.0, 0.5, -0.5, -1.2, 3.0, -1.1,
