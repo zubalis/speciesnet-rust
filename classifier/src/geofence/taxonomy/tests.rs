@@ -1,8 +1,11 @@
-use super::{TaxonomyError, get_ancestor_at_level, get_full_class_string};
-use serde_json::{from_value, json};
 use std::cell::LazyCell;
 use std::collections::HashMap;
-use std::error::Error;
+
+use serde_json::{from_value, json};
+
+use crate::error::Error;
+
+use super::{get_ancestor_at_level, get_full_class_string};
 
 const BLANK: &str = "f1856211-cfb7-4a5b-9158-c0f72fd09ee6;;;;;;blank";
 const BLANK_FC: &str = ";;;;";
@@ -72,7 +75,7 @@ const TAXONOMY_MAP: LazyCell<HashMap<String, String>> = LazyCell::new(|| {
 });
 
 #[test]
-fn test_get_full_class_string_fn() -> Result<(), Box<dyn Error>> {
+fn test_get_full_class_string_fn() -> Result<(), Error> {
     // Test BLANK/HUMAN/VEHICLE.
     assert_eq!(get_full_class_string(BLANK)?, BLANK_FC);
     assert_eq!(get_full_class_string(HUMAN)?, HUMAN_FC);
@@ -90,30 +93,34 @@ fn test_get_full_class_string_fn() -> Result<(), Box<dyn Error>> {
     {
         let invalid_label = "uuid;class;order;family;genus;species";
         let invalid_label_parts = invalid_label.split(";").collect::<Vec<_>>();
-        assert_eq!(
+
+        assert!(matches!(
             get_full_class_string(invalid_label),
-            Err(TaxonomyError::InvalidLabel(
-                invalid_label_parts.len().to_string(),
-                invalid_label.to_string()
-            ))
-        );
+            Err(Error::InvalidLabel(
+                parts_len, label
+            )) if parts_len == invalid_label_parts.len().to_string() && label == invalid_label.to_string()
+        ));
     }
+
     {
         let invalid_label = "uuid;class;order;family;genus;species;common_name;extra";
         let invalid_label_parts = invalid_label.split(";").collect::<Vec<_>>();
-        assert_eq!(
-            get_full_class_string(invalid_label),
-            Err(TaxonomyError::InvalidLabel(
-                invalid_label_parts.len().to_string(),
-                invalid_label.to_string()
-            ))
-        );
+
+        let result = get_full_class_string(invalid_label);
+
+        assert!(matches!(
+            result,
+            Err(Error::InvalidLabel(parts_len, label))
+            if parts_len == invalid_label_parts.len().to_string()
+                && label == invalid_label.to_string()
+        ));
     }
+
     Ok(())
 }
 
 #[test]
-fn test_get_ancestor_at_level_fn() -> Result<(), Box<dyn Error>> {
+fn test_get_ancestor_at_level_fn() -> Result<(), Error> {
     // Test all ancestors of LION
     assert_eq!(
         get_ancestor_at_level(LION, "species", &TAXONOMY_MAP)?,
@@ -359,35 +366,42 @@ fn test_get_ancestor_at_level_fn() -> Result<(), Box<dyn Error>> {
     {
         let invalid_label = "uuid;class;order;family;genus;species";
         let invalid_label_parts = invalid_label.split(";").collect::<Vec<_>>();
-        assert_eq!(
-            get_ancestor_at_level(invalid_label, "kingdom", &TAXONOMY_MAP),
-            Err(TaxonomyError::InvalidLabel(
-                invalid_label_parts.len().to_string(),
-                invalid_label.to_string()
-            ))
-        );
+
+        let result = get_ancestor_at_level(invalid_label, "kingdom", &TAXONOMY_MAP);
+
+        assert!(matches!(
+            result,
+            Err(Error::InvalidLabel(len, label))
+            if len == invalid_label_parts.len().to_string() &&
+                label == invalid_label
+        ));
     }
+
     {
         let invalid_label = "uuid;class;order;family;genus;species;common_name;extra";
         let invalid_label_parts = invalid_label.split(";").collect::<Vec<_>>();
-        assert_eq!(
-            get_ancestor_at_level(invalid_label, "kingdom", &TAXONOMY_MAP),
-            Err(TaxonomyError::InvalidLabel(
-                invalid_label_parts.len().to_string(),
-                invalid_label.to_string()
-            ))
-        );
+
+        let result = get_ancestor_at_level(invalid_label, "kingdom", &TAXONOMY_MAP);
+
+        assert!(matches!(
+            result,
+            Err(Error::InvalidLabel(len, label))
+            if len == invalid_label_parts.len().to_string() &&
+                label == invalid_label
+        ));
     }
 
     // Test invalid taxonomy level name
     {
         let invalid_taxonomy_level = "incorrect_name";
-        assert_eq!(
-            get_ancestor_at_level(LION, invalid_taxonomy_level, &TAXONOMY_MAP),
-            Err(TaxonomyError::InvalidTaxonomyLevel(
-                invalid_taxonomy_level.to_string()
-            ))
-        );
+
+        let result = get_ancestor_at_level(LION, invalid_taxonomy_level, &TAXONOMY_MAP);
+
+        assert!(matches!(
+            result,
+            Err(Error::InvalidTaxonomyLevel(level)) if level == invalid_taxonomy_level.to_string()
+        ));
     }
+
     Ok(())
 }

@@ -3,10 +3,11 @@ use std::path::Path;
 use std::sync::Arc;
 use tensorflow::{Graph, SavedModelBundle, SessionOptions, SessionRunArgs, Tensor};
 
-pub mod geofence;
 pub mod classifier;
-pub mod image;
 pub mod constants;
+pub mod error;
+pub mod geofence;
+pub mod image;
 
 #[derive(Debug, Clone)]
 pub struct SpeciesNetClassifier {
@@ -38,8 +39,12 @@ impl SpeciesNetClassifier {
         let session = &self.bundle.session;
         let mut args = SessionRunArgs::new();
 
-        let input_op = self.graph.operation_by_name_required("serving_default_rescaling_input")?;
-        let output_op = self.graph.operation_by_name_required("StatefulPartitionedCall")?;
+        let input_op = self
+            .graph
+            .operation_by_name_required("serving_default_rescaling_input")?;
+        let output_op = self
+            .graph
+            .operation_by_name_required("StatefulPartitionedCall")?;
 
         args.add_feed(&input_op, 0, input_tensor);
 

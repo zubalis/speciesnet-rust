@@ -1,24 +1,19 @@
 #![allow(clippy::redundant_closure)]
 
+use std::collections::{HashMap, HashSet};
+use std::fs::File;
+use std::path::Path;
+
+use csv::Reader;
+use serde::Deserialize;
+
+use crate::constants::classification;
+use crate::error::Error;
+use crate::geofence::taxonomy::get_ancestor_at_level;
+
 pub mod taxonomy;
 #[cfg(test)]
 mod tests;
-
-use crate::constants::classification;
-use crate::geofence::taxonomy::{TaxonomyError, get_ancestor_at_level};
-use std::collections::{HashMap, HashSet};
-use std::error::Error;
-use std::fs::File;
-use std::path::Path;
-use csv::Reader;
-use serde::Deserialize;
-use thiserror::Error;
-
-#[derive(Debug, Error, PartialEq)]
-pub enum GeofenceError {
-    #[error("{0}")]
-    InvalidValue(String),
-}
 
 #[derive(Debug, PartialEq)]
 pub struct GeofenceResult {
@@ -56,7 +51,7 @@ fn should_geofence(
     admin1_region: Option<&str>,
     geofence_map: &HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>,
     enable_geofence: bool,
-) -> Result<bool, TaxonomyError> {
+) -> Result<bool, Error> {
     // Do not geofence if not enabled
     if !enable_geofence {
         return Ok(false);
@@ -156,10 +151,16 @@ fn roll_up_labels_to_first_matching_level(
     taxonomy_map: &HashMap<String, String>,
     geofence_map: &HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>,
     enable_geofence: bool,
-) -> Result<Option<(String, f32, String)>, Box<dyn Error>> {
+) -> Result<Option<(String, f32, String)>, Error> {
     // Find if there is invalid taxonomy level
-    let expected_target_taxonomy_levels =
-        vec!["species".to_string(), "genus".to_string(), "family".to_string(), "order".to_string(), "class".to_string(), "kingdom".to_string()];
+    let expected_target_taxonomy_levels = vec![
+        "species".to_string(),
+        "genus".to_string(),
+        "family".to_string(),
+        "order".to_string(),
+        "class".to_string(),
+        "kingdom".to_string(),
+    ];
     let set_expected_target_taxonomy_levels: HashSet<_> =
         expected_target_taxonomy_levels.iter().collect();
     let set_target_taxonomy_levels: HashSet<_> = target_taxonomy_levels.iter().collect();
@@ -167,11 +168,10 @@ fn roll_up_labels_to_first_matching_level(
         .difference(&set_expected_target_taxonomy_levels)
         .collect();
     if !has_unknown_taxonomy.is_empty() {
-        return Err(GeofenceError::InvalidValue(format!(
+        return Err(Error::GeofenceInvalidValue(format!(
             "Unexpected target taxonomy level(s): {:?}. Expected only from the set: {:?}",
             has_unknown_taxonomy, expected_target_taxonomy_levels
-        ))
-        .into());
+        )));
     };
 
     for taxonomy_level in target_taxonomy_levels {
@@ -245,7 +245,7 @@ pub fn geofence_animal_classification(
     taxonomy_map: &HashMap<String, String>,
     geofence_map: &HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>,
     enable_geofence: bool,
-) -> Result<Option<GeofenceResult>, Box<dyn Error>> {
+) -> Result<Option<GeofenceResult>, Error> {
     if should_geofence(
         &labels[0],
         country,
@@ -258,7 +258,12 @@ pub fn geofence_animal_classification(
             scores,
             country,
             admin1_region,
-            &vec!["family".to_string(), "order".to_string(), "class".to_string(), "kingdom".to_string()],
+            &vec![
+                "family".to_string(),
+                "order".to_string(),
+                "class".to_string(),
+                "kingdom".to_string(),
+            ],
             &(scores[0] - 1e-10),
             taxonomy_map,
             geofence_map,
@@ -268,7 +273,7 @@ pub fn geofence_animal_classification(
             Ok(Some(GeofenceResult {
                 label: r_label,
                 score: r_score,
-                source: format!("classifier+geofence+{}", &r_source[11..])
+                source: format!("classifier+geofence+{}", &r_source[11..]),
             }))
         } else {
             Ok(Some(GeofenceResult {
@@ -289,7 +294,7 @@ pub fn geofence_animal_classification(
 pub fn fix_geofence_base<P: AsRef<Path>>(
     base_map: &HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>,
     csv_path: P,
-)-> Result<HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>, Box<dyn Error>> {
+) -> Result<HashMap<String, HashMap<String, HashMap<String, Vec<String>>>>, Error> {
     let mut geofence = base_map.clone();
 
     let file = File::open(csv_path)?;
@@ -300,11 +305,17 @@ pub fn fix_geofence_base<P: AsRef<Path>>(
         let label = fix.species.to_lowercase();
         let label_parts: Vec<String> = label.split(";").map(|x| x.to_string()).collect();
         if label_parts.len() != 5 {
-            return Err(GeofenceError::InvalidValue("Fixes should provide only species-level rules.".to_string()).into());
+            return Err(Error::GeofenceInvalidValue(
+                "Fixes should provide only species-level rules.".to_string(),
+            )
+            .into());
         }
         let rule = fix.rule.to_lowercase();
         if !["allow", "block"].contains(&rule.as_str()) {
-            return Err(GeofenceError::InvalidValue("Rule types should be either `allow` or `block`.".to_string()).into());
+            return Err(Error::GeofenceInvalidValue(
+                "Rule types should be either `allow` or `block`.".to_string(),
+            )
+            .into());
         }
         let country = fix.country_code;
         let state = fix.admin1_region_code.unwrap_or("".to_string());
@@ -316,12 +327,9 @@ pub fn fix_geofence_base<P: AsRef<Path>>(
                 continue;
             }
             if state.is_empty() {
-                if let Some(map) = geofence
-                    .get_mut(&label)
-                    .and_then(|v| v.get_mut("allow")) {
+                if let Some(map) = geofence.get_mut(&label).and_then(|v| v.get_mut("allow")) {
                     map.entry(country).or_insert_with(|| vec![]);
                 }
-
             } else {
                 let allow_map = geofence
                     .get_mut(&label)
@@ -336,7 +344,7 @@ pub fn fix_geofence_base<P: AsRef<Path>>(
                             let new_set: HashSet<String> = vec![state].into_iter().collect();
                             *rule = set.union(&new_set).cloned().collect();
                         }
-                    },
+                    }
                     None => {
                         geofence
                             .entry(label)
@@ -349,7 +357,9 @@ pub fn fix_geofence_base<P: AsRef<Path>>(
                 }
             }
         } else {
-            if !geofence.contains_key(&label) || geofence.get(&label).and_then(|v| v.get("block")).is_none() {
+            if !geofence.contains_key(&label)
+                || geofence.get(&label).and_then(|v| v.get("block")).is_none()
+            {
                 geofence
                     .entry(label.clone())
                     .or_default()
@@ -365,9 +375,7 @@ pub fn fix_geofence_base<P: AsRef<Path>>(
                     });
             }
             if state.is_empty() {
-                if let Some(map) = geofence
-                    .get_mut(&label)
-                    .and_then(|v| v.get_mut("block")) {
+                if let Some(map) = geofence.get_mut(&label).and_then(|v| v.get_mut("block")) {
                     map.entry(country).or_insert_with(|| vec![]);
                 }
             } else {
@@ -384,7 +392,7 @@ pub fn fix_geofence_base<P: AsRef<Path>>(
                             let new_set: HashSet<String> = vec![state].into_iter().collect();
                             *rule = set.union(&new_set).cloned().collect();
                         }
-                    },
+                    }
                     None => {
                         geofence
                             .entry(label)
@@ -398,5 +406,6 @@ pub fn fix_geofence_base<P: AsRef<Path>>(
             }
         }
     }
+
     Ok(geofence)
 }

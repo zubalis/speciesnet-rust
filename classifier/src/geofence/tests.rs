@@ -1,11 +1,15 @@
-use super::{fix_geofence_base, geofence_animal_classification, roll_up_labels_to_first_matching_level, should_geofence, GeofenceResult};
-use crate::constants::classification;
-use crate::geofence::taxonomy::TaxonomyError;
-use serde_json::{from_value, json};
 use std::cell::LazyCell;
 use std::collections::HashMap;
 use std::env::current_dir;
-use std::error::Error;
+
+use serde_json::{from_value, json};
+
+use crate::{constants::classification, error::Error};
+
+use super::{
+    GeofenceResult, fix_geofence_base, geofence_animal_classification,
+    roll_up_labels_to_first_matching_level, should_geofence,
+};
 
 const BLANK: &str = "f1856211-cfb7-4a5b-9158-c0f72fd09ee6;;;;;;blank";
 const BLANK_FC: &str = ";;;;";
@@ -128,7 +132,7 @@ const TAXONOMY_MAP: LazyCell<HashMap<String, String>> = LazyCell::new(|| {
 });
 
 #[test]
-fn test_should_geofence_fn() -> Result<(), Box<dyn Error>> {
+fn test_should_geofence_fn() -> Result<(), Error> {
     // Test disable geofencing
     assert_eq!(
         should_geofence(LION, None, None, &GEOFENCE_MAP, false)?,
@@ -203,20 +207,17 @@ fn test_should_geofence_fn() -> Result<(), Box<dyn Error>> {
     {
         let invalid_label = "uuid;class;order;family;genus;species";
         let invalid_label_parts = invalid_label.split(";").collect::<Vec<_>>();
-        assert_eq!(
+        assert!(matches!(
             should_geofence(invalid_label, Some("AUS"), None, &GEOFENCE_MAP, true),
-            Err(TaxonomyError::InvalidLabel(
-                invalid_label_parts.len().to_string(),
-                invalid_label.to_string()
-            ))
-        );
+            Err(Error::InvalidLabel( label_parts, label)) if label_parts == invalid_label_parts.len().to_string() && label == invalid_label.to_string()
+        ));
     }
 
     Ok(())
 }
 
 #[test]
-fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>> {
+fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Error> {
     let labels = vec![
         BROWN_BEAR.to_string(),
         POLAR_BEAR.to_string(),
@@ -265,10 +266,7 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
             true,
         )
     };
-    assert_eq!(
-        rollup_fn(&[0.6, 0.2, 0.01, 0.01, 0.01, 0.01, 0.01])?,
-        None
-    );
+    assert_eq!(rollup_fn(&[0.6, 0.2, 0.01, 0.01, 0.01, 0.01, 0.01])?, None);
     assert_eq!(
         rollup_fn(&[0.7, 0.25, 0.01, 0.01, 0.01, 0.01, 0.01])?,
         Some((
@@ -384,7 +382,13 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
             scores,
             None,
             None,
-            &vec!["genus".to_string(), "family".to_string(), "order".to_string(), "class".to_string(), "kingdom".to_string()],
+            &vec![
+                "genus".to_string(),
+                "family".to_string(),
+                "order".to_string(),
+                "class".to_string(),
+                "kingdom".to_string(),
+            ],
             &0.75,
             &TAXONOMY_MAP,
             &GEOFENCE_MAP,
@@ -431,7 +435,13 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
             scores,
             Some("GBR"),
             None,
-            &vec!["species".to_string(), "genus".to_string(), "family".to_string(), "order".to_string(), "class".to_string()],
+            &vec![
+                "species".to_string(),
+                "genus".to_string(),
+                "family".to_string(),
+                "order".to_string(),
+                "class".to_string(),
+            ],
             &0.4,
             &TAXONOMY_MAP,
             &GEOFENCE_MAP,
@@ -467,7 +477,7 @@ fn test_roll_up_labels_to_first_matching_level_fn() -> Result<(), Box<dyn Error>
 }
 
 #[test]
-fn test_geofence_animal_classification_fn() -> Result<(), Box<dyn Error>> {
+fn test_geofence_animal_classification_fn() -> Result<(), Error> {
     let labels = vec![
         LION.to_string(),
         POLAR_BEAR.to_string(),
@@ -475,9 +485,7 @@ fn test_geofence_animal_classification_fn() -> Result<(), Box<dyn Error>> {
         FELIDAE_FAMILY.to_string(),
     ];
 
-    let unknown_labels = vec![
-        UNKNOWN.to_string()
-    ];
+    let unknown_labels = vec![UNKNOWN.to_string()];
 
     // Test when no geofencing is needed
     let geofence_classification_fn = |scores| {
@@ -491,11 +499,14 @@ fn test_geofence_animal_classification_fn() -> Result<(), Box<dyn Error>> {
             true,
         )
     };
-    assert_eq!(geofence_classification_fn(&[0.4, 0.3, 0.2, 0.1])?, Some(GeofenceResult {
-        label: LION.to_string(),
-        score: 0.4,
-        source: "classifier".to_string()
-    }));
+    assert_eq!(
+        geofence_classification_fn(&[0.4, 0.3, 0.2, 0.1])?,
+        Some(GeofenceResult {
+            label: LION.to_string(),
+            score: 0.4,
+            source: "classifier".to_string()
+        })
+    );
 
     //Test with geofencing and rollup to family level or above
     let geofence_classification_fn = |scores| {
@@ -509,11 +520,14 @@ fn test_geofence_animal_classification_fn() -> Result<(), Box<dyn Error>> {
             true,
         )
     };
-    assert_eq!(geofence_classification_fn(&[0.4, 0.3, 0.2, 0.1])?, Some(GeofenceResult {
-        label: FELIDAE_FAMILY.to_string(),
-        score: 0.5,
-        source: "classifier+geofence+rollup_to_family".to_string()
-    }));
+    assert_eq!(
+        geofence_classification_fn(&[0.4, 0.3, 0.2, 0.1])?,
+        Some(GeofenceResult {
+            label: FELIDAE_FAMILY.to_string(),
+            score: 0.5,
+            source: "classifier+geofence+rollup_to_family".to_string()
+        })
+    );
     let geofence_classification_fn = |scores| {
         geofence_animal_classification(
             &labels,
@@ -525,11 +539,14 @@ fn test_geofence_animal_classification_fn() -> Result<(), Box<dyn Error>> {
             true,
         )
     };
-    assert_eq!(geofence_classification_fn(&[0.4, 0.3, 0.2, 0.1])?, Some(GeofenceResult {
-        label: CARNIVORA_ORDER.to_string(),
-        score: [0.4, 0.3, 0.1].iter().sum(),
-        source: "classifier+geofence+rollup_to_order".to_string()
-    }));
+    assert_eq!(
+        geofence_classification_fn(&[0.4, 0.3, 0.2, 0.1])?,
+        Some(GeofenceResult {
+            label: CARNIVORA_ORDER.to_string(),
+            score: [0.4, 0.3, 0.1].iter().sum(),
+            source: "classifier+geofence+rollup_to_order".to_string()
+        })
+    );
 
     // Test with geofencing and rollup to unknown
     let geofence_classification_fn = |scores| {
@@ -543,23 +560,66 @@ fn test_geofence_animal_classification_fn() -> Result<(), Box<dyn Error>> {
             true,
         )
     };
-    assert_eq!(geofence_classification_fn(&[0.4, 0.3, 0.2, 0.1])?, Some(GeofenceResult {
-        label: classification::UNKNOWN.to_string(),
-        score: 0.4,
-        source: "classifier+geofence+rollup_failed".to_string()
-    }));
+    assert_eq!(
+        geofence_classification_fn(&[0.4, 0.3, 0.2, 0.1])?,
+        Some(GeofenceResult {
+            label: classification::UNKNOWN.to_string(),
+            score: 0.4,
+            source: "classifier+geofence+rollup_failed".to_string()
+        })
+    );
     Ok(())
 }
 
 #[test]
-fn test_fix_geofence_base_fn() -> Result<(), Box<dyn Error>> {
-    let fix_path = current_dir()?.join("..").join("assets").join("geofence_fixes_test.csv").canonicalize()?.to_str().unwrap().to_string();
-    
+fn test_fix_geofence_base_fn() -> Result<(), Error> {
+    let fix_path = current_dir()?
+        .join("..")
+        .join("assets")
+        .join("geofence_fixes_test.csv")
+        .canonicalize()?
+        .to_str()
+        .unwrap()
+        .to_string();
+
     let fixed_base = fix_geofence_base(&GEOFENCE_MAP, fix_path.as_str())?;
-    
-    assert_eq!(fixed_base.get(LION_FC).unwrap().get("allow").unwrap().contains_key("USA"), true);
-    assert_eq!(fixed_base.get(LION_FC).unwrap().get("block").unwrap().contains_key("THA"), true);
-    assert_eq!(fixed_base.get(LION_FC).unwrap().get("block").unwrap().contains_key("TZA"), true);
-    assert_eq!(fixed_base.get(LION_FC).unwrap().get("block").unwrap().get("USA").unwrap(), &vec!["JFC"]);
+
+    assert_eq!(
+        fixed_base
+            .get(LION_FC)
+            .unwrap()
+            .get("allow")
+            .unwrap()
+            .contains_key("USA"),
+        true
+    );
+    assert_eq!(
+        fixed_base
+            .get(LION_FC)
+            .unwrap()
+            .get("block")
+            .unwrap()
+            .contains_key("THA"),
+        true
+    );
+    assert_eq!(
+        fixed_base
+            .get(LION_FC)
+            .unwrap()
+            .get("block")
+            .unwrap()
+            .contains_key("TZA"),
+        true
+    );
+    assert_eq!(
+        fixed_base
+            .get(LION_FC)
+            .unwrap()
+            .get("block")
+            .unwrap()
+            .get("USA")
+            .unwrap(),
+        &vec!["JFC"]
+    );
     Ok(())
 }

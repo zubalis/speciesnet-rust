@@ -1,19 +1,9 @@
+use std::collections::HashMap;
+
+use crate::{constants::classification, error::Error};
+
 #[cfg(test)]
 mod tests;
-
-use crate::constants::classification;
-use std::collections::HashMap;
-use thiserror::Error;
-
-#[derive(Debug, Error, PartialEq)]
-pub enum TaxonomyError {
-    #[error("Expected label made of 7 parts, but found only {0}: {1}")]
-    InvalidLabel(String, String),
-    #[error(
-        "Expected these taxonomy levels: `species`, `genus`, `family`, `order`, `class`, `kingdom`, but found: {0}"
-    )]
-    InvalidTaxonomyLevel(String),
-}
 
 ///
 /// Finds the taxonomy item corresponding to a label's ancestor at a given level
@@ -36,10 +26,10 @@ pub fn get_ancestor_at_level(
     label: &str,
     taxonomy_level: &str,
     taxonomy_map: &HashMap<String, String>,
-) -> Result<Option<String>, TaxonomyError> {
+) -> Result<Option<String>, Error> {
     let label_parts = label.split(';').collect::<Vec<_>>();
     if label_parts.len() != 7 {
-        return Err(TaxonomyError::InvalidLabel(
+        return Err(Error::InvalidLabel(
             label_parts.len().to_string(),
             label.to_string(),
         ));
@@ -122,9 +112,7 @@ pub fn get_ancestor_at_level(
             }
         }
         _ => {
-            return Err(TaxonomyError::InvalidTaxonomyLevel(
-                taxonomy_level.to_string(),
-            ));
+            return Err(Error::InvalidTaxonomyLevel(taxonomy_level.to_string()));
         }
     }
 
@@ -147,10 +135,10 @@ pub fn get_ancestor_at_level(
 ///   - label:
 ///       String slice label for to extract the full class string.
 ///
-pub fn get_full_class_string(label: &str) -> Result<String, TaxonomyError> {
+pub fn get_full_class_string(label: &str) -> Result<String, Error> {
     let label_parts = label.split(';').collect::<Vec<_>>();
     if label_parts.len() != 7 {
-        return Err(TaxonomyError::InvalidLabel(
+        return Err(Error::InvalidLabel(
             label_parts.len().to_string(),
             label.to_string(),
         ));

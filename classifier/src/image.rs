@@ -1,7 +1,8 @@
 use std::error::Error;
 use std::path::PathBuf;
-use tensorflow::{Tensor};
-use image::{io::Reader};
+
+use image::io::Reader;
+use tensorflow::Tensor;
 
 #[derive(Debug)]
 pub struct ProceededImages {
@@ -21,7 +22,9 @@ struct FailedImage {
     error_message: String,
 }
 
-pub fn load_and_preprocess_images(image_paths: &[PathBuf]) -> Result<ProceededImages, Box<dyn Error>> {
+pub fn load_and_preprocess_images(
+    image_paths: &[PathBuf],
+) -> Result<ProceededImages, Box<dyn Error>> {
     let mut success_images: Vec<Vec<f32>> = Vec::new();
     let mut success_images_paths: Vec<PathBuf> = Vec::new();
     let mut failed_images: Vec<FailedImage> = Vec::new();
@@ -30,9 +33,11 @@ pub fn load_and_preprocess_images(image_paths: &[PathBuf]) -> Result<ProceededIm
         match Reader::open(image_path) {
             Ok(img) => match img.decode() {
                 Ok(decoded_img) => {
-                    let resized_img = decoded_img.resize_exact(480, 480, image::imageops::FilterType::Triangle);
+                    let resized_img =
+                        decoded_img.resize_exact(480, 480, image::imageops::FilterType::Triangle);
                     let img_rgb = resized_img.to_rgb8();
-                    let pixels: Vec<f32> = img_rgb.pixels()
+                    let pixels: Vec<f32> = img_rgb
+                        .pixels()
                         .flat_map(|p| p.0)
                         .map(|v| v as f32 / 255.0)
                         .collect();
@@ -54,14 +59,14 @@ pub fn load_and_preprocess_images(image_paths: &[PathBuf]) -> Result<ProceededIm
 
     let success_counts = success_images.len();
     let flatted_success_images: Vec<f32> = success_images.into_iter().flatten().collect();
-    let tensor = Tensor::new(&[success_counts as u64, 480, 480, 3]).with_values(&flatted_success_images)?;
-
+    let tensor =
+        Tensor::new(&[success_counts as u64, 480, 480, 3]).with_values(&flatted_success_images)?;
 
     Ok(ProceededImages {
         success_images: SuccessImages {
             paths: success_images_paths,
             image_tensor: tensor,
         },
-        failed_images
+        failed_images,
     })
 }

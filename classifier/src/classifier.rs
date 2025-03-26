@@ -1,9 +1,9 @@
-#[cfg(test)]
-mod tests;
-
 use std::cmp::Ordering::Equal;
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+#[cfg(test)]
+mod tests;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ClassificationBundle {
@@ -40,26 +40,24 @@ pub fn map_labels_to_classifications(
         .collect()
 }
 
-pub fn pick_top_n_from(
-    mut classifications: Vec<Classification>,
-    n: usize,
-) -> Vec<Classification> {
-    classifications.sort_by(|a, b| {
-        b.score
-            .partial_cmp(&a.score)
-            .unwrap_or(Equal)
-    });
+pub fn pick_top_n_from(mut classifications: Vec<Classification>, n: usize) -> Vec<Classification> {
+    classifications.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(Equal));
     let sorted_classifications: Vec<Classification> = classifications.into_iter().take(n).collect();
     sorted_classifications
 }
 
 pub fn to_chunks(outputs: &[f32], chunk_size: usize) -> Vec<Vec<f32>> {
-    outputs.chunks(chunk_size)
-        .map(|chunk| chunk.to_vec())  // Convert slice to Vec<T>
+    outputs
+        .chunks(chunk_size)
+        .map(|chunk| chunk.to_vec()) // Convert slice to Vec<T>
         .collect()
 }
 
-pub fn transform(file_paths: &[PathBuf], outputs: &[f32], labels: &[String]) -> HashMap<PathBuf, ClassificationBundle> {
+pub fn transform(
+    file_paths: &[PathBuf],
+    outputs: &[f32],
+    labels: &[String],
+) -> HashMap<PathBuf, ClassificationBundle> {
     let chunks = to_chunks(outputs, labels.len());
     let mut bundle = HashMap::new();
     for (chunk, path) in chunks.iter().zip(file_paths.iter()) {
@@ -68,11 +66,14 @@ pub fn transform(file_paths: &[PathBuf], outputs: &[f32], labels: &[String]) -> 
         let top5_chunks = pick_top_n_from(mapped_chunks, 5);
         let labels = top5_chunks.iter().map(|c| c.label.clone()).collect();
         let scores = top5_chunks.iter().map(|c| c.score).collect();
-        bundle.insert(path.clone(), ClassificationBundle {
-            file_path: path.clone(),
-            labels,
-            scores
-        });
+        bundle.insert(
+            path.clone(),
+            ClassificationBundle {
+                file_path: path.clone(),
+                labels,
+                scores,
+            },
+        );
     }
     bundle
 }
