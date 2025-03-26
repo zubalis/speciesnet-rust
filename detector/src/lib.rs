@@ -16,7 +16,7 @@ pub mod yolo;
 #[derive(Debug, Clone)]
 pub struct SpeciesNetDetector {
     model: Arc<CModule>,
-    device: Device,
+    device: Arc<Device>,
 }
 
 impl SpeciesNetDetector {
@@ -30,7 +30,7 @@ impl SpeciesNetDetector {
 
         Ok(Self {
             model: Arc::new(model),
-            device,
+            device: Arc::new(device),
         })
     }
 
@@ -44,7 +44,7 @@ impl SpeciesNetDetector {
         let (original_width, original_height) = preprocessed_image.original_size();
         let (resized_width, resized_height) = preprocessed_image.resized_size();
         let path = preprocessed_image.path_owned();
-        let tensor = preprocessed_image.into_tensor()?.to(self.device);
+        let tensor = preprocessed_image.into_tensor()?.to(*self.device);
         let tensor = tensor.unsqueeze(0);
 
         info!("Running predictions on image {}.", path.display());
