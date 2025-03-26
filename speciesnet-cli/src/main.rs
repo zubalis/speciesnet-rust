@@ -2,7 +2,7 @@ use std::{fs::File, io::BufWriter, path::PathBuf};
 
 use clap::{Args, CommandFactory, Parser, error::ErrorKind};
 use inputs::prepare_image_inputs;
-use log::debug;
+use log::{debug, info};
 use speciesnet::SpeciesNet;
 use speciesnet_core::prediction::Predictions;
 
@@ -65,6 +65,9 @@ pub struct CliArguments {
     run_type: RunType,
     #[command(flatten)]
     additional_config: AdditionalConfiguration,
+    /// The path of the classifier model.
+    #[arg(long)]
+    classifier_model: PathBuf,
     /// The path of the detector model.
     #[arg(long)]
     detector_model: PathBuf,
@@ -113,13 +116,13 @@ fn main() -> anyhow::Result<()> {
 
     // Parse the input files into list of files.
     let images = prepare_image_inputs(&args.input_type)?;
-    let speciesnet = SpeciesNet::new(&args.detector_model)?;
+    let speciesnet = SpeciesNet::new(&args.detector_model, &args.classifier_model)?;
 
     if args.run_type.detector_only {
         let detector_results = speciesnet.detect(&images)?;
         let predictions = Predictions::from(detector_results);
 
-        debug!(
+        info!(
             "Saving the detected results to {}.",
             args.predictions_json.display()
         );
@@ -127,12 +130,12 @@ fn main() -> anyhow::Result<()> {
         let writer = BufWriter::new(File::create(&args.predictions_json)?);
         serde_json::to_writer(writer, &predictions)?;
 
-        debug!(
+        info!(
             "Predictions file has been successfully saved to {}.",
             args.predictions_json.display()
         );
     }
 
-    debug!("Program finished.");
+    info!("Program finished.");
     Ok(())
 }

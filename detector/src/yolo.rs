@@ -178,7 +178,7 @@ pub fn non_max_suppression(
         // TODO: Implement labels support.
 
         if tensor.size().first().copied().unwrap_or_default() == 0i64 {
-            info!("This image does not have any results.");
+            info!("The image image does not have any results.");
             return Ok(Vec::new());
         }
 
@@ -219,7 +219,7 @@ pub fn non_max_suppression(
         // Shape checking
         debug!("Checking the shape of the tensor before running non-max suppression.");
         if tensor.size().first().copied().unwrap_or_default() == 0i64 {
-            info!("This image does not have any results after filtering.");
+            info!("The image does not have any results after filtering.");
             return Ok(Vec::new());
         }
 

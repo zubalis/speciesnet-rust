@@ -4,7 +4,7 @@ use image::{
     DynamicImage, GenericImageView, ImageBuffer, ImageReader, Rgb, RgbImage,
     imageops::{FilterType, replace},
 };
-use log::debug;
+use log::{debug, info};
 use speciesnet_core::shape::Shape;
 use tch::Tensor;
 
@@ -194,10 +194,12 @@ pub fn preprocess<P>(image_path: P) -> Result<PreprocessedImage, Error>
 where
     P: AsRef<Path>,
 {
+    info!("Loading and decoding {}.", image_path.as_ref().display());
     let loaded_image = ImageReader::open(&image_path)?.decode()?;
     let options = LetterboxOptions::builder()
         .shape(speciesnet_core::shape::Shape::Square(1280))
         .build();
+    info!("Resizing and letterboxing the image.");
     let preprocessed_image = letterbox(loaded_image, options)?;
 
     Ok(PreprocessedImage::new(preprocessed_image, image_path))

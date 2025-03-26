@@ -5,7 +5,7 @@ use std::{
 };
 
 use anyhow::bail;
-use log::debug;
+use log::{debug, info};
 use speciesnet_core::instance::Instances;
 use walkdir::WalkDir;
 
@@ -15,6 +15,7 @@ use crate::{InputType, file_extension::SUPPORTED_IMAGE_EXTENSIONS};
 /// in one vector. The value from input type, although is a struct with 5 members but there can
 /// only be one input at a time due to clap's guarantee in the command line declaration.
 pub fn prepare_image_inputs(input_type: &InputType) -> anyhow::Result<Vec<PathBuf>> {
+    info!("Preparing the image inputs.");
     let mut image_paths: Vec<PathBuf> = Vec::new();
 
     if let Some(instances_json_path) = &input_type.instances_json {
@@ -80,24 +81,26 @@ pub fn prepare_image_inputs(input_type: &InputType) -> anyhow::Result<Vec<PathBu
         }
     }
 
-    debug!(
+    info!(
         "Found {} files from given instances files, folders and directories.",
         image_paths.len()
     );
-    debug!("Filtering non image paths out from gathered files.");
+    info!("Filtering non image paths out from gathered files.");
 
     let filtered_paths: Vec<_> = image_paths
         .into_iter()
         .filter(|p| match p.extension() {
             Some(file_extension_osstr) => match file_extension_osstr.to_str() {
-                Some(file_extension) => SUPPORTED_IMAGE_EXTENSIONS.contains(&file_extension),
+                Some(file_extension) => {
+                    SUPPORTED_IMAGE_EXTENSIONS.contains(&file_extension.to_lowercase().as_str())
+                }
                 None => false,
             },
             None => false,
         })
         .collect();
 
-    debug!(
+    info!(
         "{} images left after filtering finished.",
         filtered_paths.len()
     );

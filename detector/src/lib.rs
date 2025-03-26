@@ -1,6 +1,6 @@
 use std::{path::Path, sync::Arc};
 
-use log::debug;
+use log::{debug, info, warn};
 use preprocess::PreprocessedImage;
 use speciesnet_core::{BoundingBox, Detection, prediction::Prediction};
 use tch::{CModule, Device, IValue, IndexOp};
@@ -47,10 +47,7 @@ impl SpeciesNetDetector {
         let tensor = preprocessed_image.into_tensor()?.to(self.device);
         let tensor = tensor.unsqueeze(0);
 
-        debug!(
-            "Original dimensions ({}, {})",
-            original_width, original_height
-        );
+        info!("Running predictions on image {}.", path.display());
         let predictions = self.model.forward_is(&[IValue::Tensor(tensor)])?;
 
         match predictions {
@@ -58,6 +55,10 @@ impl SpeciesNetDetector {
             // we only care about the first one.
             tch::IValue::Tuple(ivalues) => {
                 if ivalues.is_empty() {
+                    warn!(
+                        "Image {} does not have expected results from the forwarding step.",
+                        path.display()
+                    );
                     return Ok(None);
                 }
 
@@ -65,11 +66,20 @@ impl SpeciesNetDetector {
                 let first_result = ivalues.first().unwrap();
 
                 let IValue::Tensor(predictions) = first_result else {
+                    warn!(
+                        "Image {} does not have expected results from the forwarding step.",
+                        path.display()
+                    );
                     return Ok(None);
                 };
 
+                info!("Running non-max suppression on image {}.", path.display());
                 let nmsed_results = non_max_suppression(predictions, Some(0.01))?;
                 let Some(nms_result) = nmsed_results.first() else {
+                    warn!(
+                        "Image {} does not have any results left after running non-max suppressions.",
+                        path.display()
+                    );
                     return Ok(None);
                 };
 
@@ -93,11 +103,16 @@ impl SpeciesNetDetector {
                     detections.push(Detection::new(category.try_into()?, confidence, bbox));
                 }
 
+                info!(
+                    "Found {} detections from {}.",
+                    detections.len(),
+                    path.display()
+                );
                 Ok(Some(Prediction::from_detections(path, detections)))
             }
             _ => {
                 debug!(
-                    "Filename {} does not return expected result.",
+                    "Image {} does not return expected results from the forwarding step.",
                     path.display()
                 );
 
