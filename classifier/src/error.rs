@@ -1,3 +1,5 @@
+use tensorflow::Status;
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     // Geofence errors
@@ -11,6 +13,10 @@ pub enum Error {
         "Expected these taxonomy levels: `species`, `genus`, `family`, `order`, `class`, `kingdom`, but found: {0}."
     )]
     InvalidTaxonomyLevel(String),
+
+    // Tensorflow error.
+    #[error("TF error: {0}")]
+    TFError(#[from] Status),
 
     // Miscellaneous
     #[error("IO error: {0}")]

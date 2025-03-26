@@ -1,4 +1,3 @@
-use std::error::Error;
 use std::path::Path;
 use std::sync::Arc;
 use tensorflow::{Graph, SavedModelBundle, SessionOptions, SessionRunArgs, Tensor};
@@ -9,6 +8,8 @@ pub mod error;
 pub mod geofence;
 pub mod image;
 
+use crate::error::Error;
+
 #[derive(Debug, Clone)]
 pub struct SpeciesNetClassifier {
     bundle: Arc<SavedModelBundle>,
@@ -17,7 +18,7 @@ pub struct SpeciesNetClassifier {
 
 impl SpeciesNetClassifier {
     /// Create classifier from given config
-    pub fn new<P>(model_dir_path: P) -> Result<Self, Box<dyn Error>>
+    pub fn new<P>(model_dir_path: P) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
@@ -28,6 +29,7 @@ impl SpeciesNetClassifier {
             &mut graph,
             model_dir_path,
         )?;
+
         Ok(Self {
             bundle: Arc::new(bundle),
             graph: Arc::new(graph),
@@ -35,7 +37,7 @@ impl SpeciesNetClassifier {
     }
 
     /// run a classification from given input
-    pub fn classify(&self, input_tensor: &Tensor<f32>) -> Result<Vec<f32>, Box<dyn Error>> {
+    pub fn classify(&self, input_tensor: &Tensor<f32>) -> Result<Vec<f32>, Error> {
         let session = &self.bundle.session;
         let mut args = SessionRunArgs::new();
 

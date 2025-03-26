@@ -1764,7 +1764,7 @@ dependencies = [
 [[package]]
 name = "tensorflow"
 version = "0.21.0"
-source = "git+https://github.com/tensorflow/rust?branch=master#1ddf5a348037402f87d67c076bf3019857eae05f"
+source = "git+https://github.com/tensorflow/rust?rev=1ddf5a3#1ddf5a348037402f87d67c076bf3019857eae05f"
 dependencies = [
  "byteorder",
  "crc",
@@ -1780,7 +1780,7 @@ dependencies = [
 [[package]]
 name = "tensorflow-internal-macros"
 version = "0.0.3"
-source = "git+https://github.com/tensorflow/rust?branch=master#1ddf5a348037402f87d67c076bf3019857eae05f"
+source = "git+https://github.com/tensorflow/rust?rev=1ddf5a3#1ddf5a348037402f87d67c076bf3019857eae05f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1790,7 +1790,7 @@ dependencies = [
 [[package]]
 name = "tensorflow-sys"
 version = "0.24.0"
-source = "git+https://github.com/tensorflow/rust?branch=master#1ddf5a348037402f87d67c076bf3019857eae05f"
+source = "git+https://github.com/tensorflow/rust?rev=1ddf5a3#1ddf5a348037402f87d67c076bf3019857eae05f"
 dependencies = [
  "curl",
  "flate2",
