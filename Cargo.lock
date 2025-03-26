@@ -1618,16 +1618,12 @@ dependencies = [
 name = "speciesnet"
 version = "0.1.0"
 dependencies = [
- "clap",
  "log",
  "rayon",
- "serde",
- "serde_json",
  "speciesnet-classifier",
  "speciesnet-core",
  "speciesnet-detector",
  "thiserror 2.0.12",
- "walkdir",
 ]
 
 [[package]]
@@ -1768,8 +1764,7 @@ dependencies = [
 [[package]]
 name = "tensorflow"
 version = "0.21.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70a5aa784c60e18bcca7f79fde117bd7209a30247d3242e9127a7d9496e66272"
+source = "git+https://github.com/tensorflow/rust?branch=master#1ddf5a348037402f87d67c076bf3019857eae05f"
 dependencies = [
  "byteorder",
  "crc",
@@ -1785,8 +1780,7 @@ dependencies = [
 [[package]]
 name = "tensorflow-internal-macros"
 version = "0.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4975c975b6d9c05a7cbf007ebc8e01e92e7e0907be9efcc74074857fc92ceb54"
+source = "git+https://github.com/tensorflow/rust?branch=master#1ddf5a348037402f87d67c076bf3019857eae05f"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1796,8 +1790,7 @@ dependencies = [
 [[package]]
 name = "tensorflow-sys"
 version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "24fa07ba31c6802a42d8fcb4ed2c400091d1a3da4531c1dea2c162b4b650505c"
+source = "git+https://github.com/tensorflow/rust?branch=master#1ddf5a348037402f87d67c076bf3019857eae05f"
 dependencies = [
  "curl",
  "flate2",
