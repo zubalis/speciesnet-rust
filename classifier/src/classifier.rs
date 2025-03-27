@@ -1,21 +1,13 @@
 use std::cmp::Ordering::Equal;
-use std::collections::HashMap;
-use std::path::PathBuf;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::path::{Path};
+use speciesnet_core::classification::{Classification, ClassificationBundle};
+use speciesnet_core::prediction::Prediction;
+use crate::error::Error;
 
 #[cfg(test)]
 mod tests;
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct ClassificationBundle {
-    pub file_path: PathBuf,
-    pub labels: Vec<String>,
-    pub scores: Vec<f32>,
-}
-#[derive(Debug, PartialEq, Clone)]
-pub struct Classification {
-    label: String,
-    score: f32,
-}
 
 pub fn softmax(scores: &[f32]) -> Vec<f32> {
     let exp_values: Vec<f32> = scores.iter().map(|&score| score.exp()).collect();
@@ -49,31 +41,26 @@ pub fn pick_top_n_from(mut classifications: Vec<Classification>, n: usize) -> Ve
 pub fn to_chunks(outputs: &[f32], chunk_size: usize) -> Vec<Vec<f32>> {
     outputs
         .chunks(chunk_size)
-        .map(|chunk| chunk.to_vec()) // Convert slice to Vec<T>
+        .map(|chunk| chunk.to_vec())
         .collect()
 }
 
-pub fn transform(
-    file_paths: &[PathBuf],
+pub fn transform<P: AsRef<Path>>(
+    file_path: P,
     outputs: &[f32],
     labels: &[String],
-) -> HashMap<PathBuf, ClassificationBundle> {
-    let chunks = to_chunks(outputs, labels.len());
-    let mut bundle = HashMap::new();
-    for (chunk, path) in chunks.iter().zip(file_paths.iter()) {
-        let softmax_chunk = softmax(chunk);
-        let mapped_chunks = map_labels_to_classifications(labels, &softmax_chunk);
-        let top5_chunks = pick_top_n_from(mapped_chunks, 5);
-        let labels = top5_chunks.iter().map(|c| c.label.clone()).collect();
-        let scores = top5_chunks.iter().map(|c| c.score).collect();
-        bundle.insert(
-            path.clone(),
-            ClassificationBundle {
-                file_path: path.clone(),
-                labels,
-                scores,
-            },
-        );
-    }
-    bundle
+) -> Prediction {
+    let softmax_result = softmax(outputs);
+    let mapped_result = map_labels_to_classifications(labels, &softmax_result);
+    let top5_result = pick_top_n_from(mapped_result, 5);
+    let labels = top5_result.iter().map(|c| c.label.clone()).collect();
+    let scores = top5_result.iter().map(|c| c.score).collect();
+    Prediction::from_classifications(file_path.as_ref().to_path_buf(), ClassificationBundle { labels, scores })
+}
+
+pub fn read_labels_from_file<P: AsRef<Path>>(file_path: P) -> Result<Vec<String>, Error> {
+    let label_file = File::open(file_path)?;
+    let label_reader = BufReader::new(label_file);
+    let labels: Vec<String> = label_reader.lines().map_while(Result::ok).collect();
+    Ok(labels)
 }

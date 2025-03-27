@@ -121,9 +121,28 @@ fn main() -> anyhow::Result<()> {
     if args.run_type.detector_only {
         let detector_results = speciesnet.detect(&images)?;
         let predictions = Predictions::from(detector_results);
-
+    
         info!(
             "Saving the detected results to {}.",
+            args.predictions_json.display()
+        );
+    
+        let writer = BufWriter::new(File::create(&args.predictions_json)?);
+        serde_json::to_writer(writer, &predictions)?;
+    
+        info!(
+            "Predictions file has been successfully saved to {}.",
+            args.predictions_json.display()
+        );
+    }
+    
+    if args.run_type.classifier_only {
+        let classifier_results = speciesnet.classify(&images, PathBuf::from("assets/labels.txt"))?;
+        println!("Classifier results: {}" , classifier_results.len());
+        let predictions = Predictions::from(classifier_results);
+
+        info!(
+            "Saving the classified results to {}.",
             args.predictions_json.display()
         );
 

@@ -1,6 +1,6 @@
 use std::cell::LazyCell;
 use std::path::PathBuf;
-
+use speciesnet_core::prediction::Prediction;
 use crate::classifier::{
     Classification, map_labels_to_classifications, pick_top_n_from, softmax, to_chunks, transform,
 };
@@ -116,9 +116,10 @@ fn test_transform_fn() {
         PathBuf::from("path/to/file/2.png"),
         PathBuf::from("path/to/file/3.png"),
     ];
-    let scores: Vec<f32> = vec![
-        4.0, 2.0, 1.0, 0.5, -0.5, -1.2, 3.0, -1.1, 1.0, 2.0, 5.0, 0.5, -0.5, -1.2, 1.2, -2.1, 3.0,
-        2.0, 1.0, 9.5, -0.5, -1.2, 5.0, -1.2,
+    let scores: Vec<Vec<f32>> = vec![
+        vec![4.0, 2.0, 1.0, 0.5, -0.5, -1.2, 3.0, -1.1],
+        vec![1.0, 2.0, 5.0, 0.5, -0.5, -1.2, 1.2, -2.1],
+        vec![3.0, 2.0, 1.0, 9.5, -0.5, -1.2, 5.0, -1.2],
     ];
     let labels = vec![
         "lion".to_string(),
@@ -130,16 +131,19 @@ fn test_transform_fn() {
         "ant".to_string(),
         "fish".to_string(),
     ];
+    
+    let results: Vec<Prediction> = file_paths.iter().zip(scores.iter()).map(|(p, s)| {
+        transform(p, s, &labels)
+    }).collect();
 
-    let results = transform(&file_paths, &scores, &labels);
-
-    let first = &results.get(&file_paths[0]).unwrap();
+    let first = &results.get(0).unwrap();
+    let first_classifications = first.classifications().as_ref().unwrap();
     assert_eq!(
-        first.scores,
+        first_classifications.scores,
         vec![0.62269545, 0.22907685, 0.08427267, 0.031002179, 0.018803772]
     );
     assert_eq!(
-        first.labels,
+        first_classifications.labels,
         vec![
             "lion".to_string(),
             "ant".to_string(),
@@ -148,9 +152,10 @@ fn test_transform_fn() {
             "dog".to_string()
         ]
     );
-    let second = &results.get(&file_paths[1]).unwrap();
+    let second = &results.get(1).unwrap();
+    let second_classifications = second.classifications().as_ref().unwrap();
     assert_eq!(
-        second.scores,
+        second_classifications.scores,
         vec![
             0.90210056,
             0.04491294,
@@ -160,7 +165,7 @@ fn test_transform_fn() {
         ]
     );
     assert_eq!(
-        second.labels,
+        second_classifications.labels,
         vec![
             "cat".to_string(),
             "elephant".to_string(),
@@ -169,9 +174,10 @@ fn test_transform_fn() {
             "dog".to_string()
         ]
     );
-    let third = &results.get(&file_paths[2]).unwrap();
+    let third = &results.get(2).unwrap();
+    let third_classifications = third.classifications().as_ref().unwrap();
     assert_eq!(
-        third.scores,
+        third_classifications.scores,
         vec![
             0.9867193,
             0.010961462,
@@ -181,7 +187,7 @@ fn test_transform_fn() {
         ]
     );
     assert_eq!(
-        third.labels,
+        third_classifications.labels,
         vec![
             "dog".to_string(),
             "ant".to_string(),

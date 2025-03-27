@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 
 use crate::Detection;
+use crate::classification::ClassificationBundle;
 
 /// The output type of `predictions.json` file.
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -30,6 +31,7 @@ pub struct Prediction {
     country: Option<String>,
     admin1_region: Option<String>,
     detections: Option<Vec<Detection>>,
+    classifications: Option<ClassificationBundle>,
     prediction: Option<String>,
     prediction_score: Option<f64>,
     model_version: Option<String>,
@@ -42,6 +44,20 @@ impl Prediction {
             country: None,
             admin1_region: None,
             detections: Some(detections),
+            classifications: None,
+            prediction: None,
+            prediction_score: None,
+            model_version: None,
+        }
+    }
+    
+    pub fn from_classifications(file_path: PathBuf, classifications: ClassificationBundle) -> Self {
+        Self {
+            file_path,
+            country: None,
+            admin1_region: None,
+            detections: None,
+            classifications: Some(classifications),
             prediction: None,
             prediction_score: None,
             model_version: None,
@@ -50,5 +66,9 @@ impl Prediction {
 
     pub fn detections(&self) -> &Option<Vec<Detection>> {
         &self.detections
+    }
+
+    pub fn classifications(&self) -> &Option<ClassificationBundle> {
+        &self.classifications
     }
 }

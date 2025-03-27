@@ -23,4 +23,10 @@ pub enum Error {
     IoError(#[from] std::io::Error),
     #[error("CSV error: {0}")]
     CsvError(#[from] csv::Error),
+    #[error("Image error: {0}")]
+    ImageError(#[from] fast_image_resize::ImageBufferError),
+    #[error("Resize error: {0}")]
+    ResizeError(#[from] fast_image_resize::ResizeError),
+    #[error("Decode error: {0}")]
+    ImageDecodeError(#[from] image::ImageError),
 }

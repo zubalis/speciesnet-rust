@@ -22,10 +22,10 @@ fn test_entire_process() -> Result<(), Box<dyn Error>> {
         .join("assets")
         .join("images")
         .join("african_elephants.jpg");
-    let inputs = load_and_preprocess_images(&[img_path])?;
+    let inputs = load_and_preprocess_images(img_path)?;
 
     // Run classify inputs
-    let outputs = classifier.classify(&inputs.success_images.image_tensor);
+    let outputs = classifier.classify(&inputs.image_tensor);
     assert!(outputs.is_ok());
     let outputs = outputs?;
 
@@ -36,8 +36,8 @@ fn test_entire_process() -> Result<(), Box<dyn Error>> {
     let labels: Vec<String> = label_reader.lines().map_while(Result::ok).collect();
 
     // Transform outputs into usable format (softmax, mapping labels, pick top 5)
-    let image_paths = inputs.success_images.paths;
-    let outputs_map = transform(&image_paths, &outputs, &labels);
+    let image_path = inputs.path;
+    let output = transform(image_path, &outputs, &labels);
 
     // Load geofence map from file
     let geofence_path = current_dir()?
@@ -67,19 +67,17 @@ fn test_entire_process() -> Result<(), Box<dyn Error>> {
     }
 
     // Geofencing each files and results from classification
-    for path in image_paths {
-        let bundle = outputs_map.get(&path).unwrap();
-        let result = geofence_animal_classification(
-            &bundle.labels,
-            &bundle.scores,
-            Some("THA"),
-            None,
-            &taxonomy_map,
-            &geofence_map,
-            true,
-        );
-        assert!(result.is_ok());
-    }
+    let bundle = output.classifications().as_ref().unwrap();
+    let result = geofence_animal_classification(
+        &bundle.labels,
+        &bundle.scores,
+        Some("THA"),
+        None,
+        &taxonomy_map,
+        &geofence_map,
+        true,
+    );
+    assert!(result.is_ok());
 
     Ok(())
 }
