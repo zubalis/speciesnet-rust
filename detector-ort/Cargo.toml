@@ -1,0 +1,13 @@
+[package]
+name = "speciesnet-detector-ort"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1"
+image = "0.25"
+ndarray = "0.16"
+ort = { version = "=2.0.0-rc.9", features = ["ndarray"] }
+speciesnet-core = { path = "../core" }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt", "ansi"] }
