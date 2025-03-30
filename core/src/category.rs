@@ -93,6 +93,19 @@ impl TryFrom<i64> for Category {
     }
 }
 
+impl TryFrom<f32> for Category {
+    type Error = Error;
+
+    fn try_from(value: f32) -> Result<Self, Self::Error> {
+        match value {
+            1f32 => Ok(Self::Animal),
+            2f32 => Ok(Self::Human),
+            3f32 => Ok(Self::Vehicle),
+            _other => Err(Error::CategoryIndexOutOfRange(_other as f64)),
+        }
+    }
+}
+
 impl TryFrom<f64> for Category {
     type Error = Error;
 
