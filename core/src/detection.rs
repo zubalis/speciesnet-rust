@@ -8,6 +8,7 @@ use crate::{bounding_box::BoundingBox, category::Category};
 #[derive(Debug, Clone, Deserialize)]
 pub struct Detection {
     category: Category,
+    #[serde(rename(deserialize = "conf"))]
     confidence: f64,
     bounding_box: BoundingBox,
 }
@@ -31,7 +32,7 @@ impl Serialize for Detection {
 
         s.serialize_field("category", &self.category.index())?;
         s.serialize_field("label", &self.category)?;
-        s.serialize_field("confidence", &self.confidence)?;
+        s.serialize_field("conf", &self.confidence)?;
         s.serialize_field("bbox", &self.bounding_box)?;
 
         s.end()
