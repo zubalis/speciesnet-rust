@@ -2,7 +2,7 @@ use std::{fs::File, io::BufWriter, path::PathBuf};
 
 use clap::{Args, CommandFactory, Parser, error::ErrorKind};
 use inputs::prepare_image_inputs;
-use log::{debug, info};
+use log::info;
 use speciesnet::SpeciesNet;
 use speciesnet_core::prediction::Predictions;
 
@@ -65,7 +65,7 @@ pub struct CliArguments {
     run_type: RunType,
     #[command(flatten)]
     additional_config: AdditionalConfiguration,
-    /// The path of the classifier model.
+    /// The path of the classifier model folder.
     #[arg(long)]
     classifier_model: PathBuf,
     /// The path of the detector model.

@@ -36,17 +36,28 @@ impl SpeciesNet {
     /// Performs the detection by MegaDetector Model from given file or folder. Returns a list of
     /// detections.
     pub fn detect(&self, list_of_files: &[PathBuf]) -> Result<Vec<Prediction>, Error> {
-        debug!("Starting the rayon multithread for files.");
+        info!("Starting the detector step.");
 
         let detections = list_of_files
-            .par_iter()
+            .iter()
             .map(|fp| {
-                let preprocessed_image = preprocess(fp)?;
-                let detections = self.detector.predict(preprocessed_image)?;
+                let preprocessed_image = match preprocess(fp) {
+                    Ok(pi) => pi,
+                    Err(e) => {
+                        error!("{}", e);
+                        return None;
+                    }
+                };
 
-                Ok(detections)
+                match self.detector.predict(preprocessed_image) {
+                    Ok(d) => d,
+                    Err(e) => {
+                        error!("{}", e);
+                        None
+                    }
+                }
             })
-            .collect::<Result<Vec<Option<Prediction>>, Error>>()?;
+            .collect::<Vec<Option<Prediction>>>();
 
         Ok(detections
             .into_iter()
