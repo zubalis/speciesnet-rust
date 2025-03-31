@@ -1,12 +1,9 @@
 use core::f32;
 
-use ndarray::{
-    Array2, Array3, Array4, ArrayBase, ArrayD, ArrayView2, Axis, Dim, IxDynImpl, OwnedRepr,
-    concatenate, s, stack,
-};
+use ndarray::{Array2, ArrayD, ArrayView2, Axis, concatenate, s, stack};
 use tracing::{debug, info};
 
-use crate::torchvision::nms;
+use crate::{error::Error, torchvision::nms};
 
 const DEFAULT_CONF_THRESHOLD: f32 = 0.25;
 
@@ -22,7 +19,7 @@ const REQUIRES_REDUNDANT_DETECTION: bool = true;
 
 const DEFAULT_XYWHN_WIDTH_HEIGHT: i64 = 640;
 
-pub fn xywh_to_xyxy(tensor: ArrayView2<f32>) -> anyhow::Result<Array2<f32>> {
+pub fn xywh_to_xyxy(tensor: ArrayView2<f32>) -> Result<Array2<f32>, Error> {
     let x1 = &tensor.slice(s![.., 0]) - (&tensor.slice(s![.., 2]) / 2.0f32);
     let y1 = &tensor.slice(s![.., 1]) - (&tensor.slice(s![.., 3]) / 2.0f32);
     let x2 = &tensor.slice(s![.., 0]) + (&tensor.slice(s![.., 2]) / 2.0f32);
@@ -37,7 +34,7 @@ pub fn xywh_to_xyxy(tensor: ArrayView2<f32>) -> anyhow::Result<Array2<f32>> {
 pub fn non_max_suppression(
     predictions: ArrayD<f32>,
     conf_threshold: Option<f32>,
-) -> anyhow::Result<Array2<f32>> {
+) -> Result<Array2<f32>, Error> {
     let conf_threshold = conf_threshold.map_or(DEFAULT_CONF_THRESHOLD, |v| {
         if (0.0..1.0).contains(&v) {
             v
@@ -49,9 +46,9 @@ pub fn non_max_suppression(
     // checks
     let shapes = predictions.shape();
     let batch_size = shapes.first().unwrap();
+    let number_of_classes = *shapes.get(2).unwrap() - (NUMBER_OF_MASKS as usize) - 5;
     info!("shapes {:?}", shapes);
     info!("batch size {}", batch_size,);
-    let number_of_classes = *shapes.get(2).unwrap() - (NUMBER_OF_MASKS as usize) - 5;
     info!("number of classes {}", number_of_classes);
     let candidates = predictions
         .slice(s![.., .., 4])
