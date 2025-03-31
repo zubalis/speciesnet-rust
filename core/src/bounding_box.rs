@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
+use ndarray::ArrayView1;
 use serde::{Deserialize, Serialize, de, ser::SerializeSeq};
-use tch::{IndexOp, Tensor};
 
 use crate::error::Error;
 
@@ -78,7 +78,7 @@ impl Serialize for BoundingBox {
 
 impl BoundingBox {
     /// Expected tensor size for converting values to this struct from [`Tensor`].
-    const EXPECTED_TENSOR_SIZE: i64 = 4;
+    const EXPECTED_TENSOR_SIZE: i32 = 4;
 
     pub fn new(x1: f64, y1: f64, x2: f64, y2: f64) -> Self {
         Self { x1, y1, x2, y2 }
@@ -105,48 +105,59 @@ impl BoundingBox {
         }
     }
 
-    /// Tries to convert a [`Tensor`] in format of `(x1, y1, x2, y2)` to the bounding box struct.
-    /// Tensor must be 1 dimension in the format of `Tensor[4, Float]`.
-    pub fn from_xyxy_tensor(tensor: &Tensor) -> Result<Self, Error> {
-        let tensor_size = tensor.size1()?;
+    /// Tries to convert an [`ArrayView1`] in format of `(x1, y1, x2, y2)` to the bounding box struct.
+    pub fn from_xyxy_tensor(tensor: ArrayView1<f32>) -> Result<Self, Error> {
+        let tensor_size = tensor.shape();
 
-        if tensor_size < Self::EXPECTED_TENSOR_SIZE {
-            return Err(Error::InvalidTensorSize(tensor_size));
+        let first_dim_tensor_size = tensor_size.first().unwrap_or(&0usize);
+        if (*first_dim_tensor_size as i32) < Self::EXPECTED_TENSOR_SIZE {
+            return Err(Error::InvalidTensorSize(*first_dim_tensor_size as i32));
         }
 
-        let x1 = tensor.f_i(0)?.f_double_value(&[])?;
-        let y1 = tensor.f_i(1)?.f_double_value(&[])?;
-        let x2 = tensor.f_i(2)?.f_double_value(&[])?;
-        let y2 = tensor.f_i(3)?.f_double_value(&[])?;
+        let x1 = tensor[0];
+        let y1 = tensor[1];
+        let x2 = tensor[2];
+        let y2 = tensor[3];
 
-        Ok(Self { x1, y1, x2, y2 })
+        Ok(Self {
+            x1: x1.into(),
+            y1: y1.into(),
+            x2: x2.into(),
+            y2: y2.into(),
+        })
     }
 
-    /// Tries to convert a [Tensor][tensor] in format of `(center_y, center_y, width, height)` to the bounding box struct.
+    /// Tries to convert a [`ArrayView1`] in format of `(center_y, center_y, width, height)` to the bounding box struct.
     ///
     /// # Panics
     ///
     /// This function could panic if the [Tensor][tensor]'s shape is not `Tensor[4, Float]`.
     ///
     /// [tensor]: tch::Tensor
-    pub fn from_xywh_tensor(tensor: &Tensor) -> Result<Self, Error> {
-        let tensor_size = tensor.size1()?;
+    pub fn from_xywh_tensor(tensor: ArrayView1<f32>) -> Result<Self, Error> {
+        let tensor_sizes = tensor.shape();
 
-        if tensor_size < Self::EXPECTED_TENSOR_SIZE {
-            return Err(Error::InvalidTensorSize(tensor_size));
+        let first_dim_tensor_size = tensor_sizes.first().unwrap_or(&0usize);
+        if (*first_dim_tensor_size as i32) < Self::EXPECTED_TENSOR_SIZE {
+            return Err(Error::InvalidTensorSize(*first_dim_tensor_size as i32));
         }
 
-        let center_x = tensor.f_i(0)?.f_double_value(&[])?;
-        let center_y = tensor.f_i(1)?.f_double_value(&[])?;
-        let width = tensor.f_i(2)?.f_double_value(&[])?;
-        let height = tensor.f_i(3)?.f_double_value(&[])?;
+        let center_x = tensor[0];
+        let center_y = tensor[1];
+        let width = tensor[2];
+        let height = tensor[3];
 
         let x1 = center_x - (width / 2.0);
         let y1 = center_y - (height / 2.0);
         let x2 = center_x + (width / 2.0);
         let y2 = center_y + (height / 2.0);
 
-        Ok(Self { x1, y1, x2, y2 })
+        Ok(Self {
+            x1: x1.into(),
+            y1: y1.into(),
+            x2: x2.into(),
+            y2: y2.into(),
+        })
     }
 
     /// Returns the values of the coordinates in a form of `(x1, y1, x2, y2)` tuple format.
