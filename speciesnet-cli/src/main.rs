@@ -4,7 +4,7 @@ use clap::{Args, CommandFactory, Parser, error::ErrorKind};
 use inputs::prepare_image_inputs;
 use speciesnet::SpeciesNet;
 use speciesnet_core::prediction::Predictions;
-use tracing::{debug, info};
+use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
 mod file_extension;
@@ -126,12 +126,10 @@ fn main() -> anyhow::Result<()> {
 
     // Parse the input files into list of files.
     let images = prepare_image_inputs(&args.input_type)?;
-    debug!("what");
     let speciesnet = SpeciesNet::new(&args.detector_model, &args.classifier_model)?;
 
     if args.run_type.detector_only {
-        info!("Running the detector");
-        let detector_results = speciesnet.detect_ort(&images)?;
+        let detector_results = speciesnet.detect(&images)?;
         let predictions = Predictions::from(detector_results);
 
         info!(
