@@ -128,12 +128,6 @@ impl BoundingBox {
     }
 
     /// Tries to convert a [`ArrayView1`] in format of `(center_y, center_y, width, height)` to the bounding box struct.
-    ///
-    /// # Panics
-    ///
-    /// This function could panic if the [Tensor][tensor]'s shape is not `Tensor[4, Float]`.
-    ///
-    /// [tensor]: tch::Tensor
     pub fn from_xywh_tensor(tensor: ArrayView1<f32>) -> Result<Self, Error> {
         let tensor_sizes = tensor.shape();
 

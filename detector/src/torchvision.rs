@@ -1,5 +1,10 @@
 use ndarray::{ArrayView1, ArrayView2};
 
+/// A function to perform Non-max suppression on a detection tensor and scores tensor.
+///
+/// This function is mimicked from [LibTorch's Non-max suppression](https://github.com/pytorch/vision/blob/124dfa404f395db90280e6dd84a51c50c742d5fd/torchvision/csrc/ops/cpu/nms_kernel.cpp).
+///
+/// This function's implementation is take from [this issue comment in tch](https://github.com/laurentmazare/tch-rs/issues/833#issuecomment-1905027185).
 pub fn nms(detections: ArrayView2<f32>, scores: ArrayView1<f32>, iou_threshold: f32) -> Vec<usize> {
     let mut sorting: Vec<usize> = (0..scores.len()).collect();
     sorting.sort_unstable_by(|&a, &b| scores[a].total_cmp(&scores[b]));
@@ -19,6 +24,10 @@ pub fn nms(detections: ArrayView2<f32>, scores: ArrayView1<f32>, iou_threshold: 
     keep
 }
 
+/// Performs the calculation of Intersection Over Union value that's being used in Non-max
+/// suppression function.
+///
+/// This function's implementation is take from [this issue comment in tch](https://github.com/laurentmazare/tch-rs/issues/833#issuecomment-1905027185).
 fn iou(a: ArrayView1<f32>, b: ArrayView1<f32>) -> f32 {
     let zero: f32 = 0.0;
 

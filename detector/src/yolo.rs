@@ -14,6 +14,12 @@ const NUMBER_OF_MASKS: i32 = 0;
 const MAX_BOUNDING_BOX_HEIGHT: i32 = 7680;
 const MAX_NMS_BOXES: i32 = 30000;
 
+/// Converts [`ArrayView2`] output which contains the image coordinates in the format of
+/// `(center_x, center_y, width, height)` to `(x1, y1, x2, y2)`.
+///
+/// # Panics
+///
+/// The function could panic if the Array is not [`ArrayView2`] with 4 columns in each row.
 pub fn xywh_to_xyxy(tensor: ArrayView2<f32>) -> Result<Array2<f32>, Error> {
     let x1 = &tensor.slice(s![.., 0]) - (&tensor.slice(s![.., 2]) / 2.0f32);
     let y1 = &tensor.slice(s![.., 1]) - (&tensor.slice(s![.., 3]) / 2.0f32);
@@ -134,4 +140,21 @@ pub fn non_max_suppression(
 
     let filtered_results = tensor.select(Axis(0), &nms_indexes);
     Ok(filtered_results)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn xywh_to_xyxy_conversion() {
+        let initial_tensor: Array2<f32> = array![[9f32, 11f32, 8f32, 6f32]];
+
+        let xyxy_tensor: Array2<f32> = xywh_to_xyxy(initial_tensor.view()).unwrap();
+
+        assert_eq!(xyxy_tensor[[0, 0]], 5f32);
+        assert_eq!(xyxy_tensor[[0, 1]], 8f32);
+        assert_eq!(xyxy_tensor[[0, 2]], 13f32);
+        assert_eq!(xyxy_tensor[[0, 3]], 14f32);
+    }
 }
