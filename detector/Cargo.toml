@@ -3,17 +3,11 @@ name = "speciesnet-detector"
 version = "0.1.0"
 edition = "2024"
 
-[lib]
-name = "speciesnet_detector"
-path = "src/lib.rs"
-
 [dependencies]
-anyhow = "1.0.97"
-env_logger = "0.11.6"
-image = "0.25.5"
-log = "0.4.26"
-ndarray = "0.16.1"
-tch = { version = "0.19.0", features = ["image"] }
-thiserror = "2"
+image = "0.25"
+ndarray = "0.16"
+num_cpus = "1"
+ort = { version = "=2.0.0-rc.9", features = ["ndarray"] }
 speciesnet-core = { path = "../core" }
-rayon = "1.10.0"
+thiserror = "2.0"
+tracing = "0.1"
