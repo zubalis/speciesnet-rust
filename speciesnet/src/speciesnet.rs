@@ -1,18 +1,19 @@
 use std::path::{Path, PathBuf};
-use log::{debug, info};
+
 use rayon::prelude::*;
-use num_cpus;
+use speciesnet_classifier::SpeciesNetClassifier;
 use speciesnet_classifier::classifier::{read_labels_from_file, transform};
 use speciesnet_classifier::image::load_and_preprocess_images;
-use speciesnet_classifier::SpeciesNetClassifier;
 use speciesnet_core::prediction::Prediction;
-use speciesnet_detector::{SpeciesNetDetector, preprocess::preprocess};
+//use speciesnet_detector::{SpeciesNetDetector, preprocess::preprocess};
+use speciesnet_detector_ort::SpeciesNetDetectorOrt;
+use tracing::{debug, error, info};
 
 use crate::error::Error;
 
 #[derive(Debug, Clone)]
 pub struct SpeciesNet {
-    detector: SpeciesNetDetector,
+    detector_ort: SpeciesNetDetectorOrt,
     classifier: SpeciesNetClassifier,
 }
 
@@ -22,26 +23,57 @@ impl SpeciesNet {
     where
         P: AsRef<Path>,
     {
-        let detector = SpeciesNetDetector::new(detector_model_path)?;
-        info!("Detector initialized.");
         let classifier = SpeciesNetClassifier::new(classifier_model_dir_path)?;
         info!("Classifier initialized.");
 
+        let detector_ort = SpeciesNetDetectorOrt::new(detector_model_path)?;
+        info!("Detector ort initialized.");
+
         Ok(Self {
-            detector,
             classifier,
+            detector_ort,
         })
     }
 
-    /// Performs the detection by MegaDetector Model from given file or folder. Returns a list of
-    /// detections.
-    pub fn detect(&self, list_of_files: &[PathBuf]) -> Result<Vec<Prediction>, Error> {
-        info!("Starting the detector step.");
+    // Performs the detection by MegaDetector Model from given file or folder. Returns a list of
+    // detections.
+    //pub fn detect(&self, list_of_files: &[PathBuf]) -> Result<Vec<Prediction>, Error> {
+    //    info!("Starting the detector step.");
+    //
+    //    let detections = list_of_files
+    //        .iter()
+    //        .map(|fp| {
+    //            let preprocessed_image = match preprocess(fp) {
+    //                Ok(pi) => pi,
+    //                Err(e) => {
+    //                    error!("{}", e);
+    //                    return None;
+    //                }
+    //            };
+    //
+    //            match self.detector.predict(preprocessed_image) {
+    //                Ok(d) => d,
+    //                Err(e) => {
+    //                    error!("{}", e);
+    //                    None
+    //                }
+    //            }
+    //        })
+    //        .collect::<Vec<Option<Prediction>>>();
+    //
+    //    Ok(detections
+    //        .into_iter()
+    //        .flatten()
+    //        .collect::<Vec<Prediction>>())
+    //}
+
+    pub fn detect_ort(&self, list_of_files: &[PathBuf]) -> Result<Vec<Prediction>, Error> {
+        info!("Starting the detector ort step.");
 
         let detections = list_of_files
             .iter()
             .map(|fp| {
-                let preprocessed_image = match preprocess(fp) {
+                let preprocessed_image = match speciesnet_detector_ort::preprocess::preprocess(fp) {
                     Ok(pi) => pi,
                     Err(e) => {
                         error!("{}", e);
@@ -49,7 +81,7 @@ impl SpeciesNet {
                     }
                 };
 
-                match self.detector.predict(preprocessed_image) {
+                match self.detector_ort.predict(preprocessed_image) {
                     Ok(d) => d,
                     Err(e) => {
                         error!("{}", e);
@@ -66,9 +98,17 @@ impl SpeciesNet {
     }
 
     /// Performs the classification by the cameratrap model.
-    pub fn classify(&self, list_of_files: &[PathBuf], label_path: PathBuf) -> Result<Vec<Prediction>, Error> {
+    pub fn classify(
+        &self,
+        list_of_files: &[PathBuf],
+        label_path: PathBuf,
+    ) -> Result<Vec<Prediction>, Error> {
         let num_threads = num_cpus::get() - 1; // can be tuned later
-        debug!("Running classify: {}, with {} threads", list_of_files.len(), num_threads);
+        debug!(
+            "Running classify: {}, with {} threads",
+            list_of_files.len(),
+            num_threads
+        );
         // Load labels
         let labels: Vec<String> = read_labels_from_file(&label_path)?;
         let predictions = list_of_files
@@ -81,9 +121,11 @@ impl SpeciesNet {
                 // Transform outputs into usable format (softmax, mapping labels, pick top 5)
                 let prediction = transform(image_path, &outputs, &labels);
                 Ok(prediction)
-            }).collect::<Result<Vec<Prediction>, Error>>();
+            })
+            .collect::<Result<Vec<Prediction>, Error>>()?;
+
         debug!("Finished classification");
-        Ok(predictions?)
+        Ok(predictions)
     }
 
     /// Performs both detection by MegaDetector and classify by the cameratrap model.
