@@ -5,7 +5,10 @@ use serde::{
     de::{self, Visitor},
 };
 
-use crate::error::Error;
+use crate::{
+    error::Error,
+    macros::{category_try_from_floats, category_try_from_integers},
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Category {
@@ -80,44 +83,8 @@ impl FromStr for Category {
     }
 }
 
-impl TryFrom<i64> for Category {
-    type Error = Error;
-
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
-        match value {
-            1 => Ok(Self::Animal),
-            2 => Ok(Self::Human),
-            3 => Ok(Self::Vehicle),
-            _other => Err(Error::CategoryIndexOutOfRange(_other as f64)),
-        }
-    }
-}
-
-impl TryFrom<f32> for Category {
-    type Error = Error;
-
-    fn try_from(value: f32) -> Result<Self, Self::Error> {
-        match value {
-            1f32 => Ok(Self::Animal),
-            2f32 => Ok(Self::Human),
-            3f32 => Ok(Self::Vehicle),
-            _other => Err(Error::CategoryIndexOutOfRange(_other as f64)),
-        }
-    }
-}
-
-impl TryFrom<f64> for Category {
-    type Error = Error;
-
-    fn try_from(value: f64) -> Result<Self, Self::Error> {
-        match value {
-            1f64 => Ok(Self::Animal),
-            2f64 => Ok(Self::Human),
-            3f64 => Ok(Self::Vehicle),
-            _other => Err(Error::CategoryIndexOutOfRange(_other)),
-        }
-    }
-}
+category_try_from_integers!(i8, i16, i32, i64, u8, u16, u32, u64);
+category_try_from_floats!(f32, f64);
 
 impl Display for Category {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
