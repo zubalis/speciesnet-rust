@@ -4,7 +4,6 @@ members = [
   "classifier",
   "core",
   "detector",
-  "detector-ort",
   "examples/*",
   "speciesnet",
   "speciesnet-cli"
