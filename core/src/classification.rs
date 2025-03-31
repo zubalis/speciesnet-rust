@@ -20,7 +20,7 @@ impl Serialize for ClassificationBundle {
     {
         let mut s = serializer.serialize_struct("ClassificationBundle", 2)?;
 
-        s.serialize_field("label", &self.labels)?;
+        s.serialize_field("classes", &self.labels)?;
         s.serialize_field("scores", &self.scores)?;
 
         s.end()
@@ -50,13 +50,13 @@ impl<'de> Deserialize<'de> for ClassificationBundle {
 
                 while let Some(key) = map.next_key::<String>()? {
                     match key.as_str() {
-                        "labels" => labels = Some(map.next_value()?),
+                        "classes" => labels = Some(map.next_value()?),
                         "scores" => scores = Some(map.next_value()?),
                         _ => {}
                     }
                 }
 
-                let labels = labels.ok_or_else(|| serde::de::Error::missing_field("labels"))?;
+                let labels = labels.ok_or_else(|| serde::de::Error::missing_field("classes"))?;
                 let scores = scores.ok_or_else(|| serde::de::Error::missing_field("scores"))?;
                 
                 if labels.len() != scores.len() {

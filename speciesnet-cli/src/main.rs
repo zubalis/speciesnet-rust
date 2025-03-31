@@ -137,8 +137,7 @@ fn main() -> anyhow::Result<()> {
     }
     
     if args.run_type.classifier_only {
-        let classifier_results = speciesnet.classify(&images, PathBuf::from("assets/labels.txt"))?;
-        println!("Classifier results: {}" , classifier_results.len());
+        let classifier_results = speciesnet.classify(&args.additional_config.detections_json.unwrap(), PathBuf::from("assets/labels.txt"))?;
         let predictions = Predictions::from(classifier_results);
 
         info!(

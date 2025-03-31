@@ -1,10 +1,11 @@
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 use fast_image_resize::images::Image;
 use fast_image_resize::{PixelType, Resizer};
 
 use image::io::Reader;
 use tensorflow::Tensor;
 use crate::error::Error;
+use crate::input::ClassifierInput;
 
 #[derive(Debug)]
 pub struct ProceededImage {
@@ -12,12 +13,23 @@ pub struct ProceededImage {
     pub image_tensor: Tensor<f32>,
 }
 
-pub fn load_and_preprocess_images<P: AsRef<Path>>(
-    image_path: P,
+pub fn preprocess(
+    classifier_input: &ClassifierInput,
 ) -> Result<ProceededImage, Error> {
-    let reader = Reader::open(image_path.as_ref())?;
+    let reader = Reader::open(&classifier_input.file_path)?;
     let decoded_img = reader.decode()?;
-    let img_rgb = decoded_img.to_rgb8();
+    // Crop image
+    let min_x = (classifier_input.bbox.get_x1() * decoded_img.width() as f64) as u32;
+    let min_y = (classifier_input.bbox.get_y1() * decoded_img.height() as f64) as u32;
+    let max_x = (classifier_input.bbox.get_x2() * decoded_img.width() as f64) as u32;
+    let max_y = (classifier_input.bbox.get_y2() * decoded_img.height() as f64) as u32;
+    let cropped_img = decoded_img.crop_imm(
+        min_x,
+        min_y,
+        max_x - min_x,
+        max_y - min_y,
+    );
+    let img_rgb = cropped_img.to_rgb8();
     let (w, h) = img_rgb.dimensions();
     let src_image = Image::from_vec_u8(
         w, h,
@@ -39,7 +51,7 @@ pub fn load_and_preprocess_images<P: AsRef<Path>>(
     let tensor =
         Tensor::new(&[1, 480, 480, 3]).with_values(&pixels)?;
     Ok(ProceededImage {
-        path: image_path.as_ref().to_path_buf(),
+        path: classifier_input.file_path.clone(),
         image_tensor: tensor
     })
 }

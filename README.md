@@ -82,7 +82,7 @@ cargo run --bin speciesnet -- --instances-json assets/images/input.json --predic
 Running only the classifer
 
 ```
-cargo run --bin speciesnet -- --instances-json assets/images/input.json --predictions-json assets/images/output_classifier_test.json --classifier-only --detections-json assets/images/output_detector.json
+cargo run --release --bin speciesnet-cli -- --instances-json path/to/input.json --predictions-json path/to/output_classifier.json --classifier-only --classifier-model path/to/model/dir --detector-model path/to/model.pt --detections-json path/to/output_detector.json
 ```
 
 Running only the ensemble

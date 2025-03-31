@@ -7,6 +7,7 @@ pub mod constants;
 pub mod error;
 pub mod geofence;
 pub mod image;
+pub mod input;
 
 use crate::error::Error;
 
@@ -43,7 +44,7 @@ impl SpeciesNetClassifier {
 
         let input_op = self
             .graph
-            .operation_by_name_required("serving_default_rescaling_input")?;
+            .operation_by_name_required("serving_default_input_2")?;
         let output_op = self
             .graph
             .operation_by_name_required("StatefulPartitionedCall")?;
