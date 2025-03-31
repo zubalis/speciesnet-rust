@@ -122,13 +122,13 @@ impl BoundingBox {
         Ok(Self { x1, y1, x2, y2 })
     }
 
-    /// Tries to convert a [Tensor] in format of `(center_y, center_y, width, height)` to the bounding box struct.
+    /// Tries to convert a [Tensor][tensor] in format of `(center_y, center_y, width, height)` to the bounding box struct.
     ///
     /// # Panics
     ///
-    /// This function could panic if the [Tensor]'s shape is not `Tensor[4, Float]`.
+    /// This function could panic if the [Tensor][tensor]'s shape is not `Tensor[4, Float]`.
     ///
-    /// [Tensor]: tch::Tensor
+    /// [tensor]: tch::Tensor
     pub fn from_xywh_tensor(tensor: &Tensor) -> Result<Self, Error> {
         let tensor_size = tensor.size1()?;
 
@@ -196,18 +196,18 @@ impl BoundingBox {
     /// [YOLOv5's clip_boxes]: https://github.com/ultralytics/yolov5/blob/8cc449636da76757a71385a2b57dc977db58b81e/utils/general.py#L988-L997
     pub fn scale_to(
         mut self,
-        scaled_down_width: u32,
-        scaled_down_height: u32,
+        resized_width: u32,
+        resized_height: u32,
         width: u32,
         height: u32,
     ) -> Self {
         let gain = f32::min(
-            scaled_down_width as f32 / width as f32,
-            scaled_down_height as f32 / height as f32,
+            resized_width as f32 / width as f32,
+            resized_height as f32 / height as f32,
         );
         let pad = (
-            (scaled_down_height as f32 - (height as f32 * gain)) / 2.0,
-            (scaled_down_width as f32 - (width as f32 * gain)) / 2.0,
+            (resized_height as f32 - (height as f32 * gain)) / 2.0,
+            (resized_width as f32 - (width as f32 * gain)) / 2.0,
         );
 
         // The clamp part is the clip_boxes function.
