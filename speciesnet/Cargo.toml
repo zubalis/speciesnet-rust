@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 speciesnet-core = { path = "../core" }
 speciesnet-detector = { path = "../detector" }
-speciesnet-detector-ort = { path = "../detector-ort" }
 speciesnet-classifier = { path = "../classifier" }
 rayon = "1"
 thiserror = "2"

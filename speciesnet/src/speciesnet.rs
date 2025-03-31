@@ -5,8 +5,7 @@ use speciesnet_classifier::SpeciesNetClassifier;
 use speciesnet_classifier::classifier::{read_labels_from_file, transform};
 use speciesnet_classifier::image::load_and_preprocess_images;
 use speciesnet_core::prediction::Prediction;
-//use speciesnet_detector::{SpeciesNetDetector, preprocess::preprocess};
-use speciesnet_detector_ort::SpeciesNetDetectorOrt;
+use speciesnet_detector::{SpeciesNetDetectorOrt, preprocess::preprocess};
 use tracing::{debug, error, info};
 
 use crate::error::Error;
@@ -35,45 +34,15 @@ impl SpeciesNet {
         })
     }
 
-    // Performs the detection by MegaDetector Model from given file or folder. Returns a list of
-    // detections.
-    //pub fn detect(&self, list_of_files: &[PathBuf]) -> Result<Vec<Prediction>, Error> {
-    //    info!("Starting the detector step.");
-    //
-    //    let detections = list_of_files
-    //        .iter()
-    //        .map(|fp| {
-    //            let preprocessed_image = match preprocess(fp) {
-    //                Ok(pi) => pi,
-    //                Err(e) => {
-    //                    error!("{}", e);
-    //                    return None;
-    //                }
-    //            };
-    //
-    //            match self.detector.predict(preprocessed_image) {
-    //                Ok(d) => d,
-    //                Err(e) => {
-    //                    error!("{}", e);
-    //                    None
-    //                }
-    //            }
-    //        })
-    //        .collect::<Vec<Option<Prediction>>>();
-    //
-    //    Ok(detections
-    //        .into_iter()
-    //        .flatten()
-    //        .collect::<Vec<Prediction>>())
-    //}
-
-    pub fn detect_ort(&self, list_of_files: &[PathBuf]) -> Result<Vec<Prediction>, Error> {
+    /// Performs the detection by MegaDetector Model from given file or folder. Returns a list of
+    /// detections.
+    pub fn detect(&self, list_of_files: &[PathBuf]) -> Result<Vec<Prediction>, Error> {
         info!("Starting the detector ort step.");
 
         let detections = list_of_files
             .iter()
             .map(|fp| {
-                let preprocessed_image = match speciesnet_detector_ort::preprocess::preprocess(fp) {
+                let preprocessed_image = match preprocess(fp) {
                     Ok(pi) => pi,
                     Err(e) => {
                         error!("{}", e);
