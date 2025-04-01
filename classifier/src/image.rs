@@ -18,10 +18,10 @@ pub fn preprocess(classifier_input: &ClassifierInput) -> Result<ProceededImage, 
     let reader = Reader::open(&classifier_input.file_path)?;
     let decoded_img = reader.decode()?;
     // Crop image
-    let min_x = (classifier_input.bbox.get_x1() * decoded_img.width() as f64) as u32;
-    let min_y = (classifier_input.bbox.get_y1() * decoded_img.height() as f64) as u32;
-    let max_x = (classifier_input.bbox.get_x2() * decoded_img.width() as f64) as u32;
-    let max_y = (classifier_input.bbox.get_y2() * decoded_img.height() as f64) as u32;
+    let min_x = (classifier_input.bbox.x1() * decoded_img.width() as f64) as u32;
+    let min_y = (classifier_input.bbox.y1() * decoded_img.height() as f64) as u32;
+    let max_x = (classifier_input.bbox.x2() * decoded_img.width() as f64) as u32;
+    let max_y = (classifier_input.bbox.y2() * decoded_img.height() as f64) as u32;
     let cropped_img = decoded_img.crop_imm(min_x, min_y, max_x - min_x, max_y - min_y);
     let img_rgb = cropped_img.to_rgb8();
     let (w, h) = img_rgb.dimensions();
@@ -33,8 +33,8 @@ pub fn preprocess(classifier_input: &ClassifierInput) -> Result<ProceededImage, 
 
     let pixels: Vec<f32> = dst_image
         .buffer()
-        .to_vec()
-        .into_iter()
+        .iter()
+        .copied()
         .map(|v| v as f32 / 255.0)
         .collect();
 

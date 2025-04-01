@@ -230,19 +230,19 @@ impl BoundingBox {
         self
     }
 
-    pub fn get_x1(&self) -> f64 {
+    pub fn x1(&self) -> f64 {
         self.x1
     }
 
-    pub fn get_y1(&self) -> f64 {
+    pub fn y1(&self) -> f64 {
         self.y1
     }
 
-    pub fn get_x2(&self) -> f64 {
+    pub fn x2(&self) -> f64 {
         self.x2
     }
 
-    pub fn get_y2(&self) -> f64 {
+    pub fn y2(&self) -> f64 {
         self.y2
     }
 }
