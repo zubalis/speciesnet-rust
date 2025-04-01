@@ -68,14 +68,10 @@ impl SpeciesNet {
     }
 
     /// Performs the classification from detector output by the cameratrap model.
-    pub fn classify(
-        &self,
-        detector_output_path: &PathBuf,
-        label_path: PathBuf,
-    ) -> Result<Vec<Prediction>, Error> {
+    pub fn classify(&self, detector_output_path: &PathBuf, label_path: &PathBuf) -> Result<Vec<Prediction>, Error> {
         let classifier_inputs = ClassifierInput::from_detector_output(detector_output_path)?;
         // Load labels
-        let labels: Vec<String> = read_labels_from_file(&label_path)?;
+        let labels: Vec<String> = read_labels_from_file(label_path)?;
         let predictions = classifier_inputs
             .par_iter()
             .map(|fp| {

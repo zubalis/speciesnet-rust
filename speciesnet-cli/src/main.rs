@@ -147,10 +147,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     if args.run_type.classifier_only {
-        let classifier_results = speciesnet.classify(
-            &args.additional_config.detections_json.unwrap(),
-            PathBuf::from("assets/labels.txt"),
-        )?;
+        let classifier_results = speciesnet.classify(&args.additional_config.detections_json.unwrap(), &args.classifier_model.join("labels.txt"))?; // assumed labels is in the same folder as model
         let predictions = Predictions::from(classifier_results);
 
         info!(
