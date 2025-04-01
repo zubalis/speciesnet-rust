@@ -1,6 +1,6 @@
 use std::{fs::File, io::BufWriter, path::PathBuf};
 
-use clap::{error::ErrorKind, Args, CommandFactory, Parser};
+use clap::{Args, CommandFactory, Parser, error::ErrorKind};
 use inputs::prepare_image_inputs;
 use speciesnet::SpeciesNet;
 use speciesnet_core::prediction::Predictions;

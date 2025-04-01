@@ -57,7 +57,7 @@ impl Prediction {
             model_version: None,
         }
     }
-    
+
     pub fn from_classifications(file_path: PathBuf, classifications: ClassificationBundle) -> Self {
         Self {
             file_path,

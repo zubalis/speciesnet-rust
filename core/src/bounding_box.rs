@@ -229,7 +229,7 @@ impl BoundingBox {
 
         self
     }
-    
+
     pub fn get_x1(&self) -> f64 {
         self.x1
     }

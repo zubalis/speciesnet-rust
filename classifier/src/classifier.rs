@@ -1,9 +1,11 @@
 use std::cmp::Ordering::Equal;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::path::{Path};
+use std::path::Path;
+
 use speciesnet_core::classification::{Classification, ClassificationBundle};
 use speciesnet_core::prediction::Prediction;
+
 use crate::error::Error;
 
 #[cfg(test)]
@@ -45,17 +47,16 @@ pub fn to_chunks(outputs: &[f32], chunk_size: usize) -> Vec<Vec<f32>> {
         .collect()
 }
 
-pub fn transform<P: AsRef<Path>>(
-    file_path: P,
-    outputs: &[f32],
-    labels: &[String],
-) -> Prediction {
+pub fn transform<P: AsRef<Path>>(file_path: P, outputs: &[f32], labels: &[String]) -> Prediction {
     let softmax_result = softmax(outputs);
     let mapped_result = map_labels_to_classifications(labels, &softmax_result);
     let top5_result = pick_top_n_from(mapped_result, 5);
     let labels = top5_result.iter().map(|c| c.label.clone()).collect();
     let scores = top5_result.iter().map(|c| c.score).collect();
-    Prediction::from_classifications(file_path.as_ref().to_path_buf(), ClassificationBundle { labels, scores })
+    Prediction::from_classifications(
+        file_path.as_ref().to_path_buf(),
+        ClassificationBundle { labels, scores },
+    )
 }
 
 pub fn read_labels_from_file<P: AsRef<Path>>(file_path: P) -> Result<Vec<String>, Error> {
