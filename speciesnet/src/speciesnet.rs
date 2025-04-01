@@ -6,14 +6,14 @@ use speciesnet_classifier::classifier::{read_labels_from_file, transform};
 use speciesnet_classifier::image::preprocess as classifier_preprocess;
 use speciesnet_classifier::input::ClassifierInput;
 use speciesnet_core::prediction::Prediction;
-use speciesnet_detector::{SpeciesNetDetectorOrt, preprocess::preprocess};
+use speciesnet_detector::{SpeciesNetDetector, preprocess::preprocess};
 use tracing::{debug, error, info};
 
 use crate::error::Error;
 
 #[derive(Debug, Clone)]
 pub struct SpeciesNet {
-    detector_ort: SpeciesNetDetectorOrt,
+    detector: SpeciesNetDetector,
     classifier: SpeciesNetClassifier,
 }
 
@@ -26,12 +26,12 @@ impl SpeciesNet {
         let classifier = SpeciesNetClassifier::new(classifier_model_dir_path)?;
         info!("Classifier initialized.");
 
-        let detector_ort = SpeciesNetDetectorOrt::new(detector_model_path)?;
+        let detector = SpeciesNetDetector::new(detector_model_path)?;
         info!("Detector ort initialized.");
 
         Ok(Self {
             classifier,
-            detector_ort,
+            detector,
         })
     }
 
@@ -51,7 +51,7 @@ impl SpeciesNet {
                     }
                 };
 
-                match self.detector_ort.predict(preprocessed_image) {
+                match self.detector.predict(preprocessed_image) {
                     Ok(d) => d,
                     Err(e) => {
                         error!("{}", e);

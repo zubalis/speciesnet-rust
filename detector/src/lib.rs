@@ -16,11 +16,11 @@ pub mod torchvision;
 pub mod yolo;
 
 #[derive(Debug, Clone)]
-pub struct SpeciesNetDetectorOrt {
+pub struct SpeciesNetDetector {
     model: Arc<Session>,
 }
 
-impl SpeciesNetDetectorOrt {
+impl SpeciesNetDetector {
     pub fn new<P>(model_path: P) -> Result<Self, Error>
     where
         P: AsRef<Path>,
