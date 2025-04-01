@@ -65,7 +65,7 @@ cargo run --bin speciesnet -- --instances-json assets/images/input.json --predic
 Running only the classifer
 
 ```
-cargo run --bin speciesnet -- --instances-json assets/images/input.json --predictions-json assets/images/output_classifier_test.json --classifier-only --detections-json assets/images/output_detector.json
+cargo run --release --bin speciesnet-cli -- --instances-json path/to/input.json --predictions-json path/to/output_classifier.json --classifier-only --classifier-model path/to/model/dir --detector-model path/to/model.pt --detections-json path/to/output_detector.json
 ```
 
 Running only the ensemble
@@ -73,3 +73,16 @@ Running only the ensemble
 ```
 cargo run --bin speciesnet -- --instances-json assets/images/input.json --predictions-json assets/images/output_ensemble_test.json --ensemble-only --detections-json assets/images/output_detector.json --classifications-json assets/images/output_classifier.json
 ```
+
+### Testing CLI output
+
+The CLI should output json that is similar to the original Python version of Speciesnet. The 3 `output_xyz.json` files in `assets/images` were generated from the original version and therefore are useful for comparison. Note: floating-point numbers won't be exactly the same because the model conversion and CPU differences.
+
+To compare a JSON output from the CLI with the Python version, use:
+
+```
+cd assets/images
+python compare.py output_detector_test.json output_detector.json
+```
+
+You can adjust the precision of the comparison using the constants (e.g. `DETECTION_CONF_DP = 3`) found in `compare.py`.

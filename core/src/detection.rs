@@ -10,6 +10,7 @@ pub struct Detection {
     category: Category,
     #[serde(rename(deserialize = "conf"))]
     confidence: f64,
+    #[serde(rename(deserialize = "bbox"))]
     bounding_box: BoundingBox,
 }
 

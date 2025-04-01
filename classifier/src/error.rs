@@ -29,4 +29,6 @@ pub enum Error {
     ResizeError(#[from] fast_image_resize::ResizeError),
     #[error("Decode error: {0}")]
     ImageDecodeError(#[from] image::ImageError),
+    #[error("Deserialize error: {0}")]
+    DeserializeError(#[from] serde_json::error::Error),
 }

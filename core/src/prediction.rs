@@ -28,12 +28,19 @@ impl Predictions {
 pub struct Prediction {
     #[serde(rename = "filepath")]
     file_path: PathBuf,
+    #[serde(skip_serializing_if = "Option::is_none")]
     country: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     admin1_region: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     detections: Option<Vec<Detection>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     classifications: Option<ClassificationBundle>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     prediction: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     prediction_score: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     model_version: Option<String>,
 }
 

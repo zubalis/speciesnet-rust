@@ -3,7 +3,8 @@ use std::path::{Path, PathBuf};
 use rayon::prelude::*;
 use speciesnet_classifier::SpeciesNetClassifier;
 use speciesnet_classifier::classifier::{read_labels_from_file, transform};
-use speciesnet_classifier::image::load_and_preprocess_images;
+use speciesnet_classifier::image::preprocess as classifier_preprocess;
+use speciesnet_classifier::input::ClassifierInput;
 use speciesnet_core::prediction::Prediction;
 use speciesnet_detector::{SpeciesNetDetectorOrt, preprocess::preprocess};
 use tracing::{debug, error, info};
@@ -66,24 +67,19 @@ impl SpeciesNet {
             .collect::<Vec<Prediction>>())
     }
 
-    /// Performs the classification by the cameratrap model.
+    /// Performs the classification from detector output by the cameratrap model.
     pub fn classify(
         &self,
-        list_of_files: &[PathBuf],
+        detector_output_path: &PathBuf,
         label_path: PathBuf,
     ) -> Result<Vec<Prediction>, Error> {
-        let num_threads = num_cpus::get() - 1; // can be tuned later
-        debug!(
-            "Running classify: {}, with {} threads",
-            list_of_files.len(),
-            num_threads
-        );
+        let classifier_inputs = ClassifierInput::from_detector_output(detector_output_path)?;
         // Load labels
         let labels: Vec<String> = read_labels_from_file(&label_path)?;
-        let predictions = list_of_files
+        let predictions = classifier_inputs
             .par_iter()
             .map(|fp| {
-                let image = load_and_preprocess_images(fp)?;
+                let image = classifier_preprocess(fp)?;
                 let tensor = image.image_tensor;
                 let image_path = image.path;
                 let outputs = self.classifier.classify(&tensor)?;
