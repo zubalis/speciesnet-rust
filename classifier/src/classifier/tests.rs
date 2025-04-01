@@ -1,9 +1,10 @@
 use std::cell::LazyCell;
 use std::path::PathBuf;
-use speciesnet_core::prediction::Prediction;
+
 use crate::classifier::{
     Classification, map_labels_to_classifications, pick_top_n_from, softmax, to_chunks, transform,
 };
+use speciesnet_core::prediction::Prediction;
 
 const LABELS: LazyCell<Vec<String>> = LazyCell::new(|| {
     vec![
@@ -131,10 +132,12 @@ fn test_transform_fn() {
         "ant".to_string(),
         "fish".to_string(),
     ];
-    
-    let results: Vec<Prediction> = file_paths.iter().zip(scores.iter()).map(|(p, s)| {
-        transform(p, s, &labels)
-    }).collect();
+
+    let results: Vec<Prediction> = file_paths
+        .iter()
+        .zip(scores.iter())
+        .map(|(p, s)| transform(p, s, &labels))
+        .collect();
 
     let first = &results.get(0).unwrap();
     let first_classifications = first.classifications().as_ref().unwrap();

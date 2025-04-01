@@ -1,12 +1,13 @@
+use serde::de::{MapAccess, Visitor};
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Deserializer, Serialize};
-use serde::de::{MapAccess, Visitor};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ClassificationBundle {
     pub labels: Vec<String>,
     pub scores: Vec<f32>,
 }
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Classification {
     pub label: String,
@@ -30,7 +31,7 @@ impl Serialize for ClassificationBundle {
 impl<'de> Deserialize<'de> for ClassificationBundle {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         struct ClassificationBundleVisitor;
 
@@ -58,9 +59,11 @@ impl<'de> Deserialize<'de> for ClassificationBundle {
 
                 let labels = labels.ok_or_else(|| serde::de::Error::missing_field("classes"))?;
                 let scores = scores.ok_or_else(|| serde::de::Error::missing_field("scores"))?;
-                
+
                 if labels.len() != scores.len() {
-                    Err(serde::de::Error::custom("`labels` size and `scores` size have to be the same"))?;
+                    Err(serde::de::Error::custom(
+                        "`labels` size and `scores` size have to be the same",
+                    ))?;
                 }
 
                 Ok(ClassificationBundle { labels, scores })

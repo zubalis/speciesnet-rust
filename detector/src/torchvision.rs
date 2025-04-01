@@ -1,46 +1,47 @@
-use tch::{IndexOp, Tensor};
+use ndarray::{ArrayView1, ArrayView2};
 
 /// A function to perform Non-max suppression on a detection tensor and scores tensor.
 ///
-/// This function is mimicked from [LibTorch's Non-max suppression](https://github.com/pytorch/vision/blob/124dfa404f395db90280e6dd84a51c50c742d5fd/torchvision/csrc/ops/cpu/nms_kernel.cpp)
+/// This function is mimicked from [LibTorch's Non-max suppression](https://github.com/pytorch/vision/blob/124dfa404f395db90280e6dd84a51c50c742d5fd/torchvision/csrc/ops/cpu/nms_kernel.cpp).
 ///
-/// This function's implementation is taken from [this issue in tch](https://github.com/laurentmazare/tch-rs/issues/833#issuecomment-1905027185)
-///
-/// # Panics
-///
-/// The function can panic since the tensor operations are C++ FFI.
-pub fn nms(detections: &Tensor, scores: &Tensor, iou_threshold: f64) -> Tensor {
-    let mut sorting: Vec<i64> = scores.argsort(0, false).try_into().unwrap();
-    let mut keep: Vec<i64> = Vec::new();
+/// This function's implementation is take from [this issue comment in tch](https://github.com/laurentmazare/tch-rs/issues/833#issuecomment-1905027185).
+pub fn nms(detections: ArrayView2<f32>, scores: ArrayView1<f32>, iou_threshold: f32) -> Vec<usize> {
+    let mut sorting: Vec<usize> = (0..scores.len()).collect();
+    sorting.sort_unstable_by(|&a, &b| scores[a].total_cmp(&scores[b]));
+
+    let mut keep: Vec<usize> = Vec::new();
+
     while let Some(idx) = sorting.pop() {
         keep.push(idx);
+
         for i in (0..sorting.len()).rev() {
-            if iou(&detections.i(idx), &detections.i(sorting[i])).double_value(&[]) > iou_threshold
-            {
+            if iou(detections.row(idx), detections.row(sorting[i])) > iou_threshold {
                 _ = sorting.remove(i);
             }
         }
     }
 
-    Tensor::try_from(keep).unwrap().to_device(tch::Device::Cpu)
+    keep
 }
 
 /// Performs the calculation of Intersection Over Union value that's being used in Non-max
 /// suppression function.
 ///
-/// The function's implementation is taken from [this issue in tch](https://github.com/laurentmazare/tch-rs/issues/833#issuecomment-1905027185)
-///
-/// # Panics
-///
-/// The function can panic since the tensor operations are C++ FFI.
-fn iou(a: &Tensor, b: &Tensor) -> Tensor {
-    let zero = Tensor::zeros_like(&a.i(0));
-    let a_area = (a.i(2) - a.i(0) + 1) * (a.i(3) - a.i(1) + 1);
-    let b_area = (b.i(2) - b.i(0) + 1) * (b.i(3) - b.i(1) + 1);
-    let i_xmin = a.i(0).max_other(&b.i(0));
-    let i_xmax = a.i(2).min_other(&b.i(2));
-    let i_ymin = a.i(1).max_other(&b.i(1));
-    let i_ymax = a.i(3).min_other(&b.i(3));
-    let i_area = (i_xmax - i_xmin + 1).max_other(&zero) * (i_ymax - i_ymin + 1).max_other(&zero);
-    &i_area / (a_area + b_area - &i_area)
+/// This function's implementation is take from [this issue comment in tch](https://github.com/laurentmazare/tch-rs/issues/833#issuecomment-1905027185).
+fn iou(a: ArrayView1<f32>, b: ArrayView1<f32>) -> f32 {
+    let zero: f32 = 0.0;
+
+    let a_area = (a[2] - a[0] + 1.0) * (a[3] - a[1] + 1.0);
+    let b_area = (b[2] - b[0] + 1.0) * (b[3] - b[1] + 1.0);
+
+    let i_x1 = a[0].max(b[0]);
+    let i_y1 = a[1].max(b[1]);
+    let i_x2 = a[2].min(b[2]);
+    let i_y2 = a[3].min(b[3]);
+
+    let i_width = (i_x2 - i_x1 + 1.0).max(zero);
+    let i_height = (i_y2 - i_y1 + 1.0).max(zero);
+    let i_area = i_width * i_height;
+
+    i_area / (a_area + b_area - i_area)
 }

@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
+use ndarray::ArrayView1;
 use serde::{Deserialize, Serialize, de, ser::SerializeSeq};
-use tch::{IndexOp, Tensor};
 
 use crate::error::Error;
 
@@ -78,7 +78,7 @@ impl Serialize for BoundingBox {
 
 impl BoundingBox {
     /// Expected tensor size for converting values to this struct from [`Tensor`].
-    const EXPECTED_TENSOR_SIZE: i64 = 4;
+    const EXPECTED_TENSOR_SIZE: i32 = 4;
 
     pub fn new(x1: f64, y1: f64, x2: f64, y2: f64) -> Self {
         Self { x1, y1, x2, y2 }
@@ -105,48 +105,53 @@ impl BoundingBox {
         }
     }
 
-    /// Tries to convert a [`Tensor`] in format of `(x1, y1, x2, y2)` to the bounding box struct.
-    /// Tensor must be 1 dimension in the format of `Tensor[4, Float]`.
-    pub fn from_xyxy_tensor(tensor: &Tensor) -> Result<Self, Error> {
-        let tensor_size = tensor.size1()?;
+    /// Tries to convert an [`ArrayView1`] in format of `(x1, y1, x2, y2)` to the bounding box struct.
+    pub fn from_xyxy_tensor(tensor: ArrayView1<f32>) -> Result<Self, Error> {
+        let tensor_size = tensor.shape();
 
-        if tensor_size < Self::EXPECTED_TENSOR_SIZE {
-            return Err(Error::InvalidTensorSize(tensor_size));
+        let first_dim_tensor_size = tensor_size.first().unwrap_or(&0usize);
+        if (*first_dim_tensor_size as i32) < Self::EXPECTED_TENSOR_SIZE {
+            return Err(Error::InvalidTensorSize(*first_dim_tensor_size as i32));
         }
 
-        let x1 = tensor.f_i(0)?.f_double_value(&[])?;
-        let y1 = tensor.f_i(1)?.f_double_value(&[])?;
-        let x2 = tensor.f_i(2)?.f_double_value(&[])?;
-        let y2 = tensor.f_i(3)?.f_double_value(&[])?;
+        let x1 = tensor[0];
+        let y1 = tensor[1];
+        let x2 = tensor[2];
+        let y2 = tensor[3];
 
-        Ok(Self { x1, y1, x2, y2 })
+        Ok(Self {
+            x1: x1.into(),
+            y1: y1.into(),
+            x2: x2.into(),
+            y2: y2.into(),
+        })
     }
 
-    /// Tries to convert a [Tensor] in format of `(center_y, center_y, width, height)` to the bounding box struct.
-    ///
-    /// # Panics
-    ///
-    /// This function could panic if the [Tensor]'s shape is not `Tensor[4, Float]`.
-    ///
-    /// [Tensor]: tch::Tensor
-    pub fn from_xywh_tensor(tensor: &Tensor) -> Result<Self, Error> {
-        let tensor_size = tensor.size1()?;
+    /// Tries to convert a [`ArrayView1`] in format of `(center_y, center_y, width, height)` to the bounding box struct.
+    pub fn from_xywh_tensor(tensor: ArrayView1<f32>) -> Result<Self, Error> {
+        let tensor_sizes = tensor.shape();
 
-        if tensor_size < Self::EXPECTED_TENSOR_SIZE {
-            return Err(Error::InvalidTensorSize(tensor_size));
+        let first_dim_tensor_size = tensor_sizes.first().unwrap_or(&0usize);
+        if (*first_dim_tensor_size as i32) < Self::EXPECTED_TENSOR_SIZE {
+            return Err(Error::InvalidTensorSize(*first_dim_tensor_size as i32));
         }
 
-        let center_x = tensor.f_i(0)?.f_double_value(&[])?;
-        let center_y = tensor.f_i(1)?.f_double_value(&[])?;
-        let width = tensor.f_i(2)?.f_double_value(&[])?;
-        let height = tensor.f_i(3)?.f_double_value(&[])?;
+        let center_x = tensor[0];
+        let center_y = tensor[1];
+        let width = tensor[2];
+        let height = tensor[3];
 
         let x1 = center_x - (width / 2.0);
         let y1 = center_y - (height / 2.0);
         let x2 = center_x + (width / 2.0);
         let y2 = center_y + (height / 2.0);
 
-        Ok(Self { x1, y1, x2, y2 })
+        Ok(Self {
+            x1: x1.into(),
+            y1: y1.into(),
+            x2: x2.into(),
+            y2: y2.into(),
+        })
     }
 
     /// Returns the values of the coordinates in a form of `(x1, y1, x2, y2)` tuple format.
@@ -196,18 +201,18 @@ impl BoundingBox {
     /// [YOLOv5's clip_boxes]: https://github.com/ultralytics/yolov5/blob/8cc449636da76757a71385a2b57dc977db58b81e/utils/general.py#L988-L997
     pub fn scale_to(
         mut self,
-        scaled_down_width: u32,
-        scaled_down_height: u32,
+        resized_width: u32,
+        resized_height: u32,
         width: u32,
         height: u32,
     ) -> Self {
         let gain = f32::min(
-            scaled_down_width as f32 / width as f32,
-            scaled_down_height as f32 / height as f32,
+            resized_width as f32 / width as f32,
+            resized_height as f32 / height as f32,
         );
         let pad = (
-            (scaled_down_height as f32 - (height as f32 * gain)) / 2.0,
-            (scaled_down_width as f32 - (width as f32 * gain)) / 2.0,
+            (resized_height as f32 - (height as f32 * gain)) / 2.0,
+            (resized_width as f32 - (width as f32 * gain)) / 2.0,
         );
 
         // The clamp part is the clip_boxes function.
@@ -224,20 +229,20 @@ impl BoundingBox {
 
         self
     }
-    
-    pub fn get_x1(&self) -> f64 {
+
+    pub fn x1(&self) -> f64 {
         self.x1
     }
 
-    pub fn get_y1(&self) -> f64 {
+    pub fn y1(&self) -> f64 {
         self.y1
     }
 
-    pub fn get_x2(&self) -> f64 {
+    pub fn x2(&self) -> f64 {
         self.x2
     }
 
-    pub fn get_y2(&self) -> f64 {
+    pub fn y2(&self) -> f64 {
         self.y2
     }
 }

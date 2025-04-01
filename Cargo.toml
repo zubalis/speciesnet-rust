@@ -1,3 +1,10 @@
 [workspace]
 resolver = "2"
-members = ["classifier", "core", "detector", "examples/*", "speciesnet", "speciesnet-cli"]
+members = [
+  "classifier",
+  "core",
+  "detector",
+  "examples/*",
+  "speciesnet",
+  "speciesnet-cli"
+]

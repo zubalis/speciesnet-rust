@@ -2,12 +2,16 @@ use std::{fs::File, io::BufWriter, path::PathBuf};
 
 use clap::{Args, CommandFactory, Parser, error::ErrorKind};
 use inputs::prepare_image_inputs;
-use log::{debug, info};
 use speciesnet::SpeciesNet;
 use speciesnet_core::prediction::Predictions;
+use tracing::info;
+use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
 mod file_extension;
 mod inputs;
+
+/// The name of the environment variable that can be set to specify the log level of speciesnet.
+const SPECIESNET_LOG_ENV_NAME: &str = "SPECIESNET_LOG";
 
 #[derive(Debug, Args)]
 #[group(required = true, multiple = false)]
@@ -65,7 +69,7 @@ pub struct CliArguments {
     run_type: RunType,
     #[command(flatten)]
     additional_config: AdditionalConfiguration,
-    /// The path of the classifier model.
+    /// The path of the classifier model folder.
     #[arg(long)]
     classifier_model: PathBuf,
     /// The path of the detector model.
@@ -77,7 +81,13 @@ pub struct CliArguments {
 }
 
 fn main() -> anyhow::Result<()> {
-    env_logger::init();
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_env(SPECIESNET_LOG_ENV_NAME)
+                .unwrap_or_else(|_| "debug,ort=info".into()),
+        )
+        .with(tracing_subscriber::fmt::layer().with_ansi(true))
+        .init();
 
     let args = CliArguments::parse();
     let mut cmd = CliArguments::command();
@@ -121,23 +131,26 @@ fn main() -> anyhow::Result<()> {
     if args.run_type.detector_only {
         let detector_results = speciesnet.detect(&images)?;
         let predictions = Predictions::from(detector_results);
-    
+
         info!(
             "Saving the detected results to {}.",
             args.predictions_json.display()
         );
-    
+
         let writer = BufWriter::new(File::create(&args.predictions_json)?);
         serde_json::to_writer(writer, &predictions)?;
-    
+
         info!(
             "Predictions file has been successfully saved to {}.",
             args.predictions_json.display()
         );
     }
-    
+
     if args.run_type.classifier_only {
-        let classifier_results = speciesnet.classify(&args.additional_config.detections_json.unwrap(), PathBuf::from("assets/labels.txt"))?;
+        let classifier_results = speciesnet.classify(
+            &args.additional_config.detections_json.unwrap(),
+            PathBuf::from("assets/labels.txt"),
+        )?;
         let predictions = Predictions::from(classifier_results);
 
         info!(

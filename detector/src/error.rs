@@ -1,14 +1,11 @@
-use image::ImageError;
-use tch::TchError;
-
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("tch error: {0}")]
-    TchError(#[from] TchError),
+    #[error("ort error: {0}")]
+    OrtError(#[from] ort::Error),
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
-    #[error("Image error: {0}")]
-    ImageError(#[from] ImageError),
-    #[error("SpeciesNet core error: {0}")]
-    CoreError(#[from] speciesnet_core::error::Error),
+    #[error("image error: {0}")]
+    ImageDecodeError(#[from] image::error::ImageError),
+    #[error("ndarray shape error: {0}")]
+    ShapeError(#[from] ndarray::ShapeError),
 }

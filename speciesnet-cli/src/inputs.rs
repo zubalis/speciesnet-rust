@@ -4,9 +4,8 @@ use std::{
     path::PathBuf,
 };
 
-use anyhow::bail;
-use log::{debug, info};
 use speciesnet_core::instance::Instances;
+use tracing::{debug, info};
 use walkdir::WalkDir;
 
 use crate::{InputType, file_extension::SUPPORTED_IMAGE_EXTENSIONS};
@@ -28,9 +27,9 @@ pub fn prepare_image_inputs(input_type: &InputType) -> anyhow::Result<Vec<PathBu
         let instance_json_value: Instances = serde_json::from_reader(instances_file)?;
 
         for v in instance_json_value.instances {
-            let Some(instances_file_folder) = instances_json_path.parent() else {
-                bail!("Instances file's parent path is None.");
-            };
+            let instances_file_folder = instances_json_path
+                .parent()
+                .expect("Instances file's parent path is None.");
 
             let jointed_image_path = instances_file_folder.join(v.filepath);
             image_paths.push(jointed_image_path);

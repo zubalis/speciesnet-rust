@@ -1,12 +1,14 @@
 use std::{path::Path, sync::Arc};
 
-use log::{debug, info, warn};
+use error::Error;
+use ort::{
+    session::{Session, builder::GraphOptimizationLevel},
+    value::Tensor,
+};
 use preprocess::PreprocessedImage;
-use speciesnet_core::{BoundingBox, Detection, prediction::Prediction};
-use tch::{CModule, Device, IValue, IndexOp};
+use speciesnet_core::{BoundingBox, Category, Detection, prediction::Prediction};
+use tracing::info;
 use yolo::non_max_suppression;
-
-use crate::error::Error;
 
 pub mod error;
 pub mod preprocess;
@@ -14,23 +16,24 @@ pub mod torchvision;
 pub mod yolo;
 
 #[derive(Debug, Clone)]
-pub struct SpeciesNetDetector {
-    model: Arc<CModule>,
-    device: Arc<Device>,
+pub struct SpeciesNetDetectorOrt {
+    model: Arc<Session>,
 }
 
-impl SpeciesNetDetector {
-    pub fn new<P>(model_file_path: P) -> Result<Self, Error>
+impl SpeciesNetDetectorOrt {
+    pub fn new<P>(model_path: P) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
-        let mut model = CModule::load(model_file_path)?;
-        let device = Device::cuda_if_available();
-        model.to(device, tch::Kind::Float, false);
+        let cpus = num_cpus::get();
+
+        let model = Session::builder()?
+            .with_optimization_level(GraphOptimizationLevel::Level3)?
+            .with_intra_threads(cpus)?
+            .commit_from_file(model_path)?;
 
         Ok(Self {
             model: Arc::new(model),
-            device: Arc::new(device),
         })
     }
 
@@ -38,86 +41,48 @@ impl SpeciesNetDetector {
         &self,
         preprocessed_image: PreprocessedImage,
     ) -> Result<Option<Prediction>, Error> {
-        // Converting the image to tensor.
-        // We supposed to be able to just use the [`TryFrom`] implementation of rust tensor's image
-        // feature but for some reason it does not work.
         let (original_width, original_height) = preprocessed_image.original_size();
         let (resized_width, resized_height) = preprocessed_image.resized_size();
         let path = preprocessed_image.path_owned();
-        let tensor = preprocessed_image.into_tensor()?.to(*self.device);
-        let tensor = tensor.unsqueeze(0);
+        let tensor = preprocessed_image.into_tensor();
 
         info!("Running predictions on image {}.", path.display());
-        let predictions = self.model.forward_is(&[IValue::Tensor(tensor)])?;
+        let outputs = self
+            .model
+            .run(ort::inputs!["images" => Tensor::from_array(tensor)?]?)?;
 
-        match predictions {
-            // The result of the model is in YOLO format where we have a tuple length of 2, and
-            // we only care about the first one.
-            tch::IValue::Tuple(ivalues) => {
-                if ivalues.is_empty() {
-                    warn!(
-                        "Image {} does not have expected results from the forwarding step.",
-                        path.display()
-                    );
-                    return Ok(None);
-                }
+        let output = outputs
+            .get("output")
+            .unwrap()
+            .try_extract_tensor::<f32>()?
+            .into_owned();
 
-                // A check has been done above that it does have some amount of value.
-                let first_result = ivalues.first().unwrap();
+        info!("Running non-max suppression on image {}.", path.display());
+        let nms_results = non_max_suppression(output, Some(0.01))?;
 
-                let IValue::Tensor(predictions) = first_result else {
-                    warn!(
-                        "Image {} does not have expected results from the forwarding step.",
-                        path.display()
-                    );
-                    return Ok(None);
-                };
+        let mut detections: Vec<Detection> = Vec::new();
 
-                info!("Running non-max suppression on image {}.", path.display());
-                let nmsed_results = non_max_suppression(predictions, Some(0.01))?;
-                let Some(nms_result) = nmsed_results.first() else {
-                    warn!(
-                        "Image {} does not have any results left after running non-max suppressions.",
-                        path.display()
-                    );
-                    return Ok(None);
-                };
+        for raw_detection in nms_results.rows() {
+            let x1: f64 = f64::from(raw_detection[0]);
+            let y1: f64 = f64::from(raw_detection[1]);
+            let x2: f64 = f64::from(raw_detection[2]);
+            let y2: f64 = f64::from(raw_detection[3]);
 
-                let (detections_count, _detection_size) = nms_result.size2()?;
-                let mut detections: Vec<Detection> = Vec::new();
+            let confidence = raw_detection[4];
+            let category = Category::try_from(raw_detection[5].trunc() as i32 + 1).unwrap();
 
-                for result in 0..detections_count {
-                    let xyxy_tensor = nms_result.f_i((result, ..4))?;
-                    let confidence: f64 = nms_result.f_i((result, 4))?.f_double_value(&[])?;
-                    let category: i64 = nms_result.f_i((result, 5))?.f_int64_value(&[])? + 1;
+            let bbox = BoundingBox::new(x1, y1, x2, y2)
+                .scale_to(
+                    resized_width,
+                    resized_height,
+                    original_width,
+                    original_height,
+                )
+                .normalize(original_width, original_height);
 
-                    let bbox = BoundingBox::from_xyxy_tensor(&xyxy_tensor)?
-                        .scale_to(
-                            resized_width,
-                            resized_height,
-                            original_width,
-                            original_height,
-                        )
-                        .normalize(original_width, original_height);
-
-                    detections.push(Detection::new(category.try_into()?, confidence, bbox));
-                }
-
-                info!(
-                    "Found {} detections from {}.",
-                    detections.len(),
-                    path.display()
-                );
-                Ok(Some(Prediction::from_detections(path, detections)))
-            }
-            _ => {
-                debug!(
-                    "Image {} does not return expected results from the forwarding step.",
-                    path.display()
-                );
-
-                Ok(None)
-            }
+            detections.push(Detection::new(category, confidence.into(), bbox));
         }
+
+        Ok(Some(Prediction::from_detections(path, detections)))
     }
 }

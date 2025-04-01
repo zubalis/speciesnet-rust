@@ -1,3 +1,4 @@
 libtorch
 model/*.pt
+model/*.onnx
 model/variables

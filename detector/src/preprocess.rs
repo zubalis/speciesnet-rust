@@ -1,12 +1,12 @@
 use std::path::{Path, PathBuf};
 
 use image::{
-    DynamicImage, GenericImageView, ImageBuffer, ImageReader, Rgb, RgbImage,
+    DynamicImage, GenericImageView, ImageReader, Rgb, RgbImage,
     imageops::{FilterType, replace},
 };
-use log::{debug, info};
+use ndarray::Array4;
 use speciesnet_core::shape::Shape;
-use tch::Tensor;
+use tracing::{debug, info};
 
 use crate::error::Error;
 
@@ -47,15 +47,29 @@ impl PreprocessedImage {
         self.inner.resized_size
     }
 
-    pub fn into_tensor(self) -> Result<Tensor, Error> {
-        let rgb_image = self.inner.image;
-        let size: &[i64] = &[rgb_image.height() as i64, rgb_image.width() as i64, 3];
+    fn fill_array_with_image_content(array: &mut Array4<f32>, image: &RgbImage) {
+        for pixel in image.enumerate_pixels() {
+            let x = pixel.0 as _;
+            let y = pixel.1 as _;
+            let [r, g, b] = pixel.2.0;
+            array[[0, 0, y, x]] = (r as f32) / 255.;
+            array[[0, 1, y, x]] = (g as f32) / 255.;
+            array[[0, 2, y, x]] = (b as f32) / 255.;
+        }
+    }
 
-        let image_tensor = Tensor::f_from_data_size(rgb_image.as_raw(), size, tch::Kind::Uint8)?
-            .permute([2, 0, 1]);
-        let image_tensor = image_tensor.to_kind(tch::Kind::Float) / 255;
+    pub fn into_tensor(self) -> Array4<f32> {
+        let inner_image = self.inner.image;
 
-        Ok(image_tensor)
+        let mut tensor: Array4<f32> = Array4::zeros([
+            1usize,
+            3usize,
+            inner_image.height() as usize,
+            inner_image.width() as usize,
+        ]);
+
+        Self::fill_array_with_image_content(&mut tensor, &inner_image);
+        tensor
     }
 }
 
@@ -69,11 +83,7 @@ pub struct PreprocessedImageInner {
 }
 
 impl PreprocessedImageInner {
-    pub fn new(
-        image: ImageBuffer<Rgb<u8>, Vec<u8>>,
-        original_size: (u32, u32),
-        resized_size: (u32, u32),
-    ) -> Self {
+    pub fn new(image: RgbImage, original_size: (u32, u32), resized_size: (u32, u32)) -> Self {
         Self {
             image,
             original_size,
@@ -199,6 +209,7 @@ where
     let options = LetterboxOptions::builder()
         .shape(speciesnet_core::shape::Shape::Square(1280))
         .build();
+
     info!("Resizing and letterboxing the image.");
     let preprocessed_image = letterbox(loaded_image, options)?;
 
@@ -248,9 +259,6 @@ pub fn letterbox(
         padded.0 = padded.0.rem_euclid(options.stride as f32);
         padded.1 = padded.1.rem_euclid(options.stride as f32);
     } else if options.scale_fill {
-        //dw, dh = 0.0, 0.0
-        //new_unpad = (new_shape[1], new_shape[0])
-        //ratio = new_shape[1] / shape[1], new_shape[0] / shape[0]  # width, height ratios
         ratio.0 = 0.0;
         ratio.1 = 0.0;
         new_unpad = (new_shape.1 as f32, new_shape.0 as f32);
@@ -324,5 +332,6 @@ pub fn letterbox(
     let blank_image_dimensions = blank_image.dimensions();
     let preprocessed_image =
         PreprocessedImageInner::new(blank_image, input_image_dimensions, blank_image_dimensions);
+
     Ok(preprocessed_image)
 }
