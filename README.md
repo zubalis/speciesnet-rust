@@ -46,6 +46,7 @@ A window will be opened and you can use scroll wheel to inspect the image and it
 ### Running the CLI
 
 Run the help
+
 ```
 cargo run -- --help
 ```
