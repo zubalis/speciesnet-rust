@@ -8,7 +8,8 @@ use speciesnet_classifier::SpeciesNetClassifier;
 use speciesnet_classifier::classifier::transform;
 use speciesnet_classifier::geofence::geofence_animal_classification;
 use speciesnet_classifier::geofence::taxonomy::get_full_class_string;
-use speciesnet_classifier::image::load_and_preprocess_images;
+use speciesnet_classifier::image::{preprocess};
+use speciesnet_classifier::input::ClassifierInput;
 
 #[test]
 fn test_entire_process() -> Result<(), Box<dyn Error>> {
@@ -22,7 +23,11 @@ fn test_entire_process() -> Result<(), Box<dyn Error>> {
         .join("assets")
         .join("images")
         .join("african_elephants.jpg");
-    let inputs = load_and_preprocess_images(img_path)?;
+    let classifier_input = ClassifierInput {
+        file_path: img_path,
+        bbox: None,
+    };
+    let inputs = preprocess(&classifier_input)?;
 
     // Run classify inputs
     let outputs = classifier.classify(&inputs.image_tensor);
@@ -30,7 +35,7 @@ fn test_entire_process() -> Result<(), Box<dyn Error>> {
     let outputs = outputs?;
 
     // Load labels
-    let label_path = current_dir()?.join("..").join("assets").join("labels.txt");
+    let label_path = current_dir()?.join("..").join("assets").join("model").join("labels.txt");
     let label_file = File::open(label_path)?;
     let label_reader = BufReader::new(label_file);
     let labels: Vec<String> = label_reader.lines().map_while(Result::ok).collect();
@@ -43,11 +48,7 @@ fn test_entire_process() -> Result<(), Box<dyn Error>> {
     let geofence_path = current_dir()?
         .join("..")
         .join("assets")
-        .join("geofence_base.json")
-        .canonicalize()?
-        .to_str()
-        .unwrap()
-        .to_string();
+        .join("geofence_base.json");
     let geofence_file = File::open(geofence_path)?;
     let geofence_reader = BufReader::new(geofence_file);
     let geofence_map: HashMap<String, HashMap<String, HashMap<String, Vec<String>>>> =
