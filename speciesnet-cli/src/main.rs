@@ -34,7 +34,7 @@ struct InputType {
 }
 
 #[derive(Debug, Args)]
-#[group(required = false, multiple = false)]
+#[group(required = false, multiple = true)]
 pub struct AdditionalConfiguration {
     /// Path of detections.json file to put in the model.
     #[arg(long)]

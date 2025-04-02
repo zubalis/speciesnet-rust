@@ -63,16 +63,22 @@ Running only the detector
 cargo run --bin speciesnet -- --instances-json assets/images/input.json --predictions-json assets/images/output_detector_test.json --detector-only
 ```
 
-Running only the classifer
+Running only the classifier
+
+`cd` to directory of `instances-json` file 
 
 ```
-cargo run --release --bin speciesnet-cli -- --instances-json path/to/input.json --predictions-json path/to/output_classifier.json --classifier-only --classifier-model path/to/model/dir --detector-model path/to/model.pt --detections-json path/to/output_detector.json
+cd assets/images
+
+cargo run --release --bin speciesnet-cli -- --instances-json input.json --predictions-json output_classifier_test.json --detections-json output_detector_test.json --classifier-model ../model/ --detector-model ../model/md_v5a.0.0_traced.pt --classifier-only
 ```
 
 Running only the ensemble
 
+`filepath` in `instances-json`, `output_detector_test.json` and `output_classifier_test.json` must be the same so you can run `ensemble`
+
 ```
-cargo run --bin speciesnet -- --instances-json assets/images/input.json --predictions-json assets/images/output_ensemble_test.json --ensemble-only --detections-json assets/images/output_detector.json --classifications-json assets/images/output_classifier.json
+cargo run --bin speciesnet-cli -- --instances-json assets/images/input.json --predictions-json assets/images/output_ensemble_test.json --detections-json assets/images/output_detector_test.json --classifications-json assets/images/output_classifier_test.json --classifier-model assets/model --detector-model assets/model/md_v5a.0.0_traced.pt --ensemble-only 
 ```
 
 ### Testing CLI output
