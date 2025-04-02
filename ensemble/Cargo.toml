@@ -1,0 +1,15 @@
+[package]
+name = "speciesnet-ensemble"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "speciesnet_ensemble"
+path = "src/lib.rs"
+
+[dependencies]
+thiserror = "2.0"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+csv = "1"
+speciesnet-core = { path = "../core" }

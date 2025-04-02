@@ -2,18 +2,6 @@ use tensorflow::Status;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    // Geofence errors
-    #[error("{0}")]
-    GeofenceInvalidValue(String),
-
-    // Taxonomy errors.
-    #[error("Expected lable made of 7 parts, but found only {0}: {1}.")]
-    InvalidLabel(String, String),
-    #[error(
-        "Expected these taxonomy levels: `species`, `genus`, `family`, `order`, `class`, `kingdom`, but found: {0}."
-    )]
-    InvalidTaxonomyLevel(String),
-
     // Tensorflow error.
     #[error("TF error: {0}")]
     TFError(#[from] Status),

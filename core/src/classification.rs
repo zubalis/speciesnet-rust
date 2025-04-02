@@ -4,14 +4,41 @@ use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ClassificationBundle {
-    pub labels: Vec<String>,
-    pub scores: Vec<f32>,
+    labels: Vec<String>,
+    scores: Vec<f64>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Classification {
-    pub label: String,
-    pub score: f32,
+    label: String,
+    score: f64,
+}
+
+impl ClassificationBundle {
+    
+    pub fn new(labels: Vec<String>, scores: Vec<f64>) -> Self {
+        Self { labels, scores }
+    }
+    pub fn labels(&self) -> &Vec<String> {
+        &self.labels
+    }
+
+    pub fn scores(&self) -> &Vec<f64> {
+        &self.scores
+    }
+}
+
+impl Classification {
+    pub fn new(label: String, score: f64) -> Self {
+        Self { label, score }
+    }
+    pub fn label(&self) -> &String {
+        &self.label
+    }
+
+    pub fn score(&self) -> &f64 {
+        &self.score
+    }
 }
 
 impl Serialize for ClassificationBundle {
@@ -47,7 +74,7 @@ impl<'de> Deserialize<'de> for ClassificationBundle {
                 M: MapAccess<'de>,
             {
                 let mut labels: Option<Vec<String>> = None;
-                let mut scores: Option<Vec<f32>> = None;
+                let mut scores: Option<Vec<f64>> = None;
 
                 while let Some(key) = map.next_key::<String>()? {
                     match key.as_str() {

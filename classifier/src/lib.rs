@@ -3,9 +3,7 @@ use std::sync::Arc;
 use tensorflow::{Graph, SavedModelBundle, SessionOptions, SessionRunArgs, Tensor};
 
 pub mod classifier;
-pub mod constants;
 pub mod error;
-pub mod geofence;
 pub mod image;
 pub mod input;
 

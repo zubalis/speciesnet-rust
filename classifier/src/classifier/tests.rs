@@ -17,43 +17,25 @@ const LABELS: LazyCell<Vec<String>> = LazyCell::new(|| {
     ]
 });
 
-const SCORES: LazyCell<Vec<f32>> = LazyCell::new(|| {
+const SCORES: LazyCell<Vec<f64>> = LazyCell::new(|| {
     vec![
-        0.81172436,
-        0.10985495,
-        0.040413376,
-        0.024511952,
-        0.009017443,
-        0.0044779293,
+        0.8117243501589582, 
+        0.10985494982166831, 
+        0.04041337573881406, 
+        0.024511951410569412, 
+        0.009017443373279692, 
+        0.004477929496710358
     ]
 });
 
 const CLASSIFICATIONS: LazyCell<Vec<Classification>> = LazyCell::new(|| {
     vec![
-        Classification {
-            label: LABELS[0].clone(),
-            score: SCORES[0],
-        },
-        Classification {
-            label: LABELS[1].clone(),
-            score: SCORES[1],
-        },
-        Classification {
-            label: LABELS[2].clone(),
-            score: SCORES[2],
-        },
-        Classification {
-            label: LABELS[3].clone(),
-            score: SCORES[3],
-        },
-        Classification {
-            label: LABELS[4].clone(),
-            score: SCORES[4],
-        },
-        Classification {
-            label: LABELS[5].clone(),
-            score: SCORES[5],
-        },
+        Classification::new( LABELS[0].clone(), SCORES[0]),
+        Classification::new( LABELS[1].clone(), SCORES[1]),
+        Classification::new( LABELS[2].clone(), SCORES[2]),
+        Classification::new( LABELS[3].clone(), SCORES[3]),
+        Classification::new( LABELS[4].clone(), SCORES[4]),
+        Classification::new( LABELS[5].clone(), SCORES[5]),
     ]
 });
 
@@ -80,18 +62,9 @@ fn test_map_labels_to_classifications_fn() {
 fn test_pick_top_n_from_fn() {
     let classifications = CLASSIFICATIONS.clone();
     let expected: Vec<Classification> = vec![
-        Classification {
-            label: LABELS[0].to_string(),
-            score: SCORES[0],
-        },
-        Classification {
-            label: LABELS[1].to_string(),
-            score: SCORES[1],
-        },
-        Classification {
-            label: LABELS[2].to_string(),
-            score: SCORES[2],
-        },
+        Classification::new( LABELS[0].clone(), SCORES[0]),
+        Classification::new( LABELS[1].clone(), SCORES[1]),
+        Classification::new( LABELS[2].clone(), SCORES[2]),
     ];
 
     let result = pick_top_n_from(classifications, 3);
@@ -112,11 +85,9 @@ fn test_to_chunk_fn() {
 
 #[test]
 fn test_transform_fn() {
-    let file_paths = vec![
-        PathBuf::from("path/to/file/1.png"),
+    let file_paths = [PathBuf::from("path/to/file/1.png"),
         PathBuf::from("path/to/file/2.png"),
-        PathBuf::from("path/to/file/3.png"),
-    ];
+        PathBuf::from("path/to/file/3.png")];
     let scores: Vec<Vec<f32>> = vec![
         vec![4.0, 2.0, 1.0, 0.5, -0.5, -1.2, 3.0, -1.1],
         vec![1.0, 2.0, 5.0, 0.5, -0.5, -1.2, 1.2, -2.1],
@@ -142,11 +113,11 @@ fn test_transform_fn() {
     let first = &results.get(0).unwrap();
     let first_classifications = first.classifications().as_ref().unwrap();
     assert_eq!(
-        first_classifications.scores,
-        vec![0.62269545, 0.22907685, 0.08427267, 0.031002179, 0.018803772]
+        *first_classifications.scores(),
+        vec![0.622695442229024, 0.2290768587693751, 0.08427266786669041, 0.031002180571176013, 0.018803773005592175]
     );
     assert_eq!(
-        first_classifications.labels,
+        *first_classifications.labels(),
         vec![
             "lion".to_string(),
             "ant".to_string(),
@@ -158,17 +129,11 @@ fn test_transform_fn() {
     let second = &results.get(1).unwrap();
     let second_classifications = second.classifications().as_ref().unwrap();
     assert_eq!(
-        second_classifications.scores,
-        vec![
-            0.90210056,
-            0.04491294,
-            0.020180685,
-            0.016522547,
-            0.010021431
-        ]
+        *second_classifications.scores(),
+        vec![0.9021006291980018, 0.04491294540299023, 0.02018068739160806, 0.016522548515605164, 0.01002143223596927]
     );
     assert_eq!(
-        second_classifications.labels,
+        *second_classifications.labels(),
         vec![
             "cat".to_string(),
             "elephant".to_string(),
@@ -180,17 +145,11 @@ fn test_transform_fn() {
     let third = &results.get(2).unwrap();
     let third_classifications = third.classifications().as_ref().unwrap();
     assert_eq!(
-        third_classifications.scores,
-        vec![
-            0.9867193,
-            0.010961462,
-            0.0014834725,
-            0.000545739,
-            0.00020076617
-        ]
+        *third_classifications.scores(),
+        vec![0.9867192728837968, 0.010961461436976674, 0.0014834724594672336, 0.0005457390263585093, 0.0002007661590430286]
     );
     assert_eq!(
-        third_classifications.labels,
+        *third_classifications.labels(),
         vec![
             "dog".to_string(),
             "ant".to_string(),

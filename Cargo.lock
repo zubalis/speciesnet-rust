@@ -2960,6 +2960,7 @@ dependencies = [
  "speciesnet-classifier",
  "speciesnet-core",
  "speciesnet-detector",
+ "speciesnet-ensemble",
  "thiserror 2.0.12",
  "tracing",
 ]
@@ -3015,6 +3016,17 @@ dependencies = [
  "speciesnet-core",
  "thiserror 2.0.12",
  "tracing",
+]
+
+[[package]]
+name = "speciesnet-ensemble"
+version = "0.1.0"
+dependencies = [
+ "csv",
+ "serde",
+ "serde_json",
+ "speciesnet-core",
+ "thiserror 2.0.12",
 ]
 
 [[package]]

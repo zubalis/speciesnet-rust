@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::Detection;
 use crate::classification::ClassificationBundle;
+use crate::geofence::GeofenceResult;
 
 /// The output type of `predictions.json` file.
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -20,6 +21,10 @@ impl From<Vec<Prediction>> for Predictions {
 impl Predictions {
     pub fn new(predictions: Vec<Prediction>) -> Self {
         Self { predictions }
+    }
+    
+    pub fn predictions(&self) -> &[Prediction] {
+        &self.predictions
     }
 }
 
@@ -41,6 +46,8 @@ pub struct Prediction {
     #[serde(skip_serializing_if = "Option::is_none")]
     prediction_score: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    prediction_source: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     model_version: Option<String>,
 }
 
@@ -54,6 +61,7 @@ impl Prediction {
             classifications: None,
             prediction: None,
             prediction_score: None,
+            prediction_source: None,
             model_version: None,
         }
     }
@@ -67,6 +75,21 @@ impl Prediction {
             classifications: Some(classifications),
             prediction: None,
             prediction_score: None,
+            prediction_source: None,
+            model_version: None,
+        }
+    }
+    
+    pub fn ensemble(file_path: PathBuf, country: Option<String>, admin1_region: Option<String>, geofence_result: GeofenceResult, detections: Vec<Detection>, classifications: ClassificationBundle) -> Self {
+        Self {
+            file_path,
+            country,
+            admin1_region,
+            detections: Some(detections),
+            classifications: Some(classifications),
+            prediction: Some(geofence_result.label().to_string()),
+            prediction_score: Some(geofence_result.score()),
+            prediction_source: Some(geofence_result.source().to_string()),
             model_version: None,
         }
     }
@@ -77,5 +100,9 @@ impl Prediction {
 
     pub fn classifications(&self) -> &Option<ClassificationBundle> {
         &self.classifications
+    }
+    
+    pub fn file_path(&self) -> &PathBuf {
+        &self.file_path
     }
 }

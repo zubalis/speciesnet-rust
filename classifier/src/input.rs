@@ -33,10 +33,10 @@ impl ClassifierInput {
         let detector_outputs: DetectorOutputs = serde_json::from_reader(file)?;
         
         let classifier_inputs = detector_outputs.predictions.iter().map(|prediction| {
-            if let Some(detection) = prediction.detections.get(0) {
+            if let Some(detection) = prediction.detections.first() {
                 ClassifierInput {
                     file_path: PathBuf::from(&prediction.file_path),
-                    bbox: Some(detection.bounding_box().clone()),
+                    bbox: Some(*detection.bounding_box()),
                 }
             } else {
                 ClassifierInput {
