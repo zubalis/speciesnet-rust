@@ -128,21 +128,30 @@ fn main() -> anyhow::Result<()> {
     let images = prepare_image_inputs(&args.input_type)?;
     let geofence_base_path = args.classifier_model.join("../geofence_base.json").clone();
     let geofence_fixes_path = args.classifier_model.join("../geofence_fixes.csv").clone();
-    let taxonomy_path = args.classifier_model.join("../taxonomy_release.txt").clone();
-    let speciesnet = SpeciesNet::new(&args.detector_model, &args.classifier_model, &geofence_base_path, &geofence_fixes_path, &taxonomy_path)?;
+    let taxonomy_path = args
+        .classifier_model
+        .join("../taxonomy_release.txt")
+        .clone();
+    let speciesnet = SpeciesNet::new(
+        &args.detector_model,
+        &args.classifier_model,
+        &geofence_base_path,
+        &geofence_fixes_path,
+        &taxonomy_path,
+    )?;
 
     if args.run_type.detector_only {
         let detector_results = speciesnet.detect(&images)?;
         let predictions = Predictions::from(detector_results);
-    
+
         info!(
             "Saving the detected results to {}.",
             args.predictions_json.display()
         );
-    
+
         let writer = BufWriter::new(File::create(&args.predictions_json)?);
         serde_json::to_writer(writer, &predictions)?;
-    
+
         info!(
             "Predictions file has been successfully saved to {}.",
             args.predictions_json.display()
@@ -151,7 +160,10 @@ fn main() -> anyhow::Result<()> {
 
     if args.run_type.classifier_only {
         let output_detection_path = args.additional_config.detections_json.clone();
-        let classifier_results = speciesnet.classify(&output_detection_path.unwrap(), &args.classifier_model.join("labels.txt"))?; // assumed labels is in the same folder as model
+        let classifier_results = speciesnet.classify(
+            &output_detection_path.unwrap(),
+            &args.classifier_model.join("labels.txt"),
+        )?; // assumed labels is in the same folder as model
         let predictions = Predictions::from(classifier_results);
 
         info!(
@@ -172,7 +184,11 @@ fn main() -> anyhow::Result<()> {
         let instances_json_path = args.input_type.instances_json.clone();
         let output_detection_path = args.additional_config.detections_json.clone();
         let output_classification_path = args.additional_config.classifications_json.clone();
-        let ensemble_results = speciesnet.ensemble(&instances_json_path.unwrap(), &output_detection_path.unwrap(), &output_classification_path.unwrap())?;
+        let ensemble_results = speciesnet.ensemble(
+            &instances_json_path.unwrap(),
+            &output_detection_path.unwrap(),
+            &output_classification_path.unwrap(),
+        )?;
         let predictions = Predictions::from(ensemble_results);
 
         info!(

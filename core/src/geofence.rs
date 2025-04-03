@@ -7,7 +7,11 @@ pub struct GeofenceResult {
 
 impl GeofenceResult {
     pub fn new(label: String, score: f64, source: String) -> Self {
-        Self { label, score, source }
+        Self {
+            label,
+            score,
+            source,
+        }
     }
     pub fn label(&self) -> &str {
         &self.label

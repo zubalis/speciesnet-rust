@@ -7,10 +7,11 @@ use speciesnet_classifier::image::preprocess as classifier_preprocess;
 use speciesnet_classifier::input::ClassifierInput;
 use speciesnet_core::prediction::Prediction;
 use speciesnet_detector::{SpeciesNetDetector, preprocess::preprocess};
-use tracing::{debug, error, info};
+use speciesnet_ensemble::SpeciesNetEnsemble;
 use speciesnet_ensemble::error::Error::NoneDetectionOrClassification;
 use speciesnet_ensemble::input::EnsembleInput;
-use speciesnet_ensemble::SpeciesNetEnsemble;
+use tracing::{debug, error, info};
+
 use crate::error::Error;
 
 #[derive(Debug, Clone)]
@@ -22,7 +23,13 @@ pub struct SpeciesNet {
 
 impl SpeciesNet {
     /// Initialize the detector and the classifier by loading them into memory.
-    pub fn new<P>(detector_model_path: P, classifier_model_dir_path: P, geofence_base_path: P, geofence_fix_path: P, taxonomy_path: P) -> Result<Self, Error>
+    pub fn new<P>(
+        detector_model_path: P,
+        classifier_model_dir_path: P,
+        geofence_base_path: P,
+        geofence_fix_path: P,
+        taxonomy_path: P,
+    ) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
@@ -32,7 +39,8 @@ impl SpeciesNet {
         let detector = SpeciesNetDetector::new(detector_model_path)?;
         info!("Detector ort initialized.");
 
-        let ensemble = SpeciesNetEnsemble::new(geofence_base_path, geofence_fix_path, taxonomy_path)?;
+        let ensemble =
+            SpeciesNetEnsemble::new(geofence_base_path, geofence_fix_path, taxonomy_path)?;
         info!("Ensemble initialized.");
 
         Ok(Self {
@@ -75,7 +83,11 @@ impl SpeciesNet {
     }
 
     /// Performs the classification from detector output by the cameratrap model.
-    pub fn classify(&self, detector_output_path: &PathBuf, label_path: &PathBuf) -> Result<Vec<Prediction>, Error> {
+    pub fn classify(
+        &self,
+        detector_output_path: &PathBuf,
+        label_path: &PathBuf,
+    ) -> Result<Vec<Prediction>, Error> {
         info!("Starting classification");
         let classifier_inputs = ClassifierInput::from_detector_output(detector_output_path)?;
         // Load labels
@@ -98,34 +110,41 @@ impl SpeciesNet {
     }
 
     /// Performs the ensemble
-    pub fn ensemble(&self, instances_path: &PathBuf, detector_output_path: &PathBuf, classifier_output_path: &PathBuf) -> Result<Vec<Prediction>, Error> {
+    pub fn ensemble(
+        &self,
+        instances_path: &PathBuf,
+        detector_output_path: &PathBuf,
+        classifier_output_path: &PathBuf,
+    ) -> Result<Vec<Prediction>, Error> {
         info!("Starting ensemble");
-        let ensemble_inputs = EnsembleInput::from(instances_path, detector_output_path, classifier_output_path)?;
+        let ensemble_inputs =
+            EnsembleInput::from(instances_path, detector_output_path, classifier_output_path)?;
         let predictions = ensemble_inputs
             .par_iter()
             .map(|input| {
-                if let (Some(detections), Some(classification)) = (input.detections(), input.classifications()) {
+                if let (Some(detections), Some(classification)) =
+                    (input.detections(), input.classifications())
+                {
                     let geofence_result = &self.ensemble.ensemble(
                         detections,
                         classification,
                         input.country().clone(),
                         input.admin1_region().clone(),
                     )?;
-                    Ok(
-                        Prediction::ensemble(
-                            input.file_path().clone(),
-                            input.country().clone(),
-                            input.admin1_region().clone(),
-                            geofence_result.clone(),
-                            detections.clone(),
-                            classification.clone(),
-                        )
-                    )
+                    Ok(Prediction::ensemble(
+                        input.file_path().clone(),
+                        input.country().clone(),
+                        input.admin1_region().clone(),
+                        geofence_result.clone(),
+                        detections.clone(),
+                        classification.clone(),
+                    ))
                 } else {
                     Err(NoneDetectionOrClassification.into())
                 }
-            }).collect::<Result<Vec<Prediction>, Error>>()?;
-        
+            })
+            .collect::<Result<Vec<Prediction>, Error>>()?;
+
         Ok(predictions)
     }
 

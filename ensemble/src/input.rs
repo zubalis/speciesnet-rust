@@ -2,12 +2,16 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
+
 use serde::Deserialize;
 use speciesnet_core::classification::ClassificationBundle;
-use speciesnet_core::{Detection, Instances};
 use speciesnet_core::prediction::Predictions;
+use speciesnet_core::{Detection, Instances};
+
 use crate::error::Error;
-use crate::error::Error::{EmptyOutputClassifier, EmptyOutputDetector, MismatchDetectionsClassifications};
+use crate::error::Error::{
+    EmptyOutputClassifier, EmptyOutputDetector, MismatchDetectionsClassifications,
+};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct EnsembleInput {
@@ -17,8 +21,13 @@ pub struct EnsembleInput {
     classifications: Option<ClassificationBundle>,
     detections: Option<Vec<Detection>>,
 }
+
 impl EnsembleInput {
-    pub fn from<P: AsRef<Path>>(instances_path: P, detector_output_path: P, classifier_output_path: P) -> Result<Vec<Self>, Error> {
+    pub fn from<P: AsRef<Path>>(
+        instances_path: P,
+        detector_output_path: P,
+        classifier_output_path: P,
+    ) -> Result<Vec<Self>, Error> {
         let instance_file = BufReader::new(File::open(instances_path)?);
         let instance_outputs: Instances = serde_json::from_reader(instance_file)?;
 
@@ -40,7 +49,15 @@ impl EnsembleInput {
             return Err(MismatchDetectionsClassifications);
         }
 
-        let mut path_map: HashMap<PathBuf, (Option<String>, Option<String>, &Option<Vec<Detection>>, &Option<ClassificationBundle>)>= HashMap::new();
+        let mut path_map: HashMap<
+            PathBuf,
+            (
+                Option<String>,
+                Option<String>,
+                &Option<Vec<Detection>>,
+                &Option<ClassificationBundle>,
+            ),
+        > = HashMap::new();
 
         for prediction in detector_outputs.predictions() {
             let path_value = path_map
@@ -64,24 +81,34 @@ impl EnsembleInput {
             path_value.1 = instance.admin1_region;
         }
 
-        let ensemble_inputs = path_map.into_iter()
-            .map(|(file_path, (country, admin1_region, detections, classifications))| {
-                let detections = detections.clone();
-                let classifications = classifications.clone();
-                EnsembleInput { file_path, country, admin1_region, detections, classifications }
-            }).collect::<Vec<_>>();
-            
+        let ensemble_inputs = path_map
+            .into_iter()
+            .map(
+                |(file_path, (country, admin1_region, detections, classifications))| {
+                    let detections = detections.clone();
+                    let classifications = classifications.clone();
+                    EnsembleInput {
+                        file_path,
+                        country,
+                        admin1_region,
+                        detections,
+                        classifications,
+                    }
+                },
+            )
+            .collect::<Vec<_>>();
+
         Ok(ensemble_inputs)
     }
-    
+
     pub fn file_path(&self) -> &PathBuf {
         &self.file_path
     }
-    
+
     pub fn country(&self) -> &Option<String> {
         &self.country
     }
-    
+
     pub fn admin1_region(&self) -> &Option<String> {
         &self.admin1_region
     }

@@ -11,7 +11,7 @@ pub enum Error {
         "Expected these taxonomy levels: `species`, `genus`, `family`, `order`, `class`, `kingdom`, but found: {0}."
     )]
     InvalidTaxonomyLevel(String),
-    
+
     // Ensemble errors
     #[error("`detections` cannot be empty")]
     EmptyDetections,

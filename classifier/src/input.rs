@@ -31,20 +31,24 @@ impl ClassifierInput {
         let path = Arc::new(path.as_ref());
         let file = BufReader::new(File::open(*path)?);
         let detector_outputs: DetectorOutputs = serde_json::from_reader(file)?;
-        
-        let classifier_inputs = detector_outputs.predictions.iter().map(|prediction| {
-            if let Some(detection) = prediction.detections.first() {
-                ClassifierInput {
-                    file_path: PathBuf::from(&prediction.file_path),
-                    bbox: Some(*detection.bounding_box()),
+
+        let classifier_inputs = detector_outputs
+            .predictions
+            .iter()
+            .map(|prediction| {
+                if let Some(detection) = prediction.detections.first() {
+                    ClassifierInput {
+                        file_path: PathBuf::from(&prediction.file_path),
+                        bbox: Some(*detection.bounding_box()),
+                    }
+                } else {
+                    ClassifierInput {
+                        file_path: PathBuf::from(&prediction.file_path),
+                        bbox: None,
+                    }
                 }
-            } else {
-                ClassifierInput {
-                    file_path: PathBuf::from(&prediction.file_path),
-                    bbox: None,
-                }
-            }
-        }).collect();
+            })
+            .collect();
         Ok(classifier_inputs)
     }
 }

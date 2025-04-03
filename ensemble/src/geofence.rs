@@ -6,9 +6,9 @@ use std::path::Path;
 
 use csv::Reader;
 use serde::Deserialize;
-
 use speciesnet_core::constants;
 use speciesnet_core::geofence::GeofenceResult;
+
 use crate::error::Error;
 use crate::geofence::taxonomy::get_ancestor_at_level;
 
@@ -264,12 +264,24 @@ pub fn geofence_animal_classification(
             enable_geofence,
         )?;
         if let Some((r_label, r_score, r_source)) = rollup {
-            Ok(GeofenceResult::new(r_label, r_score, format!("classifier+geofence+{}", &r_source[11..])))
+            Ok(GeofenceResult::new(
+                r_label,
+                r_score,
+                format!("classifier+geofence+{}", &r_source[11..]),
+            ))
         } else {
-            Ok(GeofenceResult::new(constants::classification::UNKNOWN.to_string(), scores[0], "classifier+geofence+rollup_failed".to_string()))
+            Ok(GeofenceResult::new(
+                constants::classification::UNKNOWN.to_string(),
+                scores[0],
+                "classifier+geofence+rollup_failed".to_string(),
+            ))
         }
     } else {
-        Ok(GeofenceResult::new(labels[0].to_string(), scores[0], "classifier".to_string()))
+        Ok(GeofenceResult::new(
+            labels[0].to_string(),
+            scores[0],
+            "classifier".to_string(),
+        ))
     }
 }
 

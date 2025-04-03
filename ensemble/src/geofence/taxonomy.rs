@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use speciesnet_core::{constants::classification};
+use speciesnet_core::constants::classification;
+
 use crate::error::Error;
 
 #[cfg(test)]

@@ -15,7 +15,6 @@ pub struct Classification {
 }
 
 impl ClassificationBundle {
-    
     pub fn new(labels: Vec<String>, scores: Vec<f64>) -> Self {
         Self { labels, scores }
     }

@@ -22,7 +22,7 @@ impl Predictions {
     pub fn new(predictions: Vec<Prediction>) -> Self {
         Self { predictions }
     }
-    
+
     pub fn predictions(&self) -> &[Prediction] {
         &self.predictions
     }
@@ -79,8 +79,15 @@ impl Prediction {
             model_version: None,
         }
     }
-    
-    pub fn ensemble(file_path: PathBuf, country: Option<String>, admin1_region: Option<String>, geofence_result: GeofenceResult, detections: Vec<Detection>, classifications: ClassificationBundle) -> Self {
+
+    pub fn ensemble(
+        file_path: PathBuf,
+        country: Option<String>,
+        admin1_region: Option<String>,
+        geofence_result: GeofenceResult,
+        detections: Vec<Detection>,
+        classifications: ClassificationBundle,
+    ) -> Self {
         Self {
             file_path,
             country,
@@ -101,7 +108,7 @@ impl Prediction {
     pub fn classifications(&self) -> &Option<ClassificationBundle> {
         &self.classifications
     }
-    
+
     pub fn file_path(&self) -> &PathBuf {
         &self.file_path
     }

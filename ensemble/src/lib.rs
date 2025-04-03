@@ -1,19 +1,23 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::path::{Path};
+use std::path::Path;
+
 use speciesnet_core::Category;
-use speciesnet_core::classification::ClassificationBundle;
 use speciesnet_core::Detection;
+use speciesnet_core::classification::ClassificationBundle;
 use speciesnet_core::constants::{classification, source};
 use speciesnet_core::geofence::GeofenceResult;
-use crate::error::Error;
-use crate::error::Error::{EmptyClassifications};
-use crate::geofence::{fix_geofence_base, geofence_animal_classification, roll_up_labels_to_first_matching_level};
-use crate::geofence::taxonomy::get_full_class_string;
 
-pub mod geofence;
+use crate::error::Error;
+use crate::error::Error::EmptyClassifications;
+use crate::geofence::taxonomy::get_full_class_string;
+use crate::geofence::{
+    fix_geofence_base, geofence_animal_classification, roll_up_labels_to_first_matching_level,
+};
+
 pub mod error;
+pub mod geofence;
 pub mod input;
 
 #[derive(Debug, Clone)]
@@ -23,7 +27,11 @@ pub struct SpeciesNetEnsemble {
 }
 
 impl SpeciesNetEnsemble {
-    pub fn new<P: AsRef<Path>>(geofence_base_path: P, geofence_fix_path: P, taxonomy_path: P) -> Result<Self, Error> {
+    pub fn new<P: AsRef<Path>>(
+        geofence_base_path: P,
+        geofence_fix_path: P,
+        taxonomy_path: P,
+    ) -> Result<Self, Error> {
         // Load geofence and fix
         let geofence_file = File::open(geofence_base_path)?;
         let geofence_reader = BufReader::new(geofence_file);
@@ -37,7 +45,13 @@ impl SpeciesNetEnsemble {
         let taxonomies: Vec<String> = taxonomy_reader.lines().map_while(Result::ok).collect();
         let mut taxonomy_map: HashMap<String, String> = HashMap::new();
         for t in taxonomies {
-            if ![classification::BLANK.to_string(), classification::VEHICLE.to_string(), classification::UNKNOWN.to_string()].contains(&t) {
+            if ![
+                classification::BLANK.to_string(),
+                classification::VEHICLE.to_string(),
+                classification::UNKNOWN.to_string(),
+            ]
+            .contains(&t)
+            {
                 taxonomy_map.insert(get_full_class_string(&t)?, t.clone());
             }
         }
@@ -48,7 +62,13 @@ impl SpeciesNetEnsemble {
         })
     }
 
-    pub fn ensemble(&self, detections: &[Detection], classifications: &ClassificationBundle, country: Option<String>, admin1_region: Option<String>) -> Result<GeofenceResult, Error> {
+    pub fn ensemble(
+        &self,
+        detections: &[Detection],
+        classifications: &ClassificationBundle,
+        country: Option<String>,
+        admin1_region: Option<String>,
+    ) -> Result<GeofenceResult, Error> {
         if classifications.scores().is_empty() || classifications.labels().is_empty() {
             return Err(EmptyClassifications);
         }
@@ -71,15 +91,28 @@ impl SpeciesNetEnsemble {
         if top_detection_class == Category::Human {
             // Threshold #1a: high-confidence HUMAN detections.
             if top_detection_score > 0.7 {
-                return Ok(GeofenceResult::new(classification::HUMAN.to_string(), top_detection_score, source::DETECTOR.to_string()));
+                return Ok(GeofenceResult::new(
+                    classification::HUMAN.to_string(),
+                    top_detection_score,
+                    source::DETECTOR.to_string(),
+                ));
             }
 
             // Threshold #1b: mid-confidence HUMAN detections + high-confidence
             // HUMAN/VEHICLE classifications.
             if top_detection_score > 0.2
-                && [classification::HUMAN.to_string(), classification::VEHICLE.to_string()].contains(top_classification_class)
-                && top_classification_score > 0.5 {
-                return Ok(GeofenceResult::new(classification::HUMAN.to_string(), top_classification_score, source::CLASSIFIER.to_string()));
+                && [
+                    classification::HUMAN.to_string(),
+                    classification::VEHICLE.to_string(),
+                ]
+                .contains(top_classification_class)
+                && top_classification_score > 0.5
+            {
+                return Ok(GeofenceResult::new(
+                    classification::HUMAN.to_string(),
+                    top_classification_score,
+                    source::CLASSIFIER.to_string(),
+                ));
             }
         }
 
@@ -88,21 +121,35 @@ impl SpeciesNetEnsemble {
             // classifications.
             if top_detection_score > 0.2
                 && top_classification_class == &classification::HUMAN.to_string()
-                && top_classification_score > 0.5 {
-                return Ok(GeofenceResult::new(classification::HUMAN.to_string(), top_classification_score, source::CLASSIFIER.to_string()));
+                && top_classification_score > 0.5
+            {
+                return Ok(GeofenceResult::new(
+                    classification::HUMAN.to_string(),
+                    top_classification_score,
+                    source::CLASSIFIER.to_string(),
+                ));
             }
 
             // Threshold #2b: high-confidence VEHICLE detections.
             if top_detection_score > 0.7 {
-                return Ok(GeofenceResult::new(classification::VEHICLE.to_string(), top_detection_score, source::DETECTOR.to_string()));
+                return Ok(GeofenceResult::new(
+                    classification::VEHICLE.to_string(),
+                    top_detection_score,
+                    source::DETECTOR.to_string(),
+                ));
             }
 
             // Threshold #2c: mid-confidence VEHICLE detections + high-confidence VEHICLE
             // classifications.
             if top_detection_score > 0.2
                 && top_classification_class == &classification::VEHICLE.to_string()
-                && top_classification_score > 0.4 {
-                return Ok(GeofenceResult::new(classification::VEHICLE.to_string(), top_classification_score, source::CLASSIFIER.to_string()));
+                && top_classification_score > 0.4
+            {
+                return Ok(GeofenceResult::new(
+                    classification::VEHICLE.to_string(),
+                    top_classification_score,
+                    source::CLASSIFIER.to_string(),
+                ));
             }
         }
 
@@ -110,17 +157,33 @@ impl SpeciesNetEnsemble {
         // classifications.
         if top_detection_score < 0.2
             && top_classification_class == &classification::BLANK.to_string()
-            && top_classification_score > 0.5 {
-            return Ok(GeofenceResult::new(classification::BLANK.to_string(), top_classification_score, source::CLASSIFIER.to_string()));
+            && top_classification_score > 0.5
+        {
+            return Ok(GeofenceResult::new(
+                classification::BLANK.to_string(),
+                top_classification_score,
+                source::CLASSIFIER.to_string(),
+            ));
         }
 
         // Threshold #3b: extra-high-confidence BLANK classifications.
         if top_classification_class == &classification::BLANK.to_string()
-            && top_classification_score > 0.99 {
-            return Ok(GeofenceResult::new(classification::BLANK.to_string(), top_classification_score, source::CLASSIFIER.to_string()));
+            && top_classification_score > 0.99
+        {
+            return Ok(GeofenceResult::new(
+                classification::BLANK.to_string(),
+                top_classification_score,
+                source::CLASSIFIER.to_string(),
+            ));
         }
-        
-        if ![classification::BLANK.to_string(), classification::HUMAN.to_string(), classification::VEHICLE.to_string()].contains(top_classification_class) {
+
+        if ![
+            classification::BLANK.to_string(),
+            classification::HUMAN.to_string(),
+            classification::VEHICLE.to_string(),
+        ]
+        .contains(top_classification_class)
+        {
             // Threshold #4a: extra-high-confidence ANIMAL classifications.
             if top_classification_score > 0.8 {
                 return geofence_animal_classification(
@@ -130,15 +193,16 @@ impl SpeciesNetEnsemble {
                     admin1_region.as_deref(),
                     &self.taxonomy_map,
                     &self.geofence_map,
-                    true
-                )
+                    true,
+                );
             }
 
             // Threshold #4b: high-confidence ANIMAL classifications + mid-confidence
             // ANIMAL detections.
             if top_classification_score > 0.65
                 && top_detection_class == Category::Animal
-                && top_detection_score > 0.2 {
+                && top_detection_score > 0.2
+            {
                 return geofence_animal_classification(
                     classes,
                     scores,
@@ -146,8 +210,8 @@ impl SpeciesNetEnsemble {
                     admin1_region.as_deref(),
                     &self.taxonomy_map,
                     &self.geofence_map,
-                    true
-                )
+                    true,
+                );
             }
         }
 
@@ -157,25 +221,35 @@ impl SpeciesNetEnsemble {
             scores,
             country.as_deref(),
             admin1_region.as_deref(),
-            &vec!["genus".to_string(), "family".to_string(), "order".to_string(), "class".to_string(), "kingdom".to_string()],
+            &vec![
+                "genus".to_string(),
+                "family".to_string(),
+                "order".to_string(),
+                "class".to_string(),
+                "kingdom".to_string(),
+            ],
             &0.65,
             &self.taxonomy_map,
             &self.geofence_map,
-            true
+            true,
         )?;
+
         if let Some((label, score, source)) = roll_up {
-            return Ok(GeofenceResult::new(
-                label,
-                score,
-                source
-            ))
+            return Ok(GeofenceResult::new(label, score, source));
         }
 
         // Threshold #5b: mid-confidence ANIMAL detections.
-        if top_detection_class == Category::Animal
-            && top_detection_score > 0.5 {
-            return Ok(GeofenceResult::new(classification::ANIMAL.to_string(), top_detection_score, source::DETECTOR.to_string()))
+        if top_detection_class == Category::Animal && top_detection_score > 0.5 {
+            return Ok(GeofenceResult::new(
+                classification::ANIMAL.to_string(),
+                top_detection_score,
+                source::DETECTOR.to_string(),
+            ));
         }
-        Ok(GeofenceResult::new(classification::UNKNOWN.to_string(), top_classification_score, source::CLASSIFIER.to_string()))
+        Ok(GeofenceResult::new(
+            classification::UNKNOWN.to_string(),
+            top_classification_score,
+            source::CLASSIFIER.to_string(),
+        ))
     }
 }

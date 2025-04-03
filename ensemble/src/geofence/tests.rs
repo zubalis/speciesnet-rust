@@ -5,13 +5,13 @@ use std::env::current_dir;
 use std::sync::LazyLock;
 
 use serde_json::json;
+use speciesnet_core::constants::classification;
 
-use speciesnet_core::{constants::classification};
-use crate::error::Error;
 use super::{
     GeofenceResult, fix_geofence_base, geofence_animal_classification,
     roll_up_labels_to_first_matching_level, should_geofence,
 };
+use crate::error::Error;
 
 const BLANK: &str = "f1856211-cfb7-4a5b-9158-c0f72fd09ee6;;;;;;blank";
 const BLANK_FC: &str = ";;;;";
@@ -524,7 +524,11 @@ fn test_geofence_animal_classification_fn() -> Result<(), Error> {
     };
     assert_eq!(
         geofence_classification_fn(&[0.4, 0.3, 0.2, 0.1])?,
-        GeofenceResult::new(FELIDAE_FAMILY.to_string(), 0.5, "classifier+geofence+rollup_to_family".to_string())
+        GeofenceResult::new(
+            FELIDAE_FAMILY.to_string(),
+            0.5,
+            "classifier+geofence+rollup_to_family".to_string()
+        )
     );
     let geofence_classification_fn = |scores| {
         geofence_animal_classification(
@@ -539,7 +543,11 @@ fn test_geofence_animal_classification_fn() -> Result<(), Error> {
     };
     assert_eq!(
         geofence_classification_fn(&[0.4, 0.3, 0.2, 0.1])?,
-        GeofenceResult::new(CARNIVORA_ORDER.to_string(), [0.4, 0.3, 0.1].iter().sum(), "classifier+geofence+rollup_to_order".to_string())
+        GeofenceResult::new(
+            CARNIVORA_ORDER.to_string(),
+            [0.4, 0.3, 0.1].iter().sum(),
+            "classifier+geofence+rollup_to_order".to_string()
+        )
     );
 
     // Test with geofencing and rollup to unknown
@@ -556,7 +564,11 @@ fn test_geofence_animal_classification_fn() -> Result<(), Error> {
     };
     assert_eq!(
         geofence_classification_fn(&[0.4, 0.3, 0.2, 0.1])?,
-        GeofenceResult::new(classification::UNKNOWN.to_string(), 0.4, "classifier+geofence+rollup_failed".to_string())
+        GeofenceResult::new(
+            classification::UNKNOWN.to_string(),
+            0.4,
+            "classifier+geofence+rollup_failed".to_string()
+        )
     );
 
     Ok(())
