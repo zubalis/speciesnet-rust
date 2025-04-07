@@ -11,7 +11,11 @@ use speciesnet_classifier::input::ClassifierInput;
 #[test]
 fn test_entire_process() -> Result<(), Box<dyn Error>> {
     // Load model
-    let model_dir_path = current_dir()?.join("..").join("assets").join("model");
+    let model_dir_path = current_dir()?
+        .join("..")
+        .join("assets")
+        .join("model")
+        .join("model.onnx");
     let classifier = SpeciesNetClassifier::new(model_dir_path)?;
 
     // Load inputs and preprocess them
@@ -27,7 +31,7 @@ fn test_entire_process() -> Result<(), Box<dyn Error>> {
     let inputs = preprocess(&classifier_input)?;
 
     // Run classify inputs
-    let outputs = classifier.classify(&inputs.image_tensor);
+    let outputs = classifier.classify(inputs.image_tensor);
     assert!(outputs.is_ok());
     let outputs = outputs?;
 

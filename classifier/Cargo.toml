@@ -8,11 +8,13 @@ name = "speciesnet_classifier"
 path = "src/lib.rs"
 
 [dependencies]
-tensorflow = { git = "https:github.com/tensorflow/rust", rev = "1ddf5a3" }
+ort = { version = "=2.0.0-rc.9", features = ["ndarray"] }
 image = "0.24"
+ndarray = "0.16"
 thiserror = "2.0"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 csv = "1"
 speciesnet-core = { path = "../core" }
 fast_image_resize = "5.1.2"
+num_cpus = "1"

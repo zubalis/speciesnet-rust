@@ -6,7 +6,6 @@ This is the home of the `speciesnet` crate for running [google/cameratrapai](htt
 
 - [docker](https://docker.com) for running virtual environments to convert models to other formats.
 - [rustup](https://rustup.rs) for running rust program.
-- [tensorflow](https://tensorflow.org) for running the cameratrap model.
 
 ### Setting up the environment
 
@@ -18,9 +17,7 @@ Go to [https://github.com/agentmorris/MegaDetector/releases/tag/v5.0](https://gi
 
 #### Converting the models
 
-After you have downloaded the models, You need to convert the MegaDetector model into [ONNX](https://onnx.ai) format by running the model conversion script inside the [converter](./converter/) directory. See [this README file](./converter/README.md) on how to convert the model. You will get the converted onnx model inside the `assets/model` folder. Now you're ready to load that model into Rust and start using it with Rust.
-
-You also need to convert the CameratrapAI model from keras to Tensorflow format, the configurations for converting the model to tensorflow is still undocumented.
+After you have downloaded the models, You need to convert the MegaDetector and Speciesnet model into [ONNX](https://onnx.ai) format by running the model conversion script inside the [converter](./converter/) directory. See [this README file](./converter/README.md) on how to convert the model. You will get the converted onnx model inside the `assets/model` folder. Now you're ready to load that model into Rust and start using it with Rust.
 
 #### Setup environment variables
 
@@ -70,7 +67,7 @@ Running only the classifier
 ```
 cd assets/images
 
-cargo run --release --bin speciesnet-cli -- --instances-json input.json --predictions-json output_classifier_test.json --detections-json output_detector_test.json --classifier-model ../model/ --detector-model ../model/md_v5a.0.0_traced.pt --classifier-only
+cargo run --release --bin speciesnet-cli -- --instances-json input.json --predictions-json output_classifier_test.json --detections-json output_detector_test.json --classifier-model ../model/model.onnx --detector-model ../model/md_v5a.0.0_traced.pt --classifier-only
 ```
 
 Running only the ensemble
@@ -78,7 +75,7 @@ Running only the ensemble
 `filepath` in `instances-json`, `output_detector_test.json` and `output_classifier_test.json` must be the same so you can run `ensemble`
 
 ```
-cargo run --bin speciesnet-cli -- --instances-json assets/images/input.json --predictions-json assets/images/output_ensemble_test.json --detections-json assets/images/output_detector_test.json --classifications-json assets/images/output_classifier_test.json --classifier-model assets/model --detector-model assets/model/md_v5a.0.0_traced.pt --ensemble-only 
+cargo run --bin speciesnet-cli -- --instances-json assets/images/input.json --predictions-json assets/images/output_ensemble_test.json --detections-json assets/images/output_detector_test.json --classifications-json assets/images/output_classifier_test.json --classifier-model assets/model/model.onnx --detector-model assets/model/md_v5a.0.0_traced.pt --ensemble-only 
 ```
 
 ### Testing CLI output

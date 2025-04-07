@@ -1,10 +1,8 @@
-use tensorflow::Status;
-
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    // Tensorflow error.
-    #[error("TF error: {0}")]
-    TFError(#[from] Status),
+    // ORT error.
+    #[error("ORT error: {0}")]
+    ORTError(#[from] ort::error::Error),
 
     // Miscellaneous
     #[error("IO error: {0}")]
@@ -19,4 +17,6 @@ pub enum Error {
     ImageDecodeError(#[from] image::ImageError),
     #[error("Deserialize error: {0}")]
     DeserializeError(#[from] serde_json::error::Error),
+    #[error("NDArray error: {0}")]
+    NDArray(#[from] ndarray::ShapeError),
 }

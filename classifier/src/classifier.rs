@@ -1,17 +1,17 @@
+use ndarray::Array1;
+use speciesnet_core::classification::{Classification, ClassificationBundle};
+use speciesnet_core::prediction::Prediction;
 use std::cmp::Ordering::Equal;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-
-use speciesnet_core::classification::{Classification, ClassificationBundle};
-use speciesnet_core::prediction::Prediction;
 
 use crate::error::Error;
 
 #[cfg(test)]
 mod tests;
 
-pub fn softmax(scores: &[f32]) -> Vec<f64> {
+pub fn softmax(scores: &Array1<f32>) -> Vec<f64> {
     let exp_values: Vec<f64> = scores.iter().map(|&score| score.exp() as f64).collect();
     let sum_exp_values: f64 = exp_values.iter().sum();
     exp_values
@@ -44,7 +44,11 @@ pub fn to_chunks(outputs: &[f32], chunk_size: usize) -> Vec<Vec<f32>> {
         .collect()
 }
 
-pub fn transform<P: AsRef<Path>>(file_path: P, outputs: &[f32], labels: &[String]) -> Prediction {
+pub fn transform<P: AsRef<Path>>(
+    file_path: P,
+    outputs: &Array1<f32>,
+    labels: &[String],
+) -> Prediction {
     let softmax_result = softmax(outputs);
     let mapped_result = map_labels_to_classifications(labels, &softmax_result);
     let top5_result = pick_top_n_from(mapped_result, 5);

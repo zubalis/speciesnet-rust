@@ -1,6 +1,9 @@
+use ndarray::{Array1, Array4, Ix2};
+use ort::session::Session;
+use ort::session::builder::GraphOptimizationLevel;
+use ort::value::Tensor;
 use std::path::Path;
 use std::sync::Arc;
-use tensorflow::{Graph, SavedModelBundle, SessionOptions, SessionRunArgs, Tensor};
 
 pub mod classifier;
 pub mod error;
@@ -11,50 +14,37 @@ use crate::error::Error;
 
 #[derive(Debug, Clone)]
 pub struct SpeciesNetClassifier {
-    bundle: Arc<SavedModelBundle>,
-    graph: Arc<Graph>,
+    model: Arc<Session>,
 }
 
 impl SpeciesNetClassifier {
     /// Create classifier from given config
-    pub fn new<P>(model_dir_path: P) -> Result<Self, Error>
+    pub fn new<P>(model_path: P) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
-        let mut graph = Graph::new();
-        let bundle = SavedModelBundle::load(
-            &SessionOptions::new(),
-            ["serve"],
-            &mut graph,
-            model_dir_path,
-        )?;
-
+        let cpus = num_cpus::get();
+        let session = Session::builder()?
+            .with_optimization_level(GraphOptimizationLevel::Level3)?
+            .with_intra_threads(cpus)?
+            .commit_from_file(model_path)?;
         Ok(Self {
-            bundle: Arc::new(bundle),
-            graph: Arc::new(graph),
+            model: Arc::new(session),
         })
     }
 
     /// run a classification from given input
-    pub fn classify(&self, input_tensor: &Tensor<f32>) -> Result<Vec<f32>, Error> {
-        let session = &self.bundle.session;
-        let mut args = SessionRunArgs::new();
-
-        let input_op = self
-            .graph
-            .operation_by_name_required("serving_default_input_2")?;
-        let output_op = self
-            .graph
-            .operation_by_name_required("StatefulPartitionedCall")?;
-
-        args.add_feed(&input_op, 0, input_tensor);
-
-        let output_token = args.request_fetch(&output_op, 0);
-        session.run(&mut args)?;
-
-        let output_tensor: Tensor<f32> = args.fetch(output_token)?;
-        let o_vec = output_tensor.to_vec();
-
-        Ok(o_vec)
+    pub fn classify(&self, input_tensor: Array4<f32>) -> Result<Array1<f32>, Error> {
+        let outputs = self
+            .model
+            .run(ort::inputs!["input" => Tensor::from_array(input_tensor)?]?)?;
+        let output: Array1<f32> = outputs
+            .get("dense")
+            .unwrap()
+            .try_extract_tensor::<f32>()?
+            .into_dimensionality::<Ix2>()?
+            .row(0) // to get the scores
+            .into_owned();
+        Ok(output)
     }
 }

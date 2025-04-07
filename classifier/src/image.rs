@@ -4,7 +4,7 @@ use fast_image_resize::images::Image;
 use fast_image_resize::{PixelType, Resizer};
 use image::RgbImage;
 use image::io::Reader;
-use tensorflow::Tensor;
+use ndarray::Array4;
 
 use crate::error::Error;
 use crate::input::ClassifierInput;
@@ -12,7 +12,7 @@ use crate::input::ClassifierInput;
 #[derive(Debug)]
 pub struct ProceededImage {
     pub path: PathBuf,
-    pub image_tensor: Tensor<f32>,
+    pub image_tensor: Array4<f32>,
 }
 
 pub fn preprocess(classifier_input: &ClassifierInput) -> Result<ProceededImage, Error> {
@@ -44,8 +44,7 @@ pub fn preprocess(classifier_input: &ClassifierInput) -> Result<ProceededImage, 
         .copied()
         .map(|v| v as f32 / 255.0)
         .collect();
-
-    let tensor = Tensor::new(&[1, 480, 480, 3]).with_values(&pixels)?;
+    let tensor: Array4<f32> = Array4::from_shape_vec((1, 480, 480, 3), pixels)?;
     Ok(ProceededImage {
         path: classifier_input.file_path.clone(),
         image_tensor: tensor,

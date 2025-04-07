@@ -1,10 +1,10 @@
-use std::cell::LazyCell;
-use std::path::PathBuf;
-
 use crate::classifier::{
     Classification, map_labels_to_classifications, pick_top_n_from, softmax, to_chunks, transform,
 };
+use ndarray::Array1;
 use speciesnet_core::prediction::Prediction;
+use std::cell::LazyCell;
+use std::path::PathBuf;
 
 const LABELS: LazyCell<Vec<String>> = LazyCell::new(|| {
     vec![
@@ -41,7 +41,7 @@ const CLASSIFICATIONS: LazyCell<Vec<Classification>> = LazyCell::new(|| {
 
 #[test]
 fn test_softmax_fn() {
-    let scores: Vec<f32> = vec![4.0, 2.0, 1.0, 0.5, -0.5, -1.2];
+    let scores = Array1::from_vec(vec![4.0, 2.0, 1.0, 0.5, -0.5, -1.2]);
     let expected_scores = SCORES.clone();
 
     let result = softmax(&scores);
@@ -90,10 +90,10 @@ fn test_transform_fn() {
         PathBuf::from("path/to/file/2.png"),
         PathBuf::from("path/to/file/3.png"),
     ];
-    let scores: Vec<Vec<f32>> = vec![
-        vec![4.0, 2.0, 1.0, 0.5, -0.5, -1.2, 3.0, -1.1],
-        vec![1.0, 2.0, 5.0, 0.5, -0.5, -1.2, 1.2, -2.1],
-        vec![3.0, 2.0, 1.0, 9.5, -0.5, -1.2, 5.0, -1.2],
+    let scores: Vec<Array1<f32>> = vec![
+        Array1::from_vec(vec![4.0, 2.0, 1.0, 0.5, -0.5, -1.2, 3.0, -1.1]),
+        Array1::from_vec(vec![1.0, 2.0, 5.0, 0.5, -0.5, -1.2, 1.2, -2.1]),
+        Array1::from_vec(vec![3.0, 2.0, 1.0, 9.5, -0.5, -1.2, 5.0, -1.2]),
     ];
     let labels = vec![
         "lion".to_string(),
