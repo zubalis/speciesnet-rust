@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize, de, ser::SerializeSeq};
 
 use crate::error::Error;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct BoundingBox {
     /// Top left `x` point of the image.
     x1: f64,
@@ -183,8 +183,8 @@ impl BoundingBox {
 
     /// Normalize the values to be under `0..1` by the given width and height.
     ///
-    /// This is implemented to be chained with the scale function to cap the numbers between `0` and
-    /// `1`.
+    /// This is implemented to be chained with the [scale_to](crate::bounding_box::BoundingBox::scale_to)
+    /// function to cap the numbers between `0` and `1`.
     pub fn normalize(mut self, width: u32, height: u32) -> Self {
         self.x1 /= width as f64;
         self.y1 /= height as f64;

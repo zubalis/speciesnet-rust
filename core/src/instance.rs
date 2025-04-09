@@ -17,3 +17,13 @@ pub struct Instance {
     pub country: Option<String>,
     pub admin1_region: Option<String>,
 }
+
+impl Instance {
+    pub fn from_path_buf(filepath: PathBuf) -> Self {
+        Self {
+            filepath,
+            country: None,
+            admin1_region: None,
+        }
+    }
+}
