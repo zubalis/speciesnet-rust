@@ -1,11 +1,12 @@
 use std::{path::Path, sync::Arc};
 
 use error::Error;
+use image::DynamicImage;
 use ort::{
     session::{Session, builder::GraphOptimizationLevel},
     value::Tensor,
 };
-use preprocess::PreprocessedImage;
+use preprocess::{LetterboxOptions, PreprocessedImage, PreprocessedImageInner, letterbox};
 use speciesnet_core::{BoundingBox, Category, Detection, prediction::Prediction};
 use tracing::info;
 use yolo::non_max_suppression;
@@ -35,6 +36,15 @@ impl SpeciesNetDetector {
         Ok(Self {
             model: Arc::new(model),
         })
+    }
+
+    pub fn preprocess(
+        &self,
+        image: DynamicImage,
+        options: LetterboxOptions,
+    ) -> Result<PreprocessedImageInner, Error> {
+        let preprocessed_image = letterbox(image, options)?;
+        Ok(preprocessed_image)
     }
 
     pub fn predict(
