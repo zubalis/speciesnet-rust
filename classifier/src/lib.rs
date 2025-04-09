@@ -1,5 +1,8 @@
 use std::path::Path;
 use std::sync::Arc;
+
+use ::image::DynamicImage;
+use speciesnet_core::BoundingBox;
 use tensorflow::{Graph, SavedModelBundle, SessionOptions, SessionRunArgs, Tensor};
 
 pub mod classifier;
@@ -7,7 +10,7 @@ pub mod error;
 pub mod image;
 pub mod input;
 
-use crate::error::Error;
+use crate::{error::Error, image::preprocess_impl};
 
 #[derive(Debug, Clone)]
 pub struct SpeciesNetClassifier {
@@ -56,5 +59,24 @@ impl SpeciesNetClassifier {
         let o_vec = output_tensor.to_vec();
 
         Ok(o_vec)
+    }
+
+    /// Preprocess a given image to be classifier compatible format.
+    pub fn preprocess(
+        &self,
+        image: DynamicImage,
+        bboxes: &[BoundingBox],
+    ) -> Result<Tensor<f32>, Error> {
+        let processed_image = preprocess_impl(image, bboxes.first().cloned())?;
+
+        let pixels = processed_image
+            .into_vec()
+            .iter()
+            .map(|p| *p as f32 / 255.0)
+            .collect::<Vec<f32>>();
+
+        let tensor = Tensor::new(&[1, 480, 480, 3]).with_values(&pixels)?;
+
+        Ok(tensor)
     }
 }
