@@ -32,7 +32,7 @@ impl<'de> Deserialize<'de> for BoundingBox {
     where
         D: serde::Deserializer<'de>,
     {
-        let variant = Vec::<f32>::deserialize(deserializer)?;
+        let variant = Vec::<f64>::deserialize(deserializer)?;
 
         // The length of the given array must be 4 as the bounding box is saved in the json file as
         // `(min_x, min_y, width, height)`.
@@ -51,10 +51,7 @@ impl<'de> Deserialize<'de> for BoundingBox {
         let height = variant.get(3).unwrap();
 
         Ok(BoundingBox::from_megadetector_coordinates(
-            *min_x as f64,
-            *min_y as f64,
-            *width as f64,
-            *height as f64,
+            *min_x, *min_y, *width, *height,
         ))
     }
 }
