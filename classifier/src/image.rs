@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use fast_image_resize::images::Image;
 use fast_image_resize::{PixelType, Resizer};
 use image::{DynamicImage, ImageReader, RgbImage};
+use ndarray::Array4;
 use speciesnet_core::BoundingBox;
-use tensorflow::Tensor;
 
 use crate::error::Error;
 use crate::input::ClassifierInput;
@@ -12,7 +12,7 @@ use crate::input::ClassifierInput;
 #[derive(Debug)]
 pub struct ProceededImage {
     pub path: PathBuf,
-    pub image_tensor: Tensor<f32>,
+    pub image_tensor: Array4<f32>,
 }
 
 pub fn preprocess(classifier_input: &ClassifierInput) -> Result<ProceededImage, Error> {

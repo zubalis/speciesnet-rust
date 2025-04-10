@@ -3,8 +3,8 @@ use std::sync::LazyLock;
 
 use serde_json::json;
 
-use crate::error::Error;
 use super::{get_ancestor_at_level, get_full_class_string};
+use crate::error::Error;
 
 const BLANK: &str = "f1856211-cfb7-4a5b-9158-c0f72fd09ee6;;;;;;blank";
 const BLANK_FC: &str = ";;;;";

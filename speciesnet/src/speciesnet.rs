@@ -6,18 +6,18 @@ use std::{
 use image::ImageReader;
 use rayon::prelude::*;
 use speciesnet_classifier::{
-    SpeciesNetClassifier,
     classifier::{read_labels_from_file, transform},
     image::preprocess as classifier_preprocess,
     input::ClassifierInput,
+    SpeciesNetClassifier,
 };
-use speciesnet_core::{BoundingBox, Instance, prediction::Prediction, shape::Shape};
+use speciesnet_core::{prediction::Prediction, shape::Shape, BoundingBox, Instance};
 use speciesnet_detector::{
-    SpeciesNetDetector,
     preprocess::{LetterboxOptions, PreprocessedImage},
+    SpeciesNetDetector,
 };
 use speciesnet_ensemble::{
-    SpeciesNetEnsemble, error::Error::NoneDetectionOrClassification, input::EnsembleInput,
+    error::Error::NoneDetectionOrClassification, input::EnsembleInput, SpeciesNetEnsemble,
 };
 use tracing::{debug, error, info};
 
@@ -34,7 +34,7 @@ impl SpeciesNet {
     /// Initialize the detector and the classifier by loading them into memory.
     pub fn new<P>(
         detector_model_path: P,
-        classifier_model_dir_path: P,
+        classifier_model_path: P,
         geofence_base_path: P,
         geofence_fix_path: P,
         taxonomy_path: P,
@@ -42,7 +42,7 @@ impl SpeciesNet {
     where
         P: AsRef<Path>,
     {
-        let classifier = SpeciesNetClassifier::new(classifier_model_dir_path)?;
+        let classifier = SpeciesNetClassifier::new(classifier_model_path)?;
         info!("Classifier initialized.");
 
         let detector = SpeciesNetDetector::new(detector_model_path)?;
@@ -107,7 +107,7 @@ impl SpeciesNet {
                 let image = classifier_preprocess(fp)?;
                 let tensor = image.image_tensor;
                 let image_path = image.path;
-                let outputs = self.classifier.classify(&tensor)?;
+                let outputs = self.classifier.classify(tensor)?;
 
                 // Transform outputs into usable format (softmax, mapping labels, pick top 5)
                 let prediction = transform(image_path, &outputs, &labels);

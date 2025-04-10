@@ -126,10 +126,22 @@ fn main() -> anyhow::Result<()> {
 
     // Parse the input files into list of files.
     let images = prepare_image_inputs(&args.input_type)?;
-    let geofence_base_path = args.classifier_model.join("../geofence_base.json").clone();
-    let geofence_fixes_path = args.classifier_model.join("../geofence_fixes.csv").clone();
+    let geofence_base_path = args
+        .classifier_model
+        .parent()
+        .unwrap()
+        .join("../geofence_base.json")
+        .clone();
+    let geofence_fixes_path = args
+        .classifier_model
+        .parent()
+        .unwrap()
+        .join("../geofence_fixes.csv")
+        .clone();
     let taxonomy_path = args
         .classifier_model
+        .parent()
+        .unwrap()
         .join("../taxonomy_release.txt")
         .clone();
     let speciesnet = SpeciesNet::new(
@@ -162,7 +174,7 @@ fn main() -> anyhow::Result<()> {
         let output_detection_path = args.additional_config.detections_json.clone();
         let classifier_results = speciesnet.classify(
             &output_detection_path.unwrap(),
-            &args.classifier_model.join("labels.txt"),
+            &args.classifier_model.parent().unwrap().join("labels.txt"),
         )?; // assumed labels is in the same folder as model
         let predictions = Predictions::from(classifier_results);
 
