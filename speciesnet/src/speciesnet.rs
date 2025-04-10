@@ -1,5 +1,7 @@
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use image::ImageReader;
 use rayon::prelude::*;
@@ -17,7 +19,7 @@ use speciesnet_detector::{
 use speciesnet_ensemble::{
     SpeciesNetEnsemble, error::Error::NoneDetectionOrClassification, input::EnsembleInput,
 };
-use tracing::{debug, info};
+use tracing::{debug, error, info};
 
 use crate::error::Error;
 
@@ -182,11 +184,16 @@ impl SpeciesNet {
         let predictions = instances
             .par_iter()
             .map(|fp| {
-                let mut prediction = Prediction::default();
-                prediction.set_file_path(fp.filepath.clone());
+                let mut prediction = Prediction::new(fp.filepath.clone());
 
                 // Loading the image
-                let loaded_image = ImageReader::open(&fp.filepath)?.decode()?;
+                let loaded_image = match ImageReader::open(&fp.filepath)?.decode() {
+                    Ok(image) => image,
+                    Err(e) => {
+                        error!("image failed to load {}", e);
+                        return Ok(prediction);
+                    }
+                };
 
                 // Running the detector
                 let detector_image = self

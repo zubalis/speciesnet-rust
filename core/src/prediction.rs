@@ -27,7 +27,7 @@ impl Predictions {
 }
 
 /// The possible output of each predictions found during the run.
-#[derive(Debug, Default, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Prediction {
     #[serde(rename = "filepath")]
     file_path: PathBuf,
@@ -50,6 +50,20 @@ pub struct Prediction {
 }
 
 impl Prediction {
+    pub fn new(file_path: PathBuf) -> Self {
+        Self {
+            file_path,
+            country: None,
+            admin1_region: None,
+            detections: None,
+            classifications: None,
+            prediction: None,
+            prediction_score: None,
+            prediction_source: None,
+            model_version: None,
+        }
+    }
+
     pub fn from_detections(file_path: PathBuf, detections: Vec<Detection>) -> Self {
         Self {
             file_path,

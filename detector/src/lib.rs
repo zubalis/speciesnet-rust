@@ -70,6 +70,10 @@ impl SpeciesNetDetector {
         info!("Running non-max suppression on image {}.", path.display());
         let nms_results = non_max_suppression(output, Some(0.01))?;
 
+        if nms_results.is_empty() {
+            return Ok(None);
+        }
+
         let mut detections: Vec<Detection> = Vec::new();
 
         for raw_detection in nms_results.rows() {
