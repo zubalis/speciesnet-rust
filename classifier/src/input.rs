@@ -14,6 +14,15 @@ pub struct ClassifierInput {
     pub bbox: Option<BoundingBox>,
 }
 
+impl ClassifierInput {
+    pub fn new(file_path: PathBuf, bounding_box: Option<BoundingBox>) -> Self {
+        Self {
+            file_path,
+            bbox: bounding_box,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize)]
 struct DetectorOutputs {
     pub predictions: Vec<DetectorOutput>,
@@ -49,6 +58,7 @@ impl ClassifierInput {
                 }
             })
             .collect();
+
         Ok(classifier_inputs)
     }
 }

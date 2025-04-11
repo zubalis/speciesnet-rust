@@ -1,15 +1,24 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
+use image::ImageReader;
 use rayon::prelude::*;
-use speciesnet_classifier::SpeciesNetClassifier;
-use speciesnet_classifier::classifier::{read_labels_from_file, transform};
-use speciesnet_classifier::image::preprocess as classifier_preprocess;
-use speciesnet_classifier::input::ClassifierInput;
-use speciesnet_core::prediction::Prediction;
-use speciesnet_detector::{SpeciesNetDetector, preprocess::preprocess};
-use speciesnet_ensemble::SpeciesNetEnsemble;
-use speciesnet_ensemble::error::Error::NoneDetectionOrClassification;
-use speciesnet_ensemble::input::EnsembleInput;
+use speciesnet_classifier::{
+    SpeciesNetClassifier,
+    classifier::{read_labels_from_file, transform},
+    image::preprocess as classifier_preprocess,
+    input::ClassifierInput,
+};
+use speciesnet_core::{BoundingBox, Instance, prediction::Prediction, shape::Shape};
+use speciesnet_detector::{
+    SpeciesNetDetector,
+    preprocess::{LetterboxOptions, PreprocessedImage},
+};
+use speciesnet_ensemble::{
+    SpeciesNetEnsemble, error::Error::NoneDetectionOrClassification, input::EnsembleInput,
+};
 use tracing::{debug, error, info};
 
 use crate::error::Error;
@@ -52,34 +61,32 @@ impl SpeciesNet {
 
     /// Performs the detection by MegaDetector Model from given file or folder. Returns a list of
     /// detections.
-    pub fn detect(&self, list_of_files: &[PathBuf]) -> Result<Vec<Prediction>, Error> {
+    pub fn detect(&self, instances: &[Instance]) -> Result<Vec<Prediction>, Error> {
         info!("Starting the detector ort step.");
 
-        let detections = list_of_files
-            .iter()
+        let image_format_options: Arc<LetterboxOptions> = Arc::new(
+            LetterboxOptions::builder()
+                .shape(Shape::Square(1280))
+                .build(),
+        );
+
+        let detections = instances
+            .par_iter()
             .map(|fp| {
-                let preprocessed_image = match preprocess(fp) {
-                    Ok(pi) => pi,
-                    Err(e) => {
-                        error!("{}", e);
-                        return None;
-                    }
-                };
+                let loaded_image = ImageReader::open(&fp.filepath)?.decode()?;
+                let preprocessed_image = self
+                    .detector
+                    .preprocess(loaded_image, *image_format_options)?;
+                let preprocessed_image =
+                    PreprocessedImage::new(preprocessed_image, fp.filepath.clone());
 
-                match self.detector.predict(preprocessed_image) {
-                    Ok(d) => d,
-                    Err(e) => {
-                        error!("{}", e);
-                        None
-                    }
-                }
+                let predictions = self.detector.predict(preprocessed_image)?;
+
+                Ok(predictions)
             })
-            .collect::<Vec<Option<Prediction>>>();
+            .collect::<Result<Vec<Option<Prediction>>, Error>>()?;
 
-        Ok(detections
-            .into_iter()
-            .flatten()
-            .collect::<Vec<Prediction>>())
+        Ok(detections.into_iter().flatten().collect())
     }
 
     /// Performs the classification from detector output by the cameratrap model.
@@ -89,7 +96,9 @@ impl SpeciesNet {
         label_path: &PathBuf,
     ) -> Result<Vec<Prediction>, Error> {
         info!("Starting classification");
+
         let classifier_inputs = ClassifierInput::from_detector_output(detector_output_path)?;
+
         // Load labels
         let labels: Vec<String> = read_labels_from_file(label_path)?;
         let predictions = classifier_inputs
@@ -99,8 +108,9 @@ impl SpeciesNet {
                 let tensor = image.image_tensor;
                 let image_path = image.path;
                 let outputs = self.classifier.classify(tensor)?;
+
                 // Transform outputs into usable format (softmax, mapping labels, pick top 5)
-                let prediction = transform(image_path, &outputs, &labels);
+                let prediction = transform(image_path, outputs.view(), &labels);
                 Ok(prediction)
             })
             .collect::<Result<Vec<Prediction>, Error>>()?;
@@ -117,8 +127,10 @@ impl SpeciesNet {
         classifier_output_path: &PathBuf,
     ) -> Result<Vec<Prediction>, Error> {
         info!("Starting ensemble");
+
         let ensemble_inputs =
             EnsembleInput::from(instances_path, detector_output_path, classifier_output_path)?;
+
         let predictions = ensemble_inputs
             .par_iter()
             .map(|input| {
@@ -131,7 +143,8 @@ impl SpeciesNet {
                         input.country().clone(),
                         input.admin1_region().clone(),
                     )?;
-                    Ok(Prediction::ensemble(
+
+                    Ok(Prediction::from_ensemble(
                         input.file_path().clone(),
                         input.country().clone(),
                         input.admin1_region().clone(),
@@ -148,8 +161,105 @@ impl SpeciesNet {
         Ok(predictions)
     }
 
-    /// Performs both detection by MegaDetector and classify by the cameratrap model.
-    pub fn predict(&self) {
-        todo!()
+    /// Performs the whole pipeline (Detection, Classification, Ensemble) from given list of
+    /// instances.
+    pub fn predict(
+        &self,
+        instances: &[Instance],
+        labels_path: &Path,
+    ) -> Result<Vec<Prediction>, Error> {
+        info!("Starting the predictions on the whole pipeline.");
+
+        // loads the image, this will gets converted to both detector input and classifier so they
+        // need to stay.
+
+        let letterbox_options: Arc<LetterboxOptions> = Arc::new(
+            LetterboxOptions::builder()
+                .shape(Shape::Square(1280))
+                .build(),
+        );
+
+        let labels = read_labels_from_file(labels_path)?;
+
+        let predictions = instances
+            .par_iter()
+            .map(|fp| {
+                let mut prediction = Prediction::new(fp.filepath.clone());
+
+                // Loading the image
+                let loaded_image = match ImageReader::open(&fp.filepath)?.decode() {
+                    Ok(image) => image,
+                    Err(e) => {
+                        error!("image failed to load {}", e);
+                        return Ok(prediction);
+                    }
+                };
+
+                // Running the detector
+                let detector_image = self
+                    .detector
+                    .preprocess(loaded_image.clone(), *letterbox_options)?;
+                let detector_image = PreprocessedImage::new(detector_image, fp.filepath.clone());
+
+                let detector_results = self.detector.predict(detector_image)?;
+
+                if let Some(ref res) = detector_results {
+                    prediction.merge(res.clone());
+                }
+
+                let bounding_boxes = match detector_results {
+                    Some(detections) => match detections.detections() {
+                        Some(det) => {
+                            let binding = det
+                                .iter()
+                                .map(|d| *d.bounding_box())
+                                .collect::<Vec<BoundingBox>>();
+
+                            binding
+                        }
+                        None => vec![],
+                    },
+                    None => vec![],
+                };
+
+                // Running the classifier
+                let classifier_tensor =
+                    self.classifier.preprocess(loaded_image, &bounding_boxes)?;
+
+                let classifier_results = self.classifier.classify(classifier_tensor)?;
+                let classifier_results =
+                    transform(&fp.filepath, classifier_results.view(), &labels);
+
+                prediction.merge(classifier_results);
+
+                // Running the emsembler
+                if let (Some(detections), Some(classifications)) =
+                    (prediction.detections(), prediction.classifications())
+                {
+                    let ensemble_results = self.ensemble.ensemble(
+                        detections,
+                        classifications,
+                        fp.country.clone(),
+                        fp.admin1_region.clone(),
+                    )?;
+
+                    let ensemble_prediction = Prediction::from_ensemble(
+                        fp.filepath.clone(),
+                        fp.country.clone(),
+                        fp.admin1_region.clone(),
+                        ensemble_results.clone(),
+                        detections.clone(),
+                        classifications.clone(),
+                    );
+
+                    prediction.merge(ensemble_prediction);
+                }
+
+                Ok(prediction)
+            })
+            .collect::<Result<Vec<Prediction>, Error>>()?;
+
+        info!("Finished running the whole flow.");
+        Ok(predictions)
     }
 }

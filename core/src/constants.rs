@@ -5,9 +5,16 @@ pub mod classification {
         "990ae9dd-7a59-4344-afcb-1b7b21368000;mammalia;primates;hominidae;homo;sapiens;human";
     pub const VEHICLE: &str = "e2895ed5-780b-48f6-8a11-9e27cb594511;;;;;;vehicle";
     pub const UNKNOWN: &str = "f2efdae9-efb8-48fb-8a91-eccf79ab4ffb;no cv result;no cv result;no cv result;no cv result;no cv result;no cv result";
+
+    pub const IMAGE_WIDTH: u32 = 480;
+    pub const IMAGE_HEIGHT: u32 = 480;
 }
 
 pub mod source {
     pub const DETECTOR: &str = "detector";
     pub const CLASSIFIER: &str = "classifier";
+}
+
+pub mod detector {
+    pub const IMAGE_HEIGHT: u32 = 1280;
 }

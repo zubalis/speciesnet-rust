@@ -1,14 +1,17 @@
 use std::{path::Path, sync::Arc};
 
-use error::Error;
+use image::DynamicImage;
+use ndarray::Ix3;
 use ort::{
     session::{Session, builder::GraphOptimizationLevel},
     value::Tensor,
 };
-use preprocess::PreprocessedImage;
+use preprocess::{LetterboxOptions, PreprocessedImage, PreprocessedImageInner, letterbox};
 use speciesnet_core::{BoundingBox, Category, Detection, prediction::Prediction};
 use tracing::info;
 use yolo::non_max_suppression;
+
+use crate::error::Error;
 
 pub mod error;
 pub mod preprocess;
@@ -37,6 +40,15 @@ impl SpeciesNetDetector {
         })
     }
 
+    pub fn preprocess(
+        &self,
+        image: DynamicImage,
+        options: LetterboxOptions,
+    ) -> Result<PreprocessedImageInner, Error> {
+        let preprocessed_image = letterbox(image, options)?;
+        Ok(preprocessed_image)
+    }
+
     pub fn predict(
         &self,
         preprocessed_image: PreprocessedImage,
@@ -55,10 +67,15 @@ impl SpeciesNetDetector {
             .get("output")
             .unwrap()
             .try_extract_tensor::<f32>()?
+            .into_dimensionality::<Ix3>()?
             .into_owned();
 
         info!("Running non-max suppression on image {}.", path.display());
         let nms_results = non_max_suppression(output, Some(0.01))?;
+
+        if nms_results.is_empty() {
+            return Ok(None);
+        }
 
         let mut detections: Vec<Detection> = Vec::new();
 

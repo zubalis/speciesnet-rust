@@ -8,6 +8,7 @@ use show_image::{
     event::{VirtualKeyCode, WindowEvent},
 };
 use speciesnet::speciesnet::SpeciesNet;
+use speciesnet_core::Instance;
 use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
@@ -18,13 +19,19 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     let image_path = PathBuf::from("../../assets/images/african_elephants.jpg");
-    let speciesnet = SpeciesNet::new("../../assets/model/md_v5a.0.0.onnx", "../../assets/model/")?;
+    let speciesnet = SpeciesNet::new(
+        "../../assets/model/md_v5a.0.0.onnx",
+        "../../assets/model/",
+        "../../assets/geofence_base.json",
+        "../../assets/geofence_fixes.csv",
+        "../../assets/taxonomy_release.txt",
+    )?;
 
     info!(
         "Running detector on the example image {}.",
         image_path.display()
     );
-    let results = speciesnet.detect(&[image_path.clone()])?;
+    let results = speciesnet.detect(&[Instance::from_path_buf(image_path.clone())])?;
 
     info!("Loading the original image {}.", image_path.display());
     let loaded_image = ImageReader::open(&image_path)?.decode()?.to_rgb8();

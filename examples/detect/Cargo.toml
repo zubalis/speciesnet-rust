@@ -11,5 +11,6 @@ image = "0.25"
 raqote = { version = "0.8", default-features = false, features = ["text"] }
 show-image = { version = "=0.14.0", features = ["image", "raqote"] }
 speciesnet = { path = "../../speciesnet" }
+speciesnet-core = { path = "../../core" }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt", "ansi"] }

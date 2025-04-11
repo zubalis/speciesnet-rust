@@ -217,6 +217,29 @@ fn main() -> anyhow::Result<()> {
         );
     }
 
+    // Performs full inference when none of the options are set.
+    if !args.run_type.detector_only
+        && !args.run_type.classifier_only
+        && !args.run_type.ensemble_only
+    {
+        let full_results =
+            speciesnet.predict(&images, &PathBuf::from("../assets/model/labels.txt"))?;
+        let predictions = Predictions::from(full_results);
+
+        info!(
+            "Saving the detected results to {}.",
+            args.predictions_json.display()
+        );
+
+        let writer = BufWriter::new(File::create(&args.predictions_json)?);
+        serde_json::to_writer_pretty(writer, &predictions)?;
+
+        info!(
+            "Predictions file has been successfully saved to {}.",
+            args.predictions_json.display()
+        );
+    }
+
     info!("Program finished.");
     Ok(())
 }

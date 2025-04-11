@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize, de, ser::SerializeSeq};
 
 use crate::error::Error;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct BoundingBox {
     /// Top left `x` point of the image.
     x1: f64,
@@ -32,7 +32,7 @@ impl<'de> Deserialize<'de> for BoundingBox {
     where
         D: serde::Deserializer<'de>,
     {
-        let variant = Vec::<f32>::deserialize(deserializer)?;
+        let variant = Vec::<f64>::deserialize(deserializer)?;
 
         // The length of the given array must be 4 as the bounding box is saved in the json file as
         // `(min_x, min_y, width, height)`.
@@ -45,16 +45,13 @@ impl<'de> Deserialize<'de> for BoundingBox {
 
         // SAFETY: These unwraps are safe to do so becase we've verified the length of the array to
         // be (and only be) 4.
-        let min_x = variant.first().unwrap();
-        let min_y = variant.get(1).unwrap();
+        let x1 = variant.first().unwrap();
+        let y1 = variant.get(1).unwrap();
         let width = variant.get(2).unwrap();
         let height = variant.get(3).unwrap();
 
         Ok(BoundingBox::from_megadetector_coordinates(
-            *min_x as f64,
-            *min_y as f64,
-            *width as f64,
-            *height as f64,
+            *x1, *y1, *width, *height,
         ))
     }
 }
@@ -183,8 +180,8 @@ impl BoundingBox {
 
     /// Normalize the values to be under `0..1` by the given width and height.
     ///
-    /// This is implemented to be chained with the scale function to cap the numbers between `0` and
-    /// `1`.
+    /// This is implemented to be chained with the [scale_to](crate::bounding_box::BoundingBox::scale_to)
+    /// function to cap the numbers between `0` and `1`.
     pub fn normalize(mut self, width: u32, height: u32) -> Self {
         self.x1 /= width as f64;
         self.y1 /= height as f64;
