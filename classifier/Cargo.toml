@@ -9,7 +9,7 @@ path = "src/lib.rs"
 
 [dependencies]
 ort = { version = "=2.0.0-rc.9", features = ["ndarray"] }
-image = "0.24"
+image = "0.25"
 ndarray = "0.16"
 num_cpus = "1"
 thiserror = "2.0"

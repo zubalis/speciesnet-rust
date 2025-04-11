@@ -1,12 +1,12 @@
+use std::{path::PathBuf, sync::LazyLock};
+
 use crate::classifier::{
     Classification, map_labels_to_classifications, pick_top_n_from, softmax, to_chunks, transform,
 };
 use ndarray::Array1;
 use speciesnet_core::prediction::Prediction;
-use std::cell::LazyCell;
-use std::path::PathBuf;
 
-const LABELS: LazyCell<Vec<String>> = LazyCell::new(|| {
+static LABELS: LazyLock<Vec<String>> = LazyLock::new(|| {
     vec![
         "lion".to_string(),
         "elephant".to_string(),
@@ -17,7 +17,7 @@ const LABELS: LazyCell<Vec<String>> = LazyCell::new(|| {
     ]
 });
 
-const SCORES: LazyCell<Vec<f64>> = LazyCell::new(|| {
+static SCORES: LazyLock<Vec<f64>> = LazyLock::new(|| {
     vec![
         0.8117243501589582,
         0.10985494982166831,
@@ -28,7 +28,7 @@ const SCORES: LazyCell<Vec<f64>> = LazyCell::new(|| {
     ]
 });
 
-const CLASSIFICATIONS: LazyCell<Vec<Classification>> = LazyCell::new(|| {
+static CLASSIFICATIONS: LazyLock<Vec<Classification>> = LazyLock::new(|| {
     vec![
         Classification::new(LABELS[0].clone(), SCORES[0]),
         Classification::new(LABELS[1].clone(), SCORES[1]),
@@ -44,7 +44,7 @@ fn test_softmax_fn() {
     let scores = Array1::from_vec(vec![4.0, 2.0, 1.0, 0.5, -0.5, -1.2]);
     let expected_scores = SCORES.clone();
 
-    let result = softmax(&scores);
+    let result = softmax(scores.view());
 
     assert_eq!(result, expected_scores)
 }
@@ -109,11 +109,12 @@ fn test_transform_fn() {
     let results: Vec<Prediction> = file_paths
         .iter()
         .zip(scores.iter())
-        .map(|(p, s)| transform(p, s, &labels))
+        .map(|(p, s)| transform(p, s.view(), &labels))
         .collect();
 
-    let first = &results.get(0).unwrap();
+    let first = &results.first().unwrap();
     let first_classifications = first.classifications().as_ref().unwrap();
+
     assert_eq!(
         *first_classifications.scores(),
         vec![
@@ -134,8 +135,10 @@ fn test_transform_fn() {
             "dog".to_string()
         ]
     );
+
     let second = &results.get(1).unwrap();
     let second_classifications = second.classifications().as_ref().unwrap();
+
     assert_eq!(
         *second_classifications.scores(),
         vec![
@@ -156,8 +159,10 @@ fn test_transform_fn() {
             "dog".to_string()
         ]
     );
+
     let third = &results.get(2).unwrap();
     let third_classifications = third.classifications().as_ref().unwrap();
+
     assert_eq!(
         *third_classifications.scores(),
         vec![

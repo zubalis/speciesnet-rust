@@ -1,6 +1,6 @@
 use core::f32;
 
-use ndarray::{Array2, ArrayD, ArrayView2, Axis, array, concatenate, s, stack};
+use ndarray::{Array2, Array3, ArrayView2, Axis, array, concatenate, s, stack};
 use tracing::{debug, info};
 
 use crate::{error::Error, torchvision::nms};
@@ -33,7 +33,7 @@ pub fn xywh_to_xyxy(tensor: ArrayView2<f32>) -> Result<Array2<f32>, Error> {
 }
 
 pub fn non_max_suppression(
-    predictions: ArrayD<f32>,
+    predictions: Array3<f32>,
     conf_threshold: Option<f32>,
 ) -> Result<Array2<f32>, Error> {
     let conf_threshold = conf_threshold.map_or(DEFAULT_CONF_THRESHOLD, |v| {

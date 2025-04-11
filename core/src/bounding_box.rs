@@ -45,13 +45,13 @@ impl<'de> Deserialize<'de> for BoundingBox {
 
         // SAFETY: These unwraps are safe to do so becase we've verified the length of the array to
         // be (and only be) 4.
-        let min_x = variant.first().unwrap();
-        let min_y = variant.get(1).unwrap();
+        let x1 = variant.first().unwrap();
+        let y1 = variant.get(1).unwrap();
         let width = variant.get(2).unwrap();
         let height = variant.get(3).unwrap();
 
         Ok(BoundingBox::from_megadetector_coordinates(
-            *min_x, *min_y, *width, *height,
+            *x1, *y1, *width, *height,
         ))
     }
 }

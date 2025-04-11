@@ -21,12 +21,16 @@ pub fn preprocess(classifier_input: &ClassifierInput) -> Result<ProceededImage, 
 
     let proceeded_image = preprocess_impl(decoded_img, classifier_input.bbox)?;
 
-    let pixels = proceeded_image
-        .into_vec()
-        .iter()
-        .map(|p| *p as f32 / 255.0)
-        .collect::<Vec<f32>>();
-    let tensor = Tensor::new(&[1, 480, 480, 3]).with_values(&pixels)?;
+    let mut tensor = Array4::zeros([1usize, 480usize, 480usize, 3usize]);
+
+    for pixel in proceeded_image.enumerate_pixels() {
+        let x = pixel.0 as _;
+        let y = pixel.1 as _;
+        let [r, g, b] = pixel.2.0;
+        tensor[[0, x, y, 0]] = (r as f32) / 255.;
+        tensor[[0, x, y, 1]] = (g as f32) / 255.;
+        tensor[[0, x, y, 2]] = (b as f32) / 255.;
+    }
 
     Ok(ProceededImage {
         path: classifier_input.file_path.clone(),

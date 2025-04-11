@@ -207,7 +207,9 @@ where
     info!("Loading and decoding {}.", image_path.as_ref().display());
     let loaded_image = ImageReader::open(&image_path)?.decode()?;
     let options = LetterboxOptions::builder()
-        .shape(speciesnet_core::shape::Shape::Square(1280))
+        .shape(speciesnet_core::shape::Shape::Square(
+            speciesnet_core::constants::detector::IMAGE_HEIGHT,
+        ))
         .build();
 
     info!("Resizing and letterboxing the image.");

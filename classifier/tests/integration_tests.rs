@@ -1,7 +1,9 @@
-use std::env::current_dir;
-use std::error::Error;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::{
+    env::current_dir,
+    error::Error,
+    fs::File,
+    io::{BufRead, BufReader},
+};
 
 use speciesnet_classifier::SpeciesNetClassifier;
 use speciesnet_classifier::classifier::transform;
@@ -47,7 +49,7 @@ fn test_entire_process() -> Result<(), Box<dyn Error>> {
 
     // Transform outputs into usable format (softmax, mapping labels, pick top 5)
     let image_path = inputs.path;
-    let output = transform(image_path, &outputs, &labels);
+    let output = transform(image_path, outputs.view(), &labels);
 
     assert!(output.classifications().is_some());
 

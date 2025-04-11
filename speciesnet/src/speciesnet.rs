@@ -6,18 +6,18 @@ use std::{
 use image::ImageReader;
 use rayon::prelude::*;
 use speciesnet_classifier::{
+    SpeciesNetClassifier,
     classifier::{read_labels_from_file, transform},
     image::preprocess as classifier_preprocess,
     input::ClassifierInput,
-    SpeciesNetClassifier,
 };
-use speciesnet_core::{prediction::Prediction, shape::Shape, BoundingBox, Instance};
+use speciesnet_core::{BoundingBox, Instance, prediction::Prediction, shape::Shape};
 use speciesnet_detector::{
-    preprocess::{LetterboxOptions, PreprocessedImage},
     SpeciesNetDetector,
+    preprocess::{LetterboxOptions, PreprocessedImage},
 };
 use speciesnet_ensemble::{
-    error::Error::NoneDetectionOrClassification, input::EnsembleInput, SpeciesNetEnsemble,
+    SpeciesNetEnsemble, error::Error::NoneDetectionOrClassification, input::EnsembleInput,
 };
 use tracing::{debug, error, info};
 
@@ -110,7 +110,7 @@ impl SpeciesNet {
                 let outputs = self.classifier.classify(tensor)?;
 
                 // Transform outputs into usable format (softmax, mapping labels, pick top 5)
-                let prediction = transform(image_path, &outputs, &labels);
+                let prediction = transform(image_path, outputs.view(), &labels);
                 Ok(prediction)
             })
             .collect::<Result<Vec<Prediction>, Error>>()?;
@@ -226,8 +226,9 @@ impl SpeciesNet {
                 let classifier_tensor =
                     self.classifier.preprocess(loaded_image, &bounding_boxes)?;
 
-                let classifier_results = self.classifier.classify(&classifier_tensor)?;
-                let classifier_results = transform(&fp.filepath, &classifier_results, &labels);
+                let classifier_results = self.classifier.classify(classifier_tensor)?;
+                let classifier_results =
+                    transform(&fp.filepath, classifier_results.view(), &labels);
 
                 prediction.merge(classifier_results);
 

@@ -1,13 +1,13 @@
-use ndarray::{Array1, Array4, Ix2};
-use ort::session::builder::GraphOptimizationLevel;
-use ort::session::Session;
-use ort::value::Tensor;
 use std::path::Path;
 use std::sync::Arc;
 
-use image::DynamicImage;
+use ::image::DynamicImage;
+use ndarray::{Array1, Array4, Ix2};
+use ort::session::Session;
+use ort::session::builder::GraphOptimizationLevel;
+use ort::value::Tensor;
+
 use speciesnet_core::BoundingBox;
-use tensorflow::{Graph, SavedModelBundle, SessionOptions, SessionRunArgs, Tensor};
 
 pub mod classifier;
 pub mod error;
@@ -32,6 +32,7 @@ impl SpeciesNetClassifier {
             .with_optimization_level(GraphOptimizationLevel::Level3)?
             .with_intra_threads(cpus)?
             .commit_from_file(model_path)?;
+
         Ok(Self {
             model: Arc::new(session),
         })
@@ -57,16 +58,20 @@ impl SpeciesNetClassifier {
         &self,
         image: DynamicImage,
         bboxes: &[BoundingBox],
-    ) -> Result<Tensor<f32>, Error> {
+    ) -> Result<Array4<f32>, Error> {
         let processed_image = preprocess_impl(image, bboxes.first().cloned())?;
 
-        let pixels = processed_image
-            .into_vec()
-            .iter()
-            .map(|p| *p as f32 / 255.0)
-            .collect::<Vec<f32>>();
+        // The tensor's structure for classifier is batch, width, height, and channel.
+        let mut tensor = Array4::zeros([1usize, 480usize, 480usize, 3usize]);
 
-        let tensor = Tensor::new(&[1, 480, 480, 3]).with_values(&pixels)?;
+        for pixel in processed_image.enumerate_pixels() {
+            let x = pixel.0 as _;
+            let y = pixel.1 as _;
+            let [r, g, b] = pixel.2.0;
+            tensor[[0, x, y, 0]] = (r as f32) / 255.;
+            tensor[[0, x, y, 1]] = (g as f32) / 255.;
+            tensor[[0, x, y, 2]] = (b as f32) / 255.;
+        }
 
         Ok(tensor)
     }

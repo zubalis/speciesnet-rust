@@ -1,7 +1,7 @@
 use std::{path::Path, sync::Arc};
 
-use error::Error;
 use image::DynamicImage;
+use ndarray::Ix3;
 use ort::{
     session::{Session, builder::GraphOptimizationLevel},
     value::Tensor,
@@ -10,6 +10,8 @@ use preprocess::{LetterboxOptions, PreprocessedImage, PreprocessedImageInner, le
 use speciesnet_core::{BoundingBox, Category, Detection, prediction::Prediction};
 use tracing::info;
 use yolo::non_max_suppression;
+
+use crate::error::Error;
 
 pub mod error;
 pub mod preprocess;
@@ -65,6 +67,7 @@ impl SpeciesNetDetector {
             .get("output")
             .unwrap()
             .try_extract_tensor::<f32>()?
+            .into_dimensionality::<Ix3>()?
             .into_owned();
 
         info!("Running non-max suppression on image {}.", path.display());
