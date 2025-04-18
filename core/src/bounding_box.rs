@@ -151,6 +151,10 @@ impl BoundingBox {
         })
     }
 
+    pub fn area(&self) -> f64 {
+        (self.x2 - self.x1) * (self.y2 - self.y1)
+    }
+
     /// Returns the values of the coordinates in a form of `(x1, y1, x2, y2)` tuple format.
     pub fn as_xyxy_bounding_box(&self) -> (f64, f64, f64, f64) {
         (self.x1, self.y1, self.x2, self.y2)
