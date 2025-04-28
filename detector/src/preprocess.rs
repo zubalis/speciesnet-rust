@@ -1,11 +1,11 @@
 use std::path::{Path, PathBuf};
 
 use image::{
-    DynamicImage, GenericImageView, ImageReader, Rgb, RgbImage,
+    DynamicImage, GenericImageView, Rgb, RgbImage,
     imageops::{FilterType, replace},
 };
 use ndarray::Array4;
-use speciesnet_core::shape::Shape;
+use speciesnet_core::{image_reader::load_image, shape::Shape};
 use tracing::{debug, info};
 
 use crate::error::Error;
@@ -205,7 +205,7 @@ where
     P: AsRef<Path>,
 {
     info!("Loading and decoding {}.", image_path.as_ref().display());
-    let loaded_image = ImageReader::open(&image_path)?.decode()?;
+    let loaded_image = load_image(&image_path)?;
     let options = LetterboxOptions::builder()
         .shape(speciesnet_core::shape::Shape::Square(
             speciesnet_core::constants::detector::IMAGE_HEIGHT,
@@ -213,14 +213,14 @@ where
         .build();
 
     info!("Resizing and letterboxing the image.");
-    let preprocessed_image = letterbox(loaded_image, options)?;
+    let preprocessed_image = letterbox(loaded_image.into(), options)?;
 
     Ok(PreprocessedImage::new(preprocessed_image, image_path))
 }
 
 /// Resize an image while meeting stride-multiple constraints.
 pub fn letterbox(
-    input_image: DynamicImage,
+    input_image: DynamicImage, // TODO: Change to RgbImage
     options: LetterboxOptions,
 ) -> Result<PreprocessedImageInner, Error> {
     let input_image_dimensions = input_image.dimensions();

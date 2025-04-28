@@ -10,4 +10,8 @@ pub enum Error {
     CategoryIndexOutOfRange(f64),
     #[error("Failed to parse value {0} to Category.")]
     CategoryParseError(String),
+    #[error("IO error: {0}")]
+    IoError(#[from] std::io::Error),
+    #[error("Image error: {0}")]
+    ImageError(#[from] image::ImageError),
 }

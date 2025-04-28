@@ -1,3 +1,5 @@
+use speciesnet_core::error::Error as SpeciesNetCoreError;
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("ort error: {0}")]
@@ -8,4 +10,6 @@ pub enum Error {
     ImageDecodeError(#[from] image::error::ImageError),
     #[error("ndarray shape error: {0}")]
     ShapeError(#[from] ndarray::ShapeError),
+    #[error("speciesnet core error: {0}")]
+    SpeciesNetCoreError(#[from] SpeciesNetCoreError),
 }

@@ -2,9 +2,9 @@ use std::path::PathBuf;
 
 use fast_image_resize::images::Image;
 use fast_image_resize::{PixelType, Resizer};
-use image::{DynamicImage, ImageReader, RgbImage};
+use image::{DynamicImage, RgbImage};
 use ndarray::Array4;
-use speciesnet_core::BoundingBox;
+use speciesnet_core::{BoundingBox, load_image};
 
 use crate::error::Error;
 use crate::input::ClassifierInput;
@@ -16,10 +16,9 @@ pub struct ProceededImage {
 }
 
 pub fn preprocess(classifier_input: &ClassifierInput) -> Result<ProceededImage, Error> {
-    let reader = ImageReader::open(&classifier_input.file_path)?;
-    let decoded_img = reader.decode()?;
+    let decoded_img = load_image(&classifier_input.file_path)?;
 
-    let proceeded_image = preprocess_impl(decoded_img, classifier_input.bbox)?;
+    let proceeded_image = preprocess_impl(decoded_img.into(), classifier_input.bbox)?;
 
     let mut tensor = Array4::zeros([1usize, 480usize, 480usize, 3usize]);
 
@@ -39,7 +38,7 @@ pub fn preprocess(classifier_input: &ClassifierInput) -> Result<ProceededImage, 
 }
 
 pub fn preprocess_impl(
-    decoded_image: DynamicImage,
+    decoded_image: DynamicImage, // TODO: Change to RgbImage
     bbox: Option<BoundingBox>,
 ) -> Result<RgbImage, Error> {
     // Performs cropping with given bounding box if there is a bounding box, otherwise just return.

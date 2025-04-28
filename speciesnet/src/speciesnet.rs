@@ -3,7 +3,6 @@ use std::{
     sync::Arc,
 };
 
-use image::ImageReader;
 use rayon::prelude::*;
 use speciesnet_classifier::{
     SpeciesNetClassifier,
@@ -11,7 +10,7 @@ use speciesnet_classifier::{
     image::preprocess as classifier_preprocess,
     input::ClassifierInput,
 };
-use speciesnet_core::{BoundingBox, Instance, prediction::Prediction, shape::Shape};
+use speciesnet_core::{BoundingBox, Instance, load_image, prediction::Prediction, shape::Shape};
 use speciesnet_detector::{
     SpeciesNetDetector,
     preprocess::{LetterboxOptions, PreprocessedImage},
@@ -73,10 +72,10 @@ impl SpeciesNet {
         let detections = instances
             .par_iter()
             .map(|fp| {
-                let loaded_image = ImageReader::open(&fp.filepath)?.decode()?;
+                let loaded_image = load_image(&fp.filepath)?;
                 let preprocessed_image = self
                     .detector
-                    .preprocess(loaded_image, *image_format_options)?;
+                    .preprocess(loaded_image.into(), *image_format_options)?;
                 let preprocessed_image =
                     PreprocessedImage::new(preprocessed_image, fp.filepath.clone());
 
@@ -187,7 +186,7 @@ impl SpeciesNet {
                 let mut prediction = Prediction::new(fp.filepath.clone());
 
                 // Loading the image
-                let loaded_image = match ImageReader::open(&fp.filepath)?.decode() {
+                let loaded_image = match load_image(&fp.filepath) {
                     Ok(image) => image,
                     Err(e) => {
                         error!("image failed to load {}", e);
@@ -198,7 +197,7 @@ impl SpeciesNet {
                 // Running the detector
                 let detector_image = self
                     .detector
-                    .preprocess(loaded_image.clone(), *letterbox_options)?;
+                    .preprocess(loaded_image.clone().into(), *letterbox_options)?;
                 let detector_image = PreprocessedImage::new(detector_image, fp.filepath.clone());
 
                 let detector_results = self.detector.predict(detector_image)?;
@@ -223,8 +222,9 @@ impl SpeciesNet {
                 };
 
                 // Running the classifier
-                let classifier_tensor =
-                    self.classifier.preprocess(loaded_image, &bounding_boxes)?;
+                let classifier_tensor = self
+                    .classifier
+                    .preprocess(loaded_image.into(), &bounding_boxes)?;
 
                 let classifier_results = self.classifier.classify(classifier_tensor)?;
                 let classifier_results =

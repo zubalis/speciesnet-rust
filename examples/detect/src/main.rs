@@ -1,14 +1,13 @@
 use std::{fs::File, path::PathBuf};
 
 use font_kit::loader::Loader;
-use image::ImageReader;
 use raqote::{DrawOptions, DrawTarget, LineJoin, PathBuilder, Point, Source, StrokeStyle};
 use show_image::{
     AsImageView, WindowOptions,
     event::{VirtualKeyCode, WindowEvent},
 };
 use speciesnet::speciesnet::SpeciesNet;
-use speciesnet_core::Instance;
+use speciesnet_core::{Instance, load_image};
 use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
@@ -21,7 +20,7 @@ fn main() -> anyhow::Result<()> {
     let image_path = PathBuf::from("../../assets/images/african_elephants.jpg");
     let speciesnet = SpeciesNet::new(
         "../../assets/model/md_v5a.0.0.onnx",
-        "../../assets/model/",
+        "../../assets/model/model.onnx",
         "../../assets/geofence_base.json",
         "../../assets/geofence_fixes.csv",
         "../../assets/taxonomy_release.txt",
@@ -34,7 +33,7 @@ fn main() -> anyhow::Result<()> {
     let results = speciesnet.detect(&[Instance::from_path_buf(image_path.clone())])?;
 
     info!("Loading the original image {}.", image_path.display());
-    let loaded_image = ImageReader::open(&image_path)?.decode()?.to_rgb8();
+    let loaded_image = load_image(&image_path)?;
     let image_width = loaded_image.width();
     let image_height = loaded_image.height();
 

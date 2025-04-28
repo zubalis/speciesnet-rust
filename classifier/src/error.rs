@@ -1,3 +1,5 @@
+use speciesnet_core::error::Error as SpeciesNetCoreError;
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     // ORT error.
@@ -19,4 +21,6 @@ pub enum Error {
     DeserializeError(#[from] serde_json::error::Error),
     #[error("NDArray error: {0}")]
     NDArray(#[from] ndarray::ShapeError),
+    #[error("SpeciesNet core error: {0}")]
+    SpeciesNetCoreError(#[from] SpeciesNetCoreError),
 }
