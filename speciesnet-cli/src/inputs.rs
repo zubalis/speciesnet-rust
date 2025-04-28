@@ -127,7 +127,7 @@ pub fn prepare_image_inputs(input_type: &InputType) -> anyhow::Result<Vec<Instan
 
     let filtered_paths: Vec<_> = image_instances
         .into_iter()
-        .filter(|p| match p.filepath.extension() {
+        .filter(|p| match p.file_path().extension() {
             Some(file_extension_osstr) => match file_extension_osstr.to_str() {
                 Some(file_extension) => {
                     SUPPORTED_IMAGE_EXTENSIONS.contains(&file_extension.to_lowercase().as_str())
