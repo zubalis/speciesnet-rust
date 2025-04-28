@@ -2814,6 +2814,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "ort",
  "serde",
  "serde_json",
  "speciesnet",

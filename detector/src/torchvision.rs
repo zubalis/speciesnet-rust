@@ -1,4 +1,5 @@
 use ndarray::{ArrayView1, ArrayView2};
+use tracing::debug;
 
 /// A function to perform Non-max suppression on a detection tensor and scores tensor.
 ///
@@ -20,6 +21,8 @@ pub fn nms(detections: ArrayView2<f32>, scores: ArrayView1<f32>, iou_threshold: 
             }
         }
     }
+
+    debug!("keep results index are {:?}", keep);
 
     keep
 }

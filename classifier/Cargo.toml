@@ -8,7 +8,7 @@ name = "speciesnet_classifier"
 path = "src/lib.rs"
 
 [dependencies]
-ort = { version = "=2.0.0-rc.9", features = ["ndarray"] }
+ort = { version = "=2.0.0-rc.9", default-features = false, features = ["ndarray", "copy-dylibs"] }
 image = "0.25"
 ndarray = "0.16"
 num_cpus = "1"
