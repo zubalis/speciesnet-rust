@@ -72,12 +72,11 @@ impl SpeciesNet {
         let detections = instances
             .par_iter()
             .map(|fp| {
-                let loaded_image = load_image(&fp.filepath)?;
+                let loaded_image = load_image(fp.file_path())?;
                 let preprocessed_image = self
                     .detector
                     .preprocess(loaded_image.into(), *image_format_options)?;
-                let preprocessed_image =
-                    PreprocessedImage::new(preprocessed_image, fp.filepath.clone());
+                let preprocessed_image = PreprocessedImage::new(preprocessed_image, fp.file_path());
 
                 let predictions = self.detector.predict(preprocessed_image)?;
 
@@ -183,10 +182,10 @@ impl SpeciesNet {
         let predictions = instances
             .par_iter()
             .map(|fp| {
-                let mut prediction = Prediction::new(fp.filepath.clone());
+                let mut prediction = Prediction::new(fp.file_path().to_path_buf());
 
                 // Loading the image
-                let loaded_image = match load_image(&fp.filepath) {
+                let loaded_image = match load_image(&fp.file_path()) {
                     Ok(image) => image,
                     Err(e) => {
                         error!("image failed to load {}", e);
@@ -198,7 +197,7 @@ impl SpeciesNet {
                 let detector_image = self
                     .detector
                     .preprocess(loaded_image.clone().into(), *letterbox_options)?;
-                let detector_image = PreprocessedImage::new(detector_image, fp.filepath.clone());
+                let detector_image = PreprocessedImage::new(detector_image, fp.file_path());
 
                 let detector_results = self.detector.predict(detector_image)?;
 
@@ -228,7 +227,7 @@ impl SpeciesNet {
 
                 let classifier_results = self.classifier.classify(classifier_tensor)?;
                 let classifier_results =
-                    transform(&fp.filepath, classifier_results.view(), &labels);
+                    transform(fp.file_path(), classifier_results.view(), &labels);
 
                 prediction.merge(classifier_results);
 
@@ -239,14 +238,14 @@ impl SpeciesNet {
                     let ensemble_results = self.ensemble.ensemble(
                         detections,
                         classifications,
-                        fp.country.clone(),
-                        fp.admin1_region.clone(),
+                        fp.country().map(str::to_string),
+                        fp.admin1_region().map(str::to_string),
                     )?;
 
                     let ensemble_prediction = Prediction::from_ensemble(
-                        fp.filepath.clone(),
-                        fp.country.clone(),
-                        fp.admin1_region.clone(),
+                        fp.file_path().to_path_buf(),
+                        fp.country().map(str::to_string),
+                        fp.admin1_region().map(str::to_string),
                         ensemble_results.clone(),
                         detections.clone(),
                         classifications.clone(),

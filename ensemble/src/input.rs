@@ -73,12 +73,12 @@ impl EnsembleInput {
             path_value.3 = prediction.classifications()
         }
 
-        for instance in instance_outputs.instances {
+        for instance in instance_outputs.instances() {
             let path_value = path_map
-                .entry(instance.filepath)
+                .entry(instance.file_path().to_path_buf())
                 .or_insert((None, None, &None, &None));
-            path_value.0 = instance.country;
-            path_value.1 = instance.admin1_region;
+            path_value.0 = instance.country().map(str::to_string);
+            path_value.1 = instance.admin1_region().map(str::to_string);
         }
 
         let ensemble_inputs = path_map

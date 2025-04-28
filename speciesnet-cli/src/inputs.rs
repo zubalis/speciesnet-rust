@@ -16,6 +16,32 @@ pub fn prepare_image_inputs(input_type: &InputType) -> anyhow::Result<Vec<Instan
     info!("Preparing the image inputs.");
     let mut image_instances: Vec<Instance> = Vec::new();
 
+    // If `instance_json_path` is present, we take the parent of the instances.json file and join
+    // it with each `filepath` key of the contents inside the file e.g.
+    //
+    // ```
+    // /Users/weiss9293/Documents/dataset_22002b_2023/instance.json
+    // ```
+    //
+    // And the content of the file is.
+    //
+    // ```
+    // {
+    //   "instances": [
+    //     {
+    //       "filepath": "92244/92933_1214.jpeg"
+    //     }
+    //   ]
+    // }
+    // ```
+    //
+    // We're expecting the path output to be
+    //
+    // ```
+    // /Users/weiss9293/Documents/dataset_22002b_2023/92244/92933_1214.jpeg
+    // ```
+    //
+    // Which is relative to where the `instance.json` file resides.
     if let Some(instances_json_path) = &input_type.instances_json {
         debug!(
             "Loading the instances file from {}",
@@ -24,15 +50,23 @@ pub fn prepare_image_inputs(input_type: &InputType) -> anyhow::Result<Vec<Instan
 
         let instances_file = BufReader::new(File::open(instances_json_path)?);
         let instance_json_value: Instances = serde_json::from_reader(instances_file)?;
+        let instances_file_folder = instances_json_path
+            .parent()
+            .expect("Instances file's parent path is None.");
 
-        for mut v in instance_json_value.instances {
-            let instances_file_folder = instances_json_path
-                .parent()
-                .expect("Instances file's parent path is None.");
+        let joint_path_instances = instance_json_value.instances().iter().map(|instance| {
+            let joint_image_path = instances_file_folder.join(instance.file_path());
+            let new_instance = Instance::new(
+                joint_image_path,
+                instance.country().map(str::to_string),
+                instance.admin1_region().map(str::to_string),
+            );
 
-            let joint_image_path = instances_file_folder.join(v.filepath);
-            v.filepath = joint_image_path;
-            image_instances.push(v);
+            new_instance
+        });
+
+        for instance in joint_path_instances {
+            image_instances.push(instance)
         }
     }
 
