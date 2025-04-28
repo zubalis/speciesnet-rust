@@ -3,13 +3,13 @@ use std::path::PathBuf;
 use serde::Deserialize;
 
 /// The type of the `instances.json` file.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Instances {
     pub instances: Vec<Instance>,
 }
 
 /// The type of each instance of image that will be passed in to the model.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Instance {
     /// File path of the given image which is relative to where the instances json file resides.
     pub filepath: PathBuf,
