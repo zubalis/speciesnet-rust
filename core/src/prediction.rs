@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::{Detection, classification::ClassificationBundle, geofence::GeofenceResult};
 
@@ -273,5 +274,22 @@ impl Prediction {
 
     pub fn file_path(&self) -> &Path {
         &self.file_path
+    }
+
+    /// Extracts the `id` part of the predicted prediction as a [`Uuid`] from the labels string in format
+    /// of.
+    ///
+    /// ```
+    /// id;class;order;family;genus;species;common name
+    /// ```
+    pub fn prediction_id(&self) -> Option<Uuid> {
+        if let Some(prediction) = &self.prediction {
+            let id_string = prediction.split(';').next().unwrap();
+            let id = uuid::Uuid::try_parse(id_string).unwrap();
+
+            return Some(id);
+        };
+
+        None
     }
 }
