@@ -294,7 +294,7 @@ impl Prediction {
     }
 
     /// Retrieves the confidence value of the prediction.
-    pub fn prediction_score(&self) -> Option<&f64> {
-        self.prediction_score.as_ref()
+    pub fn prediction_score(&self) -> Option<f64> {
+        self.prediction_score
     }
 }
