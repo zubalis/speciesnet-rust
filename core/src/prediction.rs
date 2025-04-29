@@ -3,7 +3,9 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::{Detection, classification::ClassificationBundle, geofence::GeofenceResult};
+use crate::{
+    BoundingBox, Detection, classification::ClassificationBundle, geofence::GeofenceResult,
+};
 
 /// The output type of `predictions.json` file.
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -296,5 +298,12 @@ impl Prediction {
     /// Retrieves the confidence value of the prediction.
     pub fn prediction_score(&self) -> Option<f64> {
         self.prediction_score
+    }
+
+    /// Copies the bounding boxes in the detection and returns it as a vector of [`BoundingBox`]es.
+    pub fn bounding_boxes(&self) -> Option<Vec<BoundingBox>> {
+        self.detections
+            .as_ref()
+            .map(|det| det.iter().map(|d| *d.bounding_box()).collect::<Vec<_>>())
     }
 }
