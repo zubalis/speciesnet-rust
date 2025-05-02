@@ -185,7 +185,7 @@ impl SpeciesNet {
                 let mut prediction = Prediction::new(fp.file_path().to_path_buf());
 
                 // Loading the image
-                let loaded_image = match load_image(&fp.file_path()) {
+                let loaded_image = match load_image(fp.file_path()) {
                     Ok(image) => image,
                     Err(e) => {
                         error!("image failed to load {}", e);

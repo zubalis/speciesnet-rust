@@ -295,6 +295,10 @@ impl Prediction {
         None
     }
 
+    pub fn prediction_reference(&self) -> Option<&str> {
+        self.prediction.as_deref()
+    }
+
     /// Retrieves the confidence value of the prediction.
     pub fn prediction_score(&self) -> Option<f64> {
         self.prediction_score
