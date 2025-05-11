@@ -8,6 +8,7 @@ pub mod geofence;
 pub mod image_reader;
 pub mod instance;
 mod macros;
+pub mod model_info;
 pub mod prediction;
 pub mod shape;
 
