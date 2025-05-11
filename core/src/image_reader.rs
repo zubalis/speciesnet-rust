@@ -8,23 +8,25 @@ fn vec_u8_to_rgb_image(vec: Vec<u8>, width: usize, height: usize) -> RgbImage {
     let mut rgb_image = RgbImage::new(width.try_into().unwrap(), height.try_into().unwrap());
     let component_count = vec.len() / (width * height);
     assert_eq!(component_count, 3); // only handles RGB values
+
     for (i, chunk) in vec.chunks_exact(component_count).enumerate() {
         let x = (i % width) as u32;
         let y = (i / width) as u32;
         rgb_image.put_pixel(x, y, image::Rgb([chunk[0], chunk[1], chunk[2]]));
     }
+
     rgb_image
 }
 
-fn load_jpeg_image<P>(path: P) -> Result<RgbImage, Error>
+fn load_jpeg_image<P>(path: P) -> Result<RgbImage, std::io::Error>
 where
     P: AsRef<Path>,
 {
-    // TODO: Need to handle low-level errors (catch unwind)
     let moz_image = mozjpeg::Decompress::with_markers(mozjpeg::ALL_MARKERS).from_path(path)?;
     let (moz_width, moz_height) = (moz_image.width(), moz_image.height());
     let moz_decoded_image = moz_image.rgb()?.read_scanlines::<u8>()?;
     let moz_rgb_image = vec_u8_to_rgb_image(moz_decoded_image, moz_width, moz_height);
+
     Ok(moz_rgb_image)
 }
 
@@ -34,6 +36,7 @@ where
 {
     let loaded_image = ImageReader::open(path)?.decode()?;
     let loaded_rgb_image = loaded_image.into_rgb8();
+
     Ok(loaded_rgb_image)
 }
 
@@ -43,13 +46,24 @@ where
 /// [mozjpeg]: https://crates.io/crates/mozjpeg
 pub fn load_image<P>(path: P) -> Result<RgbImage, Error>
 where
-    P: AsRef<Path>,
+    P: AsRef<Path> + std::panic::UnwindSafe,
 {
     let Some(extension) = path.as_ref().extension() else {
         return Err(io::Error::new(io::ErrorKind::InvalidInput, "File extension not found").into());
     };
+
     match extension.to_string_lossy().to_lowercase().as_str() {
-        "jpg" | "jpeg" => load_jpeg_image(path),
+        "jpg" | "jpeg" => Ok(std::panic::catch_unwind(|| load_jpeg_image(path)).map_err(
+            |e| {
+                if let Some(cause) = e.downcast_ref::<&str>() {
+                    Error::MozjpegPanicError(cause.to_string())
+                } else if let Some(cause) = e.downcast_ref::<String>() {
+                    Error::MozjpegPanicError(cause.clone())
+                } else {
+                    Error::MozjpegPanicError("Unknown panic type".to_string())
+                }
+            },
+        )??),
         _ => load_other_image(path),
     }
 }
