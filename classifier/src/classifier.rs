@@ -6,8 +6,10 @@ use std::{
 };
 
 use ndarray::ArrayView1;
-use speciesnet_core::classification::{Classification, ClassificationBundle};
-use speciesnet_core::prediction::Prediction;
+use speciesnet_core::{
+    classifier::{Classification, ClassificationBundle},
+    io::Prediction,
+};
 
 use crate::error::Error;
 

@@ -3,7 +3,7 @@ use std::{fs::File, io::BufWriter, path::PathBuf};
 use clap::{Args, CommandFactory, Parser, error::ErrorKind};
 use inputs::prepare_image_inputs;
 use speciesnet::SpeciesNet;
-use speciesnet_core::prediction::Predictions;
+use speciesnet_core::io::Predictions;
 use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 

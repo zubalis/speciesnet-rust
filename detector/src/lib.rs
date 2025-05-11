@@ -7,7 +7,10 @@ use ort::{
     value::Tensor,
 };
 use preprocess::{LetterboxOptions, PreprocessedImage, PreprocessedImageInner, letterbox};
-use speciesnet_core::{BoundingBox, Category, Detection, prediction::Prediction};
+use speciesnet_core::{
+    detector::{BoundingBox, Category, Detection},
+    io::Prediction,
+};
 use tracing::info;
 use yolo::non_max_suppression;
 

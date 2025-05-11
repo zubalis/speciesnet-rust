@@ -7,7 +7,7 @@ use std::path::Path;
 use csv::Reader;
 use serde::Deserialize;
 use speciesnet_core::constants;
-use speciesnet_core::geofence::GeofenceResult;
+use speciesnet_core::ensemble::GeofenceResult;
 
 use crate::error::Error;
 use crate::geofence::taxonomy::get_ancestor_at_level;

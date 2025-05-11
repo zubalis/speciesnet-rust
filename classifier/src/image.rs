@@ -4,10 +4,9 @@ use fast_image_resize::images::Image;
 use fast_image_resize::{PixelType, Resizer};
 use image::{DynamicImage, RgbImage};
 use ndarray::Array4;
-use speciesnet_core::{BoundingBox, load_image};
+use speciesnet_core::{detector::BoundingBox, load_image};
 
-use crate::error::Error;
-use crate::input::ClassifierInput;
+use crate::{error::Error, input::ClassifierInput};
 
 #[derive(Debug)]
 pub struct ProceededImage {

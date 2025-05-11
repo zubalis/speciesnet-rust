@@ -7,7 +7,7 @@ use show_image::{
     event::{VirtualKeyCode, WindowEvent},
 };
 use speciesnet::speciesnet::SpeciesNet;
-use speciesnet_core::{Instance, load_image};
+use speciesnet_core::{io::Instance, load_image};
 use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 

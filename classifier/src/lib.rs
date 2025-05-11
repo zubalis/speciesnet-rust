@@ -7,7 +7,7 @@ use ort::session::Session;
 use ort::session::builder::GraphOptimizationLevel;
 use ort::value::Tensor;
 
-use speciesnet_core::BoundingBox;
+use speciesnet_core::detector::BoundingBox;
 
 pub mod classifier;
 pub mod error;

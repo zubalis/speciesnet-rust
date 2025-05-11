@@ -3,7 +3,7 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-use speciesnet_core::{Instance, instance::Instances};
+use speciesnet_core::io::{Instance, Instances};
 use tracing::{debug, info};
 use walkdir::WalkDir;
 

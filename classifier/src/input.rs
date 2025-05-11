@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use serde::Deserialize;
-use speciesnet_core::{BoundingBox, Detection};
+use speciesnet_core::detector::{BoundingBox, Detection};
 
 use crate::error::Error;
 

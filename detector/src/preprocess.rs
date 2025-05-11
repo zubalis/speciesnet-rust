@@ -5,7 +5,7 @@ use image::{
     imageops::{FilterType, replace},
 };
 use ndarray::Array4;
-use speciesnet_core::{image_reader::load_image, shape::Shape};
+use speciesnet_core::{load_image, shape::Shape};
 use tracing::{debug, info};
 
 use crate::error::Error;
@@ -202,7 +202,7 @@ impl LetterboxOptions {
 /// compensated for their missing strides.
 pub fn preprocess<P>(image_path: P) -> Result<PreprocessedImage, Error>
 where
-    P: AsRef<Path>,
+    P: AsRef<Path> + std::panic::RefUnwindSafe,
 {
     info!("Loading and decoding {}.", image_path.as_ref().display());
     let loaded_image = load_image(&image_path)?;

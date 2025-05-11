@@ -1,19 +1,23 @@
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::Path;
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{BufRead, BufReader},
+    path::Path,
+};
 
-use speciesnet_core::Category;
-use speciesnet_core::Detection;
-use speciesnet_core::classification::ClassificationBundle;
-use speciesnet_core::constants::{classification, source};
-use speciesnet_core::geofence::GeofenceResult;
+use speciesnet_core::{
+    classifier::ClassificationBundle,
+    constants::{classification, source},
+    detector::{Category, Detection},
+    ensemble::GeofenceResult,
+};
 
-use crate::error::Error;
-use crate::error::Error::EmptyClassifications;
-use crate::geofence::taxonomy::get_full_class_string;
-use crate::geofence::{
-    fix_geofence_base, geofence_animal_classification, roll_up_labels_to_first_matching_level,
+use crate::{
+    error::Error,
+    geofence::{
+        fix_geofence_base, geofence_animal_classification, roll_up_labels_to_first_matching_level,
+        taxonomy::get_full_class_string,
+    },
 };
 
 pub mod error;
@@ -70,7 +74,7 @@ impl SpeciesNetEnsemble {
         admin1_region: Option<String>,
     ) -> Result<GeofenceResult, Error> {
         if classifications.scores().is_empty() || classifications.labels().is_empty() {
-            return Err(EmptyClassifications);
+            return Err(Error::EmptyClassifications);
         }
 
         let top_classification_class = classifications.labels().first().unwrap();

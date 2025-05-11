@@ -4,9 +4,11 @@ use std::io::BufReader;
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
-use speciesnet_core::classification::ClassificationBundle;
-use speciesnet_core::prediction::Predictions;
-use speciesnet_core::{Detection, Instances};
+use speciesnet_core::{
+    classifier::ClassificationBundle,
+    detector::Detection,
+    io::{Instances, Predictions},
+};
 
 use crate::error::Error;
 use crate::error::Error::{

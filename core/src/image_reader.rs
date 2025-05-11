@@ -46,7 +46,7 @@ where
 /// [mozjpeg]: https://crates.io/crates/mozjpeg
 pub fn load_image<P>(path: P) -> Result<RgbImage, Error>
 where
-    P: AsRef<Path> + std::panic::UnwindSafe,
+    P: AsRef<Path> + std::panic::UnwindSafe + std::panic::RefUnwindSafe,
 {
     let Some(extension) = path.as_ref().extension() else {
         return Err(io::Error::new(io::ErrorKind::InvalidInput, "File extension not found").into());

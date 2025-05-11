@@ -10,7 +10,12 @@ use speciesnet_classifier::{
     image::preprocess as classifier_preprocess,
     input::ClassifierInput,
 };
-use speciesnet_core::{BoundingBox, Instance, load_image, prediction::Prediction, shape::Shape};
+use speciesnet_core::{
+    detector::BoundingBox,
+    io::{Instance, Prediction},
+    load_image,
+    shape::Shape,
+};
 use speciesnet_detector::{
     SpeciesNetDetector,
     preprocess::{LetterboxOptions, PreprocessedImage},
