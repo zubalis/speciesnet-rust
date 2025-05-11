@@ -14,6 +14,8 @@ use super::ModelInfo;
 
 /// The directory for storing the downloaded model.
 const MODEL_DIRECTORY: &str = "speciesnet-rust/models/";
+/// The name of the folder for storing the downloaded model.
+const DEFAULT_MODEL_FOLDER: &str = "speciesnet-onnx-v4.0.0a";
 /// The file name of the default model.
 const DEFAULT_MODEL_FILE_NAME: &str = "speciesnet-onnx-v4.0.0a.zip";
 /// The url of the default model.
@@ -39,12 +41,11 @@ impl ModelInfo {
 
         info!(
             "Checking if the model has been downloaded at {}.",
-            model_dir.join(DEFAULT_MODEL_FILE_NAME).display()
+            model_dir.join(DEFAULT_MODEL_FOLDER).display()
         );
 
         // check if the model folder exists, or not.
-        let possible_model_path =
-            model_dir.join(PathBuf::from(DEFAULT_MODEL_FILE_NAME).file_stem().unwrap());
+        let possible_model_path = model_dir.join(DEFAULT_MODEL_FOLDER);
 
         if possible_model_path.exists() {
             return ModelInfo::from_path(possible_model_path);
@@ -70,14 +71,17 @@ impl ModelInfo {
             copy(&mut body_reader, &mut writer)?;
         }
 
-        info!("Unzipping the contents inside {}", DEFAULT_MODEL_FILE_NAME);
+        info!(
+            "Unzipping the contents inside {} into {}",
+            model_dir.join(DEFAULT_MODEL_FILE_NAME).display(),
+            model_dir.join(DEFAULT_MODEL_FOLDER).display(),
+        );
 
         // Unzip the file and put it in the models folder.
         let model_zip_file_read = File::open(model_dir.join(DEFAULT_MODEL_FILE_NAME))?;
 
         let mut zip_file = ZipArchive::new(model_zip_file_read)?;
-        let model_dest_file_name = PathBuf::from(DEFAULT_MODEL_FILE_NAME);
-        let extract_dir = model_dir.join(model_dest_file_name.file_name().unwrap());
+        let extract_dir = model_dir.join(DEFAULT_MODEL_FOLDER);
         zip_file.extract(&extract_dir)?;
 
         ModelInfo::from_path(extract_dir)

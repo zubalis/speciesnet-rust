@@ -18,13 +18,7 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     let image_path = PathBuf::from("../../assets/images/african_elephants.jpg");
-    let speciesnet = SpeciesNet::new(
-        "../../assets/model/md_v5a.0.0.onnx",
-        "../../assets/model/model.onnx",
-        "../../assets/geofence_base.json",
-        "../../assets/geofence_fixes.csv",
-        "../../assets/taxonomy_release.txt",
-    )?;
+    let speciesnet = SpeciesNet::new()?;
 
     info!(
         "Running detector on the example image {}.",
