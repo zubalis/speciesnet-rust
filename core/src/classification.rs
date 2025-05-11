@@ -88,7 +88,7 @@ impl<'de> Deserialize<'de> for ClassificationBundle {
 
                 if labels.len() != scores.len() {
                     Err(serde::de::Error::custom(
-                        "`labels` size and `scores` size have to be the same",
+                        "`labels` size and `scores` size have to be the same.",
                     ))?;
                 }
 
