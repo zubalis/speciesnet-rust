@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize, de, ser::SerializeSeq};
 
 use crate::error::Error;
 
+/// Struct for storing the bounding box point of an image.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct BoundingBox {
     /// Top left `x` point of the image.

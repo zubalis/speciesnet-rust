@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize, ser::SerializeStruct};
 
-use crate::{bounding_box::BoundingBox, category::Category};
+use crate::detector::{BoundingBox, Category};
 
 /// The detection produced from running the model.
 #[derive(Debug, Clone, Deserialize)]
@@ -42,13 +42,7 @@ impl Serialize for Detection {
 
 impl Detection {
     /// Initialize the [`Detection`] struct.
-    ///
-    /// # Panics
-    ///
-    /// The initialization could panic if the confidence is not in between `0` and `1`.
     pub fn new(category: Category, confidence: f64, bounding_box: BoundingBox) -> Self {
-        assert!((0.0f64..1.0f64).contains(&confidence));
-
         Self {
             category,
             confidence,

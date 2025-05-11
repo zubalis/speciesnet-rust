@@ -4,7 +4,9 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    BoundingBox, Detection, classification::ClassificationBundle, geofence::GeofenceResult,
+    classifier::ClassificationBundle,
+    detector::{BoundingBox, Detection},
+    ensemble::GeofenceResult,
 };
 
 /// The output type of `predictions.json` file.

@@ -13,12 +13,15 @@ impl GeofenceResult {
             source,
         }
     }
+
     pub fn label(&self) -> &str {
         &self.label
     }
+
     pub fn score(&self) -> f64 {
         self.score
     }
+
     pub fn source(&self) -> &str {
         &self.source
     }

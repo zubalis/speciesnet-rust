@@ -1,19 +1,12 @@
-pub mod bounding_box;
-pub mod category;
-pub mod classification;
+pub mod classifier;
 pub mod constants;
-pub mod detection;
+pub mod detector;
+pub mod ensemble;
 pub mod error;
-pub mod geofence;
 pub mod image_reader;
-pub mod instance;
+pub mod io;
 mod macros;
 pub mod model_info;
-pub mod prediction;
 pub mod shape;
 
-pub use crate::bounding_box::BoundingBox;
-pub use crate::category::Category;
-pub use crate::detection::Detection;
 pub use crate::image_reader::load_image;
-pub use crate::instance::{Instance, Instances};

@@ -1,6 +1,8 @@
-use serde::de::{MapAccess, Visitor};
-use serde::ser::SerializeStruct;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{
+    Deserialize, Deserializer, Serialize,
+    de::{MapAccess, Visitor},
+    ser::SerializeStruct,
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ClassificationBundle {

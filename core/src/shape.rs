@@ -1,3 +1,4 @@
+/// Struct for storing the information about the shape of the image.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Shape {
     Square(u32),
