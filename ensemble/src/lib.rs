@@ -33,15 +33,19 @@ pub struct SpeciesNetEnsemble {
 impl SpeciesNetEnsemble {
     pub fn new<P: AsRef<Path>>(
         geofence_base_path: P,
-        geofence_fix_path: P,
         taxonomy_path: P,
+        geofence_fix_path: Option<P>,
     ) -> Result<Self, Error> {
         // Load geofence and fix
         let geofence_file = File::open(geofence_base_path)?;
         let geofence_reader = BufReader::new(geofence_file);
         let geofence_map: HashMap<String, HashMap<String, HashMap<String, Vec<String>>>> =
             serde_json::from_reader(geofence_reader)?;
-        let fixed_geofence_map = fix_geofence_base(&geofence_map, geofence_fix_path)?;
+
+        let fixed_geofence_map = match geofence_fix_path {
+            Some(p) => fix_geofence_base(&geofence_map, p)?,
+            None => geofence_map,
+        };
 
         // Load taxonomy
         let taxonomy_file = File::open(taxonomy_path)?;
@@ -250,6 +254,7 @@ impl SpeciesNetEnsemble {
                 source::DETECTOR.to_string(),
             ));
         }
+
         Ok(GeofenceResult::new(
             classification::UNKNOWN.to_string(),
             top_classification_score,
