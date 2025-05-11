@@ -1,6 +1,6 @@
 ## SpeciesNet Rust
 
-This is the home of the `speciesnet` crate for running [google/cameratrapai](https://github.com/google/cameratrapai) pipeline in Rust language.
+This is the home of the `speciesnet` and `speciesnet-cli` crate for running an ensemble similar to [google/cameratrapai](https://github.com/google/cameratrapai) pipeline Rust language.
 
 ### Required tools
 
