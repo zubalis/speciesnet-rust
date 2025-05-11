@@ -14,6 +14,7 @@ use speciesnet_core::{
     detector::BoundingBox,
     io::{Instance, Prediction},
     load_image,
+    model_info::ModelInfo,
     shape::Shape,
 };
 use speciesnet_detector::{
@@ -29,34 +30,41 @@ use crate::error::Error;
 
 #[derive(Debug, Clone)]
 pub struct SpeciesNet {
+    model_info: ModelInfo,
     detector: SpeciesNetDetector,
     classifier: SpeciesNetClassifier,
     ensemble: SpeciesNetEnsemble,
 }
 
 impl SpeciesNet {
-    /// Initialize the detector and the classifier by loading them into memory.
-    pub fn new<P>(
-        detector_model_path: P,
-        classifier_model_path: P,
-        geofence_base_path: P,
-        geofence_fix_path: P,
-        taxonomy_path: P,
-    ) -> Result<Self, Error>
+    /// Initialize the detector, classifier, and ensemble by loading them into memory.
+    pub fn new() -> Result<Self, Error> {
+        let model_info = ModelInfo::from_default_url()?;
+        Self::from_model_info(model_info)
+    }
+
+    /// Initialize the detector, classifier, and ensemble from a given folder of extracted model
+    /// file.
+    pub fn from_model_folder<P>(model_folder: P) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
-        let classifier = SpeciesNetClassifier::new(classifier_model_path)?;
+        let model_info = ModelInfo::from_path(&model_folder)?;
+        Self::from_model_info(model_info)
+    }
+
+    fn from_model_info(model_info: ModelInfo) -> Result<Self, Error> {
+        let classifier = SpeciesNetClassifier::new(model_info.classifier())?;
         info!("Classifier initialized.");
 
-        let detector = SpeciesNetDetector::new(detector_model_path)?;
-        info!("Detector ort initialized.");
+        let detector = SpeciesNetDetector::new(model_info.detector())?;
+        info!("Detector initialized.");
 
-        let ensemble =
-            SpeciesNetEnsemble::new(geofence_base_path, geofence_fix_path, taxonomy_path)?;
+        let ensemble = SpeciesNetEnsemble::new(model_info.geofence(), model_info.taxonomy(), None)?;
         info!("Ensemble initialized.");
 
         Ok(Self {
+            model_info,
             classifier,
             detector,
             ensemble,
@@ -93,17 +101,13 @@ impl SpeciesNet {
     }
 
     /// Performs the classification from detector output by the cameratrap model.
-    pub fn classify(
-        &self,
-        detector_output_path: &PathBuf,
-        label_path: &PathBuf,
-    ) -> Result<Vec<Prediction>, Error> {
+    pub fn classify(&self, detector_output_path: &PathBuf) -> Result<Vec<Prediction>, Error> {
         info!("Starting classification");
 
         let classifier_inputs = ClassifierInput::from_detector_output(detector_output_path)?;
 
         // Load labels
-        let labels: Vec<String> = read_labels_from_file(label_path)?;
+        let labels: Vec<String> = read_labels_from_file(self.model_info.classifier_labels())?;
         let predictions = classifier_inputs
             .par_iter()
             .map(|fp| {
@@ -166,11 +170,7 @@ impl SpeciesNet {
 
     /// Performs the whole pipeline (Detection, Classification, Ensemble) from given list of
     /// instances.
-    pub fn predict(
-        &self,
-        instances: &[Instance],
-        labels_path: &Path,
-    ) -> Result<Vec<Prediction>, Error> {
+    pub fn predict(&self, instances: &[Instance]) -> Result<Vec<Prediction>, Error> {
         info!("Starting the predictions on the whole pipeline.");
 
         // loads the image, this will gets converted to both detector input and classifier so they
@@ -182,7 +182,7 @@ impl SpeciesNet {
                 .build(),
         );
 
-        let labels = read_labels_from_file(labels_path)?;
+        let labels = read_labels_from_file(self.model_info.classifier_labels())?;
 
         let predictions = instances
             .par_iter()
@@ -256,6 +256,7 @@ impl SpeciesNet {
                         classifications.clone(),
                     );
 
+                    prediction.set_model_version(Some(self.model_info.version().to_string()));
                     prediction.merge(ensemble_prediction);
                 }
 
