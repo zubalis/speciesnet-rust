@@ -1,6 +1,11 @@
 ## SpeciesNet Rust
 
-This is the home of the `speciesnet` and `speciesnet-cli` crate for running an ensemble similar to [google/cameratrapai](https://github.com/google/cameratrapai) pipeline Rust language.
+A port of [google/cameratrapai](https://github.com/google/cameratrapai) (a.k.a. SpeciesNet, an ensemble of AI models for classifying wildlife in camera trap images) for Rust. Contains the `speciesnet` and `speciesnet-cli` crates for running a full ensemble as well as individual components individually.
+
+Key differences:
+- Uses an Onnx-converted version of the MegaDetector (converted from PyTorch) and the classifier (converted from TF) models
+- Only requires the Onnx runtime library (thus reducing overall install footprint)
+- CLI does not implement all the features of the Python SpeciesNet cli -- only supports `--input-json` for input, does not support inference resuming
 
 ### Required tools
 
@@ -42,7 +47,7 @@ A window will be opened and you can use scroll wheel to inspect the image and it
 
 ### Running the CLI
 
-Run the help
+Print usage
 
 ```
 cargo run -- --help
@@ -51,13 +56,13 @@ cargo run -- --help
 Run the whole pipeline
 
 ```
-cargo run --bin speciesnet -- --instances-json assets/images/input.json --predictions-json assets/images/output_ensemble_test.json
+cargo run --bin speciesnet-cli -- --instances-json assets/images/input.json --predictions-json assets/images/output_ensemble_test.json
 ```
 
 Running only the detector
 
 ```
-cargo run --bin speciesnet -- --instances-json assets/images/input.json --predictions-json assets/images/output_detector_test.json --detector-only
+cargo run --bin speciesnet-cli -- --instances-json assets/images/input.json --predictions-json assets/images/output_detector_test.json --detector-only
 ```
 
 Running only the classifier
@@ -67,7 +72,7 @@ Running only the classifier
 ```
 cd assets/images
 
-cargo run --release --bin speciesnet-cli -- --instances-json input.json --predictions-json output_classifier_test.json --detections-json output_detector_test.json --classifier-model ../model/model.onnx --detector-model ../model/md_v5a.0.0_traced.pt --classifier-only
+cargo run --release --bin speciesnet-cli -- --instances-json input.json --predictions-json output_classifier_test.json --detections-json output_detector_test.json --classifier-model ../model/model.onnx --detector-model ../model/md_v5a.0.0.onnx --classifier-only
 ```
 
 Running only the ensemble
@@ -75,7 +80,7 @@ Running only the ensemble
 `filepath` in `instances-json`, `output_detector_test.json` and `output_classifier_test.json` must be the same so you can run `ensemble`
 
 ```
-cargo run --bin speciesnet-cli -- --instances-json assets/images/input.json --predictions-json assets/images/output_ensemble_test.json --detections-json assets/images/output_detector_test.json --classifications-json assets/images/output_classifier_test.json --classifier-model assets/model/model.onnx --detector-model assets/model/md_v5a.0.0_traced.pt --ensemble-only 
+cargo run --bin speciesnet-cli -- --instances-json assets/images/input.json --predictions-json assets/images/output_ensemble_test.json --detections-json assets/images/output_detector_test.json --classifications-json assets/images/output_classifier_test.json --classifier-model assets/model/model.onnx --detector-model assets/model/md_v5a.0.0.onnx --ensemble-only 
 ```
 
 ### Testing CLI output
@@ -89,4 +94,4 @@ cd assets/images
 python compare.py output_detector_test.json output_detector.json
 ```
 
-You can adjust the precision of the comparison using the constants (e.g. `DETECTION_CONF_DP = 3`) found in `compare.py`.
+You can adjust the precision of the comparison using the constants (e.g. `DETECTION_CONF_MSE_THRESHOLD = 0.01`) found in `compare.py`.
