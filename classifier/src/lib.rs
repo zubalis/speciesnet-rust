@@ -27,10 +27,9 @@ impl SpeciesNetClassifier {
     where
         P: AsRef<Path>,
     {
-        let cpus = num_cpus::get();
         let session = Session::builder()?
             .with_optimization_level(GraphOptimizationLevel::Level3)?
-            .with_intra_threads(cpus)?
+            .with_intra_threads(2)?
             .commit_from_file(model_path)?;
 
         Ok(Self {
