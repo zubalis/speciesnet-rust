@@ -172,7 +172,7 @@ impl BoundingBox {
         (center_x, center_y, width, height)
     }
 
-    /// Returns the values of the coordinates in a form on `(min_x, min_y, width, height)` tuple
+    /// Returns the values of the coordinates in a form on `(x1, y1, width, height)` tuple
     /// format.
     pub fn as_megadetector_bounding_box(&self) -> (f64, f64, f64, f64) {
         let min_x = self.x1;
@@ -185,8 +185,8 @@ impl BoundingBox {
 
     /// Normalize the values to be under `0..1` by the given width and height.
     ///
-    /// This is implemented to be chained with the [scale_to](crate::bounding_box::BoundingBox::scale_to)
-    /// function to cap the numbers between `0` and `1`.
+    /// This is implemented to be chained with the [`BoundingBox::scale_to`] function to cap the
+    /// numbers between `0` and `1`.
     pub fn normalize(mut self, width: u32, height: u32) -> Self {
         self.x1 /= width as f64;
         self.y1 /= height as f64;
