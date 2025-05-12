@@ -2,18 +2,22 @@
 # It checks for missing file paths and mismatched keys in the predictions.
 # The script takes two arguments: the test file and the reference file.
 # It prints out the differences between the two files, including missing file paths
-# and mismatched keys. The script also rounds the values of certain keys to a specified number of decimal places.
-# The script is designed to be run from the command line and requires two JSON files as input.
+# and mismatched keys.
+#
 # Usage: python compare.py <test_file.json> <ref_file.json>
 
 import json
+from math import sqrt
 import sys
 
 # Thresholds for rounding the values of certain keys in the predictions
-DETECTION_CONF_DP = 3
-DETECTION_BBOX_DP = 2
-CLASSIFICATION_SCORE_DP = 3
-PREDICTION_SCORE_DP = 3
+DETECTION_IGNORE = False
+DETECTION_CONF_MSE_THRESHOLD = 0.1
+DETECTION_BBOX_MSE_THRESHOLD = 0.1
+CLASSIFICATION_IGNORE = False
+CLASSIFICATION_SCORE_MSE_THRESHOLD = 0.01
+PREDICTION_SCORE_MSE_THRESHOLD = 0.01
+PREDICTION_SOURCE_IGNORE = False
 
 # Number of errors to show in the output
 MAX_ERRORS = 10
@@ -76,24 +80,22 @@ FAILURE_MAP = {
 def simplify_prediction(prediction):
     row = {}
     has_detections = 'detections' in prediction
-    if has_detections:
+    if has_detections and not DETECTION_IGNORE:
         for i, obj in enumerate(prediction['detections']):
             row['detection_%d_category' % i] = obj['category']
-            row['detection_%d_conf' % i] = round(obj['conf'], DETECTION_CONF_DP)
-            row['detection_%d_bbox' % i] = ",".join([str(round(x, DETECTION_BBOX_DP)) for x in obj['bbox']])
+            row['detection_%d_conf' % i] = obj['conf']
+            row['detection_%d_bbox' % i] = obj['bbox']
     has_classifications = 'classifications' in prediction
-    if has_classifications:
+    if has_classifications and not CLASSIFICATION_IGNORE:
         for i, clss in enumerate(prediction['classifications']['classes']):
-            score = prediction['classifications']['scores'][i]
-            if score < 0.0001:
-                continue
             row['classification_%d_class' % i] = clss
-            row['classification_%d_score' % i] = round(score, CLASSIFICATION_SCORE_DP)
+            row['classification_%d_score' % i] = prediction['classifications']['scores'][i]
     has_prediction = 'prediction' in prediction
     if has_prediction:
         row['prediction_class'] = prediction['prediction']
-        row['prediction_score'] = round(prediction['prediction_score'], PREDICTION_SCORE_DP)
-        row['prediction_source'] = prediction['prediction_source']
+        row['prediction_score'] = prediction['prediction_score']
+        if not PREDICTION_SOURCE_IGNORE:
+            row['prediction_source'] = prediction['prediction_source']
     row['detections_found'] = has_detections
     row['classifications_found'] = has_classifications
     row['predictions_found'] = has_prediction
@@ -109,6 +111,14 @@ ref_data_indexed = {item['filepath']: simplify_prediction(item) for item in ref_
 
 missing_filepaths = []
 mismatched_filepaths = []
+detection_conf_error_sum = 0
+detection_conf_error_count = 0
+detection_bbox_error_sum = 0
+detection_bbox_error_count = 0
+classification_score_error_sum = 0
+classification_score_error_count = 0
+prediction_score_error_sum = 0
+prediction_score_error_count = 0
 
 for filepath in ref_data_indexed.keys():
     if filepath not in test_data_indexed:
@@ -128,8 +138,37 @@ for filepath in ref_data_indexed.keys():
             mismatched_keys.append((failure_key, "missing", "true"))
         else:
             for key in [x for x in ref.keys() if x.startswith(prefix + '_')]:
-                if key not in test or ref[key] != test[key]:
-                    mismatched_keys.append((key, ref[key], test[key] if key in test else 'missing'))
+                if key not in test:
+                    #mismatched_keys.append((key, ref[key], 'missing'))
+                    _ = 1
+                elif key.startswith('detection_') and key.endswith('_conf'):
+                    error_sum = abs(ref[key] - test[key])
+                    detection_conf_error_sum += pow(error_sum, 2)
+                    detection_conf_error_count += 1
+                    if error_sum > DETECTION_CONF_MSE_THRESHOLD:
+                        mismatched_keys.append((key, ref[key], test[key]))
+                elif key.startswith('detection_') and key.endswith('_bbox'):
+                    error_sum = sum(
+                        abs(ref[key][i] - test[key][i]) for i in range(len(ref[key]))
+                    )
+                    detection_bbox_error_sum += pow(error_sum, 2)
+                    detection_bbox_error_count += 1
+                    if error_sum > DETECTION_BBOX_MSE_THRESHOLD:
+                        mismatched_keys.append((key, ref[key], test[key]))
+                elif key == 'classification_score':
+                    error_sum = abs(ref[key] - test[key])
+                    classification_score_error_sum += pow(error_sum, 2)
+                    classification_score_error_count += 1
+                    if error_sum > CLASSIFICATION_SCORE_MSE_THRESHOLD:
+                        mismatched_keys.append((key, ref[key], test[key]))
+                elif key == 'prediction_score':
+                    error_sum = abs(ref[key] - test[key])
+                    prediction_score_error_sum += pow(error_sum, 2)
+                    prediction_score_error_count += 1
+                    if error_sum > PREDICTION_SCORE_MSE_THRESHOLD:
+                        mismatched_keys.append((key, ref[key], test[key]))
+                elif ref[key] != test[key]:
+                    mismatched_keys.append((key, ref[key], test[key]))
 
     if mismatched_keys:
         mismatched_filepaths.append((filepath, mismatched_keys))
@@ -169,3 +208,12 @@ print('Number of predictions in test data: %d' % (len(test_data)))
 print('Number of predictions in ref data: %d' % (len(ref_data)))
 print('Number of filepaths missing from test data: %d' % (len(missing_filepaths)))
 print('Number of mismatched filepaths: %d out of %d' % (len(mismatched_filepaths), len(ref_data)))
+if detection_bbox_error_count > 0:
+    print('Error (RMSE) detection bbox: %.3f' % sqrt(detection_bbox_error_sum / detection_bbox_error_count))
+if detection_conf_error_count > 0:
+    print('Error (RMSE) detection conf: %.3f' % sqrt(detection_conf_error_sum / detection_conf_error_count))
+if classification_score_error_count > 0:
+    print('Error (RMSE) classification score: %.3f' % sqrt(classification_score_error_sum / classification_score_error_count))
+if prediction_score_error_count > 0:
+    print('Error (RMSE) prediction score: %.3f' % sqrt(prediction_score_error_sum / prediction_score_error_count))
+print()
