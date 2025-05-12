@@ -4,7 +4,7 @@ use crate::classifier::{
     Classification, map_labels_to_classifications, pick_top_n_from, softmax, to_chunks, transform,
 };
 use ndarray::Array1;
-use speciesnet_core::prediction::Prediction;
+use speciesnet_core::io::Prediction;
 
 static LABELS: LazyLock<Vec<String>> = LazyLock::new(|| {
     vec![
