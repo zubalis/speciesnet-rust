@@ -79,8 +79,7 @@ fn main() {
     let error_sum = loaded_rgb_image
         .pixels()
         .zip(reference_image.pixels())
-        .map(|(pix_1, pix_2)| (0..3).map(move |i| pix_1[i] as i64 - pix_2[i] as i64))
-        .flatten()
+        .flat_map(|(pix_1, pix_2)| (0..3).map(move |i| pix_1[i] as i64 - pix_2[i] as i64))
         .map(|diff| diff * diff)
         .sum::<i64>();
     let error_mean =
@@ -92,8 +91,7 @@ fn main() {
     let error_sum = zune_rgb_image
         .pixels()
         .zip(reference_image.pixels())
-        .map(|(pix_1, pix_2)| (0..3).map(move |i| pix_1[i] as i64 - pix_2[i] as i64))
-        .flatten()
+        .flat_map(|(pix_1, pix_2)| (0..3).map(move |i| pix_1[i] as i64 - pix_2[i] as i64))
         .map(|diff| diff * diff)
         .sum::<i64>();
     let error_mean = error_sum as f64 / (zune_rgb_image.width() * zune_rgb_image.height()) as f64;
@@ -104,8 +102,7 @@ fn main() {
     let error_sum = zune_rgb_image
         .pixels()
         .zip(loaded_rgb_image.pixels())
-        .map(|(pix_1, pix_2)| (0..3).map(move |i| pix_1[i] as i64 - pix_2[i] as i64))
-        .flatten()
+        .flat_map(|(pix_1, pix_2)| (0..3).map(move |i| pix_1[i] as i64 - pix_2[i] as i64))
         .map(|diff| diff * diff)
         .sum::<i64>();
     let error_mean = error_sum as f64 / (zune_rgb_image.width() * zune_rgb_image.height()) as f64;
@@ -116,8 +113,7 @@ fn main() {
     let error_sum = moz_rgb_image
         .pixels()
         .zip(reference_image.pixels())
-        .map(|(pix_1, pix_2)| (0..3).map(move |i| pix_1[i] as i64 - pix_2[i] as i64))
-        .flatten()
+        .flat_map(|(pix_1, pix_2)| (0..3).map(move |i| pix_1[i] as i64 - pix_2[i] as i64))
         .map(|diff| diff * diff)
         .sum::<i64>();
     let error_mean = error_sum as f64 / (moz_rgb_image.width() * moz_rgb_image.height()) as f64;
