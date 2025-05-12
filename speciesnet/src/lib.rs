@@ -9,6 +9,7 @@
 //! ```bash
 //! cargo add --git https://github.com/zubalis/speciesnet-rust.git --path speciesnet
 //! cargo add --git https://github.com/zubalis/speciesnet-rust.git --path core
+//! cargo add ort@=2.0.0-rc.9 -F download-binaries
 //! ```
 //!
 //! to your program to get the lastest version of speciesnet.
@@ -20,7 +21,7 @@
 //!
 //! ## Model setup
 //!
-//! SpeciesNet Rust ensemble is using [`ort`] to run the model, which means the detector model and
+//! SpeciesNet Rust ensemble is using [ort] to run the model, which means the detector model and
 //! the classifier model needs to be converted to [ONNX] before this program can be run. We have a
 //! separate repository for generating SpeciesNet Rust compatible models in [zubalis/speciesnet-onnx].
 //! You can grab the model files from there, extract it to a directory and use
@@ -34,6 +35,23 @@
 //! use speciesnet::SpeciesNet;
 //!
 //! let speciesnet = SpeciesNet::from_model_folder("./speciesnet-v4a/")?;
+//! ```
+//!
+//! Running the entire pipeline (detector + classifier + ensemble).
+//!
+//! ```rust
+//! use std::path::PathBuf;
+//!
+//! use speciesnet_core::io::Instance;
+//! use speciesnet::SpeciesNet;
+//!
+//! let instances = vec![
+//!     Instance::from_path_buf(PathBuf::from("./img1.jpeg")),
+//!     Instance::from_path_buf(PathBuf::from("./img2.jpeg"))
+//! ];
+//!
+//! let speciesnet = SpeciesNet::new()?;
+//! let detections = speciesnet.predict(&instances)?;
 //! ```
 //!
 //! Running the detector pipeline.
@@ -110,9 +128,10 @@
 //! ```
 //!
 //! [SpeciesNet]: https://www.kaggle.com/models/google/speciesnet
-//! [Prediction]: speciesnet_core::Prediction
+//! [Prediction]: speciesnet_core::io::Prediction
 //! [ONNX]: https://onnx.ai
 //! [zubalis/speciesnet-onnx]: https://github.com/zubalis/speciesnet-onnx
+//! [ort]: https://docs.rs/ort
 
 pub mod error;
 pub mod model_info;
