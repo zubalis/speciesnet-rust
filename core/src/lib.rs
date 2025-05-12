@@ -6,7 +6,6 @@ pub mod error;
 pub mod image_reader;
 pub mod io;
 mod macros;
-pub mod model_info;
 pub mod shape;
 
 pub use crate::image_reader::load_image;

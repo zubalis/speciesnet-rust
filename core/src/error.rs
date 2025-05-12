@@ -18,16 +18,4 @@ pub enum Error {
     SerdeJsonError(#[from] serde_json::error::Error),
     #[error("mozjpeg panicked: {0}")]
     MozjpegPanicError(String),
-    #[cfg(feature = "download-model")]
-    #[error("ureq error: {0}")]
-    UreqError(#[from] ureq::Error),
-    #[cfg(feature = "download-model")]
-    #[error("http error: response returned with status of {0}")]
-    RequestFailed(u16),
-    #[cfg(feature = "download-model")]
-    #[error("base dir initialization failed.")]
-    BaseDirInitFailed,
-    #[cfg(feature = "download-model")]
-    #[error("zip error: {0}")]
-    ZipError(#[from] zip::result::ZipError),
 }

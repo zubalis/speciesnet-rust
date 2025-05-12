@@ -14,7 +14,6 @@ use speciesnet_core::{
     detector::BoundingBox,
     io::{Instance, Prediction},
     load_image,
-    model_info::ModelInfo,
     shape::Shape,
 };
 use speciesnet_detector::{
@@ -26,7 +25,7 @@ use speciesnet_ensemble::{
 };
 use tracing::{debug, error, info};
 
-use crate::error::Error;
+use crate::{error::Error, model_info::ModelInfo};
 
 #[derive(Debug, Clone)]
 pub struct SpeciesNet {
@@ -38,6 +37,7 @@ pub struct SpeciesNet {
 
 impl SpeciesNet {
     /// Initialize the detector, classifier, and ensemble by loading them into memory.
+    #[cfg(feature = "download-model")]
     pub fn new() -> Result<Self, Error> {
         let model_info = ModelInfo::from_default_url()?;
         Self::from_model_info(model_info)

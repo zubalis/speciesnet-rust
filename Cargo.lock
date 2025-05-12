@@ -3025,15 +3025,20 @@ dependencies = [
 name = "speciesnet"
 version = "0.1.0"
 dependencies = [
+ "directories",
  "image",
  "num_cpus",
  "rayon",
+ "serde",
+ "serde_json",
  "speciesnet-classifier",
  "speciesnet-core",
  "speciesnet-detector",
  "speciesnet-ensemble",
  "thiserror 2.0.12",
  "tracing",
+ "ureq 3.0.11",
+ "zip",
 ]
 
 [[package]]
@@ -3072,7 +3077,6 @@ dependencies = [
 name = "speciesnet-core"
 version = "0.1.0"
 dependencies = [
- "directories",
  "image",
  "mozjpeg",
  "ndarray",
@@ -3080,10 +3084,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.12",
- "tracing",
- "ureq 3.0.11",
  "uuid",
- "zip",
 ]
 
 [[package]]

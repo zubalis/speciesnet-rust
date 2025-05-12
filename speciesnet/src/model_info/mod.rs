@@ -10,6 +10,7 @@ use crate::error::Error;
 #[cfg(feature = "download-model")]
 pub mod download_model;
 
+/// Possible types of the speciesnet model.
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum ModelType {
