@@ -7,7 +7,7 @@
 #### Cargo
 
 ```bash
-cargo install speciesnet-cli
+cargo install --git https://github.com/zubalis/speciesnet-rust.git --path speciesnet-cli
 ```
 
 ### Cargo features
@@ -24,7 +24,7 @@ The CLI is designed to be pretty similar to how [google/cameratrapai](https://gi
 - The Rust version does not override or edit an existing `predictions.json` file, if one is found when supplied using `--predictions-json`, CLI will error saying the file already existed.
 - The CLI flag `--country` and `--admin1-region` currently does nothing to the input.
 
-below is the examples of running the ensemble using speciesnet-rust compared to cameratrapai.
+below is the examples of running the ensemble using speciesnet compared to cameratrapai.
 
 #### Running only the detector
 
