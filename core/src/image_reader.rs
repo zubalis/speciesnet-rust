@@ -4,18 +4,14 @@ use image::{ImageReader, RgbImage};
 
 use crate::error::Error;
 
-fn vec_u8_to_rgb_image(vec: Vec<u8>, width: usize, height: usize) -> RgbImage {
-    let mut rgb_image = RgbImage::new(width.try_into().unwrap(), height.try_into().unwrap());
-    let component_count = vec.len() / (width * height);
-    assert_eq!(component_count, 3); // only handles RGB values
-
-    for (i, chunk) in vec.chunks_exact(component_count).enumerate() {
-        let x = (i % width) as u32;
-        let y = (i / width) as u32;
-        rgb_image.put_pixel(x, y, image::Rgb([chunk[0], chunk[1], chunk[2]]));
-    }
-
-    rgb_image
+/// Converts a list of raw RGB pixel into an [`RgbImage`], this is being used as a conversion
+/// method from [`mozjpeg`].
+fn vec_u8_to_rgb_image(pixels: Vec<u8>, width: usize, height: usize) -> RgbImage {
+    // SAFETY: The image returned from other image functions are guaranteed to be RGB space. The
+    // fucntion is also not exposed outside so it's safe to assume creation from raw vector will
+    // not fail, iterating over chunks slows down hugely (we're looking at 2ms iteration vs 3ns raw
+    // vector creation).
+    RgbImage::from_raw(width as u32, height as u32, pixels).unwrap()
 }
 
 fn load_jpeg_image<P>(path: P) -> Result<RgbImage, std::io::Error>
