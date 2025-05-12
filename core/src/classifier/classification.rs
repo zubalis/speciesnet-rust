@@ -4,12 +4,14 @@ use serde::{
     ser::SerializeStruct,
 };
 
+/// A list of classifications stored separately as a list of labels and scores.
 #[derive(Debug, PartialEq, Clone)]
 pub struct ClassificationBundle {
     labels: Vec<String>,
     scores: Vec<f64>,
 }
 
+/// Struct for storing a classification from the model.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Classification {
     label: String,
