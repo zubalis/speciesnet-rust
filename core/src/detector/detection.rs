@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize, ser::SerializeStruct};
 
 use crate::detector::{BoundingBox, Category};
 
-/// The detection produced from running the model.
+/// The detection produced from running the detector model.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Detection {
     category: Category,
