@@ -4,8 +4,13 @@ use image::{ImageReader, RgbImage};
 
 use crate::error::Error;
 
-/// Converts a list of raw RGB pixel into an [`RgbImage`], this is being used as a conversion
+/// Converts a vector of raw RGB pixel into an [`RgbImage`], this is being used as a conversion
 /// method from [`mozjpeg`].
+///
+/// # Panics
+///
+/// This function assumes the passed in pixels vector has a length of `width * height * 3`,
+/// otherwise a panic will happen, this assumption allows us to get better performance.
 fn vec_u8_to_rgb_image(pixels: Vec<u8>, width: usize, height: usize) -> RgbImage {
     // SAFETY: The image returned from other image functions are guaranteed to be RGB space. The
     // fucntion is also not exposed outside so it's safe to assume creation from raw vector will
