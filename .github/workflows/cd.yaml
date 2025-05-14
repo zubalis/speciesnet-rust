@@ -3,7 +3,7 @@ name: 'Release'
 # Run a release on a tag in format `speciesnet-*-x.y.z`.
 on:
   push:
-    branch:
+    branches:
       - main
     # tags:
     #   - "speciesnet*-[0-9]+.[0-9]+.[0-9]+"
