@@ -1,6 +1,15 @@
 [package]
 name = "speciesnet-detector"
-version = "0.1.0"
+version = "0.1.0" # Please bump this when doing a release.
+authors = [
+  "Bhattarapong Somwong <art@zubalis.com>",
+  "Antony Harfield <antony@zubalis.com>",
+  "Wasuphon Naksut <frongs@zubalis.com>",
+]
+description = "Detector components of speciesnet"
+repository = "https://github.com/zubalis/speciesnet-rust"
+homepage = "https://github.com/zubalis/speciesnet-rust"
+license = "APACHE"
 edition = "2024"
 
 [dependencies]
