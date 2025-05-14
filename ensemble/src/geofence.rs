@@ -312,17 +312,24 @@ pub fn fix_geofence_base<P: AsRef<Path>>(
         let country = fix.country_code;
         let state = fix.admin1_region_code.unwrap_or("".to_string());
         if rule == "allow" {
+            // If the label does not exist in geofence map, do not update.
             if !geofence.contains_key(&label) {
                 continue;
             }
+
+            // If the label exists but there are no allowed countries, do not update.
             if geofence.get(&label).and_then(|v| v.get("allow")).is_none() {
                 continue;
             }
+
+            // If allow block list only has a country, insert the country into the allow list.
             if state.is_empty() {
                 if let Some(map) = geofence.get_mut(&label).and_then(|v| v.get_mut("allow")) {
                     map.entry(country).or_insert_with(|| vec![]);
                 }
             } else {
+                // If admin1_region exists with country, check whether there is a previously
+                // allowed country and admin1_region before
                 let allow_map = geofence
                     .get_mut(&label)
                     .and_then(|v| v.get_mut("allow"))
@@ -330,13 +337,30 @@ pub fn fix_geofence_base<P: AsRef<Path>>(
                 match allow_map {
                     Some(rule) => {
                         if rule.is_empty() {
+                            // If the country is already allowed, but admin1 region list is
+                            // empty, then do nothing.
+                            //
+                            // if country is USA and admin1 is NY, but inside allow map is only
+                            // USA, then we skip if there are no USA/PH or something like that
+                            // before.
                             continue;
                         } else {
+                            // If the country is already allowed and there was admin1
+                            // region inside the geofence list, then we add one more to the
+                            // list.
+                            //
+                            // if country is USA and admin1 is NY, and inside allow map there
+                            // exists USA and USA/PH, then we can add in the USA/NY along.
                             let set: HashSet<String> = rule.clone().into_iter().collect();
                             let new_set: HashSet<String> = vec![state].into_iter().collect();
                             *rule = set.union(&new_set).cloned().collect();
                         }
                     }
+                    // If the country key inside the allow list has never existed before, then we
+                    // insert the new country along with its admin1 region.
+                    //
+                    // If country is USA and admin1 is NY, but the list does not even have USA,
+                    // then we add USA, and USA/NY
                     None => {
                         geofence
                             .entry(label)
@@ -349,6 +373,7 @@ pub fn fix_geofence_base<P: AsRef<Path>>(
                 }
             }
         } else {
+            // When blocking, we will add a species in, if there is not a block before.
             if !geofence.contains_key(&label)
                 || geofence.get(&label).and_then(|v| v.get("block")).is_none()
             {

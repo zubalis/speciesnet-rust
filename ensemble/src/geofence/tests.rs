@@ -151,6 +151,7 @@ fn test_should_geofence_fn() -> Result<(), Error> {
         should_geofence(PUMA, Some("USA"), None, &GEOFENCE_MAP, true)?,
         false
     );
+
     assert_eq!(
         should_geofence(PUMA, Some("USA"), Some("CA"), &GEOFENCE_MAP, true)?,
         false
