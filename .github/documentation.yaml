@@ -1,0 +1,69 @@
+name: Build documentation to Github Pages
+
+on:
+  workflow_call:
+    outputs:
+      build-outcome:
+        description: Build outcome
+        value: ${{ jobs.build.outputs.build-outcome }}
+
+permissions:
+  contents: read
+  pages: write
+
+env:
+  RUSTFLAGS: '-Dwarnings'
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+
+jobs:
+  build:
+    name: Build documentation
+    runs-on: ubuntu-latest
+    outputs:
+      build-outcome: ${{ steps.build.outcome }}
+
+    steps:
+      - name: 'Setup: Git checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Setup: Rust'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: 'x86_64-unknown-linux-gnu'
+
+      - name: 'Setup: Rust cache'
+        uses: Swatinem/rust-cache@v2
+
+      - name: 'Setup: pages'
+        id: setup-pages
+        uses: actions/configure-pages@v5
+
+      - name: 'Clean docs folder'
+        run: cargo clean --doc
+
+      - name: 'Build: documentation'
+        run: >
+          cargo doc --no-deps --package 'species*'
+
+      - name: 'Configure: redirect to speciesnet'
+        run: echo '<meta http-equiv="refresh" content="0;url=speciesnet/index.html">' > target/doc/index.html
+
+      - name: 'Configure: Remove lockfile'
+        run: rm target/doc/.lock
+
+      - name: 'Release: upload pages artifacts'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: target/doc
+
+  deploy:
+    name: Deploy documentation to Github Pages
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubunto-latest
+    needs: build
+    steps:
+      - name: Deploy to Github Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
