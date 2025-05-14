@@ -1,6 +1,7 @@
 name: Build documentation to Github Pages
 
 on:
+  workflow_dispatch:
   workflow_call:
     outputs:
       build-outcome:
