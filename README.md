@@ -1,11 +1,13 @@
 ## SpeciesNet Rust
 
-A port of [google/cameratrapai](https://github.com/google/cameratrapai) (a.k.a. SpeciesNet, an ensemble of AI models for classifying wildlife in camera trap images) for Rust. Contains the `speciesnet` and `speciesnet-cli` crates for running a full ensemble as well as individual components individually.
+A port of [google/cameratrapai](https://github.com/google/cameratrapai) (a.k.a. SpeciesNet, an ensemble of AI models for classifying wildlife in camera trap images) for Rust. Contains the `speciesnet` and `speciesnet-cli` crates for running a full ensemble as well as components individually.
 
 Key differences:
 - Uses an Onnx-converted version of the MegaDetector (converted from PyTorch) and the classifier (converted from TF) models
 - Only requires the Onnx runtime library (thus reducing overall install footprint)
 - CLI does not implement all the features of the Python SpeciesNet cli -- only supports `--input-json` for input, does not support inference resuming
+
+See: [documentation](https://zubalis.github.io/speciesnet-rust/speciesnet)
 
 ### Using the library
 
