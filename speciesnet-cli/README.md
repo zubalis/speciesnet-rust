@@ -30,30 +30,30 @@ below is the examples of running the ensemble using speciesnet compared to camer
 
 ```bash
 # cameratrapai.
-python3 -m speciesnet.scripts.run_model --instance_json ./instance.json --predictions_json ./predictions.json --detector-only
+python3 -m speciesnet.scripts.run_model --instance_json ./instance.json --predictions_json ./predictions.json --detector_only
 
 # speciesnet-rust.
-speciesnet-cli --instance-json ./instance.json --predictions_json ./predictions.json --detector-only
+speciesnet-cli --instance-json ./instance.json --predictions-json ./predictions.json --detector-only
 ```
 
 #### Running only the classifier
 
 ```bash
 # cameratrapai.
-python3 -m speciesnet.scripts.run_model --instance_json ./instance.json --predictions_json ./predictions.json --classifier-only
+python3 -m speciesnet.scripts.run_model --instance_json ./instance.json --predictions_json ./predictions.json --classifier_only
 
 # speciesnet-rust.
-speciesnet-cli --instance-json ./instance.json --predictions_json ./predictions.json --classifier-only
+speciesnet-cli --instance-json ./instance.json --predictions-json ./predictions.json --classifier-only
 ```
 
 #### Running only the ensemble
 
 ```bash
 # cameratrapai.
-python3 -m speciesnet.scripts.run_model --instance_json ./instance.json --predictions_json ./predictions.json --ensemble-only
+python3 -m speciesnet.scripts.run_model --instance_json ./instance.json --classifications_json ./output_classifier.json --detections_json ./output_detector.json --predictions_json ./predictions.json --ensemble_only
 
 # speciesnet-rust.
-speciesnet-cli --instance-json ./instance.json --predictions_json ./predictions.json --ensemble-only
+speciesnet-cli --instance-json ./instance.json --classifications-json ./output_classifier.json --detections-json ./output_detector.json --predictions-json ./predictions.json --ensemble-only
 ```
 
 #### Running the whole inference pipeline
@@ -63,5 +63,5 @@ speciesnet-cli --instance-json ./instance.json --predictions_json ./predictions.
 python3 -m speciesnet.scripts.run_model --instance_json ./instance.json --predictions_json ./predictions.json
 
 # speciesnet-rust.
-speciesnet-cli --instance-json ./instance.json --predictions_json ./predictions.json
+speciesnet-cli --instance-json ./instance.json --predictions-json ./predictions.json
 ```
