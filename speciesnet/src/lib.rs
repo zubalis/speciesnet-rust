@@ -105,25 +105,15 @@
 //! };
 //! use speciesnet::SpeciesNet;
 //!
-//! let classifications = ClassificationBundle::new(
-//!     vec![
-//!         "001795ae-1963-47f2-91cc-9dd627643a06;mammalia;cetartiodactyla;bovidae;nesotragus;;nesotragus species",
-//!         "0052e235-369e-4019-a3a4-7dc6b29a2b5e;aves;pelecaniformes;ardeidae;gorsachius;;gorsachius species"
-//!     ],
-//!     vec![0.99, 0.89],
-//! );
-//!
-//! let detections = vec![
-//!     Detection::new(Category::Animal, 0.98, BoundingBox::new(0.3, 0.1, 0.4, 0.4)),
-//!     Detection::new(Category::Animal, 0.11, BoundingBox::new(0.5, 0.4, 0.12, 0.11)),
-//! ];
+//! let instances_json_path = "./instances.json";
+//! let detector_file_path = "./output_detector.json";
+//! let classifier_file_path = "./output_classifier.json";
 //!
 //! let speciesnet = SpeciesNet::new()?;
 //! let ensembles = speciesnet.ensemble(
-//!     &detections,
-//!     &classifications,
-//!     Some("USD".to_string()),
-//!     Some("NY".to_string())
+//!     instances_json_path,
+//!     detector_file_path,
+//!     classifier_file_path,
 //! )?;
 //! ```
 //!
