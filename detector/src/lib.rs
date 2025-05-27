@@ -50,10 +50,7 @@ impl SpeciesNetDetector {
         Ok(preprocessed_image)
     }
 
-    pub fn predict(
-        &self,
-        preprocessed_image: PreprocessedImage,
-    ) -> Result<Option<Prediction>, Error> {
+    pub fn predict(&self, preprocessed_image: PreprocessedImage) -> Result<Prediction, Error> {
         let (original_width, original_height) = preprocessed_image.original_size();
         let (resized_width, resized_height) = preprocessed_image.resized_size();
         let path = preprocessed_image.path_owned();
@@ -75,7 +72,7 @@ impl SpeciesNetDetector {
         let nms_results = non_max_suppression(output, Some(0.01))?;
 
         if nms_results.is_empty() {
-            return Ok(None);
+            return Ok(Prediction::from_detections(path, vec![]));
         }
 
         let mut detections: Vec<Detection> = Vec::new();
@@ -101,6 +98,6 @@ impl SpeciesNetDetector {
             detections.push(Detection::new(category, confidence.into(), bbox));
         }
 
-        Ok(Some(Prediction::from_detections(path, detections)))
+        Ok(Prediction::from_detections(path, detections))
     }
 }
