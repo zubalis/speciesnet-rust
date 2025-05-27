@@ -95,9 +95,9 @@ impl SpeciesNet {
 
                 Ok(predictions)
             })
-            .collect::<Result<Vec<Option<Prediction>>, Error>>()?;
+            .collect::<Result<Vec<Prediction>, Error>>()?;
 
-        Ok(detections.into_iter().flatten().collect())
+        Ok(detections)
     }
 
     /// Performs the classification from detector output by the cameratrap model.
@@ -205,25 +205,19 @@ impl SpeciesNet {
                 let detector_image = PreprocessedImage::new(detector_image, fp.file_path());
 
                 let detector_results = self.detector.predict(detector_image)?;
+                let bounding_boxes = match detector_results.detections() {
+                    Some(det) => {
+                        let binding = det
+                            .iter()
+                            .map(|d| *d.bounding_box())
+                            .collect::<Vec<BoundingBox>>();
 
-                if let Some(ref res) = detector_results {
-                    prediction.merge(res.clone());
-                }
-
-                let bounding_boxes = match detector_results {
-                    Some(detections) => match detections.detections() {
-                        Some(det) => {
-                            let binding = det
-                                .iter()
-                                .map(|d| *d.bounding_box())
-                                .collect::<Vec<BoundingBox>>();
-
-                            binding
-                        }
-                        None => vec![],
-                    },
+                        binding
+                    }
                     None => vec![],
                 };
+
+                prediction.merge(detector_results);
 
                 // Running the classifier
                 let classifier_tensor = self

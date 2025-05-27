@@ -31,7 +31,7 @@
 //!
 //! Initializing speciesnet with a custom extracted model folder.
 //!
-//! ```rust
+//! ```rust,no_run
 //! use speciesnet::SpeciesNet;
 //!
 //! let speciesnet = SpeciesNet::from_model_folder("./speciesnet-v4a/")?;
