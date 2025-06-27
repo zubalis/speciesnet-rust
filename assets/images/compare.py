@@ -155,7 +155,7 @@ for filepath in ref_data_indexed.keys():
                     detection_bbox_error_count += 1
                     if error_sum > DETECTION_BBOX_MSE_THRESHOLD:
                         mismatched_keys.append((key, ref[key], test[key]))
-                elif key == 'classification_score':
+                elif key.startswith('classification_') and key.endswith('_score'):
                     error_sum = abs(ref[key] - test[key])
                     classification_score_error_sum += pow(error_sum, 2)
                     classification_score_error_count += 1
