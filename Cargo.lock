@@ -3099,6 +3099,7 @@ name = "speciesnet-ensemble"
 version = "0.0.1"
 dependencies = [
  "csv",
+ "indexmap 2.9.0",
  "serde",
  "serde_json",
  "speciesnet-core",

@@ -5,6 +5,7 @@ use std::fs::File;
 use std::path::Path;
 
 use csv::Reader;
+use indexmap::IndexMap;
 use serde::Deserialize;
 use speciesnet_core::constants;
 use speciesnet_core::ensemble::GeofenceResult;
@@ -169,7 +170,7 @@ pub fn roll_up_labels_to_first_matching_level(
     };
 
     for taxonomy_level in target_taxonomy_levels {
-        let mut accumulated_scores = HashMap::new();
+        let mut accumulated_scores = IndexMap::new();
         for (label, score) in labels.iter().zip(scores.iter()) {
             let roll_up_label = get_ancestor_at_level(label, taxonomy_level, taxonomy_map)?;
             if let Some(r_label) = roll_up_label {
