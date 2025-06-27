@@ -68,7 +68,6 @@ impl SpeciesNetDetector {
             .into_dimensionality::<Ix3>()?
             .into_owned();
 
-        info!("Running non-max suppression on image {}.", path.display());
         let nms_results = non_max_suppression(output, Some(0.01))?;
 
         if nms_results.is_empty() {
@@ -87,7 +86,7 @@ impl SpeciesNetDetector {
             let category = Category::try_from(raw_detection[5].trunc() as i32 + 1).unwrap();
 
             let bbox = BoundingBox::new(x1, y1, x2, y2)
-                .scale_to(
+                .scale(
                     resized_width,
                     resized_height,
                     original_width,

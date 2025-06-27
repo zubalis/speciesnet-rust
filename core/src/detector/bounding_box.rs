@@ -175,18 +175,15 @@ impl BoundingBox {
     /// Returns the values of the coordinates in a form on `(x1, y1, width, height)` tuple
     /// format.
     pub fn as_megadetector_bounding_box(&self) -> (f64, f64, f64, f64) {
-        let min_x = self.x1;
-        let min_y = self.y1;
+        let x1 = self.x1;
+        let y1 = self.y1;
         let width = self.x2 - self.x1;
         let height = self.y2 - self.y1;
 
-        (min_x, min_y, width, height)
+        (x1, y1, width, height)
     }
 
-    /// Normalize the values to be under `0..1` by the given width and height.
-    ///
-    /// This is implemented to be chained with the [`BoundingBox::scale_to`] function to cap the
-    /// numbers between `0` and `1`.
+    /// Normalize the [`BoundingBox`] to be under `0..1` by the given `width` and `height`.
     pub fn normalize(mut self, width: u32, height: u32) -> Self {
         self.x1 /= width as f64;
         self.y1 /= height as f64;
@@ -196,40 +193,49 @@ impl BoundingBox {
         self
     }
 
-    /// Scale the bounding box coordinates to a given width and height. This function is a
-    /// combination of [YOLOv5's scale_boxes] and [YOLOv5's clip_boxes] function.
+    /// Clips a [`BoundingBox`] to fit within the specified image `width` and `height`.
+    /// Function is copied from [yolov5 clip_boxes] function.
     ///
-    /// [YOLOv5's scale_boxes]: https://github.com/ultralytics/yolov5/blob/8cc449636da76757a71385a2b57dc977db58b81e/utils/general.py#L953-L966
-    /// [YOLOv5's clip_boxes]: https://github.com/ultralytics/yolov5/blob/8cc449636da76757a71385a2b57dc977db58b81e/utils/general.py#L988-L997
-    pub fn scale_to(
+    /// [yolov5 clip_boxes] function.
+    fn clip(mut self, width: u32, height: u32) -> Self {
+        self.x1 = self.x1.clamp(0.0, width as f64);
+        self.y1 = self.y1.clamp(0.0, height as f64);
+        self.x2 = self.x2.clamp(0.0, width as f64);
+        self.y2 = self.y2.clamp(0.0, height as f64);
+
+        self
+    }
+
+    /// Rescales [`BoundingBox`] to the given `width` and `height`.
+    ///
+    /// Function is copied from [yolov5 scale_boxes] function.
+    ///
+    /// [yolov5 scale_boxes]: https://github.com/ultralytics/yolov5/blob/8cc449636da76757a71385a2b57dc977db58b81e/utils/general.py#L953-L966
+    pub fn scale(
         mut self,
         resized_width: u32,
         resized_height: u32,
         width: u32,
         height: u32,
     ) -> Self {
-        let gain = f32::min(
-            resized_width as f32 / width as f32,
-            resized_height as f32 / height as f32,
+        let gain: f64 = f64::min(
+            resized_height as f64 / height as f64,
+            resized_width as f64 / width as f64,
         );
-        let pad = (
-            (resized_height as f32 - (height as f32 * gain)) / 2.0,
-            (resized_width as f32 - (width as f32 * gain)) / 2.0,
-        );
+        let x_padding: f64 = (resized_width as f64 - (width as f64 * gain)) / 2.0;
+        let y_padding: f64 = (resized_height as f64 - (height as f64 * gain)) / 2.0;
 
-        // The clamp part is the clip_boxes function.
-        let x1 = ((self.x1 - pad.0 as f64) / gain as f64).clamp(0.0, width as f64);
-        let x2 = ((self.x2 - pad.0 as f64) / gain as f64).clamp(0.0, width as f64);
+        self.x1 -= x_padding;
+        self.x2 -= x_padding;
+        self.y1 -= y_padding;
+        self.y2 -= y_padding;
 
-        let y1 = ((self.y1 - pad.1 as f64) / gain as f64).clamp(0.0, height as f64);
-        let y2 = ((self.y2 - pad.1 as f64) / gain as f64).clamp(0.0, height as f64);
+        self.x1 /= gain;
+        self.y1 /= gain;
+        self.x2 /= gain;
+        self.y2 /= gain;
 
-        self.x1 = x1;
-        self.y1 = y1;
-        self.x2 = x2;
-        self.y2 = y2;
-
-        self
+        Self::clip(self, width, height)
     }
 
     pub fn x1(&self) -> f64 {
