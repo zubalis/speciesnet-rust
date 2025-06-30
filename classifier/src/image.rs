@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use fast_image_resize::images::Image;
-use fast_image_resize::{PixelType, Resizer};
+use fast_image_resize::{PixelType, ResizeAlg, ResizeOptions, Resizer};
 use image::{DynamicImage, RgbImage};
 use ndarray::Array4;
 use speciesnet_core::{detector::BoundingBox, load_image};
@@ -17,7 +17,7 @@ pub struct ProceededImage {
 pub fn preprocess(classifier_input: &ClassifierInput) -> Result<ProceededImage, Error> {
     let decoded_img = load_image(&classifier_input.file_path)?;
 
-    let proceeded_image = preprocess_impl(decoded_img.into(), classifier_input.bbox)?;
+    let proceeded_image = preprocess_impl(decoded_img.into(), classifier_input.bbox.as_ref())?;
 
     let mut tensor = Array4::zeros([1usize, 480usize, 480usize, 3usize]);
 
@@ -25,9 +25,9 @@ pub fn preprocess(classifier_input: &ClassifierInput) -> Result<ProceededImage, 
         let x = pixel.0 as _;
         let y = pixel.1 as _;
         let [r, g, b] = pixel.2.0;
-        tensor[[0, x, y, 0]] = (r as f32) / 255.;
-        tensor[[0, x, y, 1]] = (g as f32) / 255.;
-        tensor[[0, x, y, 2]] = (b as f32) / 255.;
+        tensor[[0, y, x, 0]] = (r as f32) / 255.;
+        tensor[[0, y, x, 1]] = (g as f32) / 255.;
+        tensor[[0, y, x, 2]] = (b as f32) / 255.;
     }
 
     Ok(ProceededImage {
@@ -38,7 +38,7 @@ pub fn preprocess(classifier_input: &ClassifierInput) -> Result<ProceededImage, 
 
 pub fn preprocess_impl(
     decoded_image: DynamicImage, // TODO: Change to RgbImage
-    bbox: Option<BoundingBox>,
+    bbox: Option<&BoundingBox>,
 ) -> Result<RgbImage, Error> {
     // Performs cropping with given bounding box if there is a bounding box, otherwise just return.
     let cropped_image = match bbox {
@@ -65,7 +65,11 @@ pub fn preprocess_impl(
     )?;
     let mut dest_image = Image::new(480, 480, PixelType::U8x3);
 
-    resizer.resize(&src_image, &mut dest_image, None)?;
+    let options = ResizeOptions::new().resize_alg(ResizeAlg::Interpolation(
+        fast_image_resize::FilterType::Bilinear,
+    ));
+
+    resizer.resize(&src_image, &mut dest_image, Some(&options))?;
 
     // Creates the image back.
     let image = RgbImage::from_raw(480, 480, dest_image.into_vec()).unwrap();

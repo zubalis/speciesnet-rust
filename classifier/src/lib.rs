@@ -58,7 +58,7 @@ impl SpeciesNetClassifier {
         image: DynamicImage,
         bboxes: &[BoundingBox],
     ) -> Result<Array4<f32>, Error> {
-        let processed_image = preprocess_impl(image, bboxes.first().cloned())?;
+        let processed_image = preprocess_impl(image, bboxes.first())?;
 
         // The tensor's structure for classifier is batch, width, height, and channel.
         let mut tensor = Array4::zeros([1usize, 480usize, 480usize, 3usize]);
@@ -67,9 +67,9 @@ impl SpeciesNetClassifier {
             let x = pixel.0 as _;
             let y = pixel.1 as _;
             let [r, g, b] = pixel.2.0;
-            tensor[[0, x, y, 0]] = (r as f32) / 255.;
-            tensor[[0, x, y, 1]] = (g as f32) / 255.;
-            tensor[[0, x, y, 2]] = (b as f32) / 255.;
+            tensor[[0, y, x, 0]] = (r as f32) / 255.;
+            tensor[[0, y, x, 1]] = (g as f32) / 255.;
+            tensor[[0, y, x, 2]] = (b as f32) / 255.;
         }
 
         Ok(tensor)
