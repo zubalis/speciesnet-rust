@@ -24,44 +24,44 @@ The CLI is designed to be pretty similar to how [google/cameratrapai](https://gi
 - The Rust version does not override or edit an existing `predictions.json` file, if one is found when supplied using `--predictions-json`, CLI will error saying the file already existed.
 - The CLI flag `--country` and `--admin1-region` currently does nothing to the input.
 
-below is the examples of running the ensemble using speciesnet compared to cameratrapai.
+The following examples show how to run speciesnet-cli compared to cameratrapai.
 
 #### Running only the detector
 
 ```bash
 # cameratrapai.
-python3 -m speciesnet.scripts.run_model --instance_json ./instance.json --predictions_json ./predictions.json --detector_only
+python3 -m speciesnet.scripts.run_model --instance_json ./instances.json --predictions_json ./predictions.json --detector_only
 
 # speciesnet-rust.
-speciesnet-cli --instance-json ./instance.json --predictions-json ./predictions.json --detector-only
+speciesnet-cli --instances-json ./instances.json --predictions-json ./predictions.json --detector-only
 ```
 
 #### Running only the classifier
 
 ```bash
 # cameratrapai.
-python3 -m speciesnet.scripts.run_model --instance_json ./instance.json --predictions_json ./predictions.json --classifier_only
+python3 -m speciesnet.scripts.run_model --instance_json ./instances.json --predictions_json ./predictions.json --classifier_only
 
 # speciesnet-rust.
-speciesnet-cli --instance-json ./instance.json --predictions-json ./predictions.json --classifier-only
+speciesnet-cli --instances-json ./instances.json --predictions-json ./predictions.json --classifier-only
 ```
 
 #### Running only the ensemble
 
 ```bash
 # cameratrapai.
-python3 -m speciesnet.scripts.run_model --instance_json ./instance.json --classifications_json ./output_classifier.json --detections_json ./output_detector.json --predictions_json ./predictions.json --ensemble_only
+python3 -m speciesnet.scripts.run_model --instance_json ./instances.json --classifications_json ./output_classifier.json --detections_json ./output_detector.json --predictions_json ./predictions.json --ensemble_only
 
 # speciesnet-rust.
-speciesnet-cli --instance-json ./instance.json --classifications-json ./output_classifier.json --detections-json ./output_detector.json --predictions-json ./predictions.json --ensemble-only
+speciesnet-cli --instances-json ./instances.json --classifications-json ./output_classifier.json --detections-json ./output_detector.json --predictions-json ./predictions.json --ensemble-only
 ```
 
 #### Running the whole inference pipeline
 
 ```bash
 # cameratrapai.
-python3 -m speciesnet.scripts.run_model --instance_json ./instance.json --predictions_json ./predictions.json
+python3 -m speciesnet.scripts.run_model --instance_json ./instances.json --predictions_json ./predictions.json
 
 # speciesnet-rust.
-speciesnet-cli --instance-json ./instance.json --predictions-json ./predictions.json
+speciesnet-cli --instances-json ./instances.json --predictions-json ./predictions.json
 ```

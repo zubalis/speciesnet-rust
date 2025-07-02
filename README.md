@@ -76,14 +76,14 @@ speciesnet-cli --folders ./august-dataset --predictions-json ./output-august.jso
 Please refer to this [README](./speciesnet-cli/README.md) for how to run the `speciesnet-cli` compared to the python version. Whilst developing, you can run the CLI without reinstalling the program every time by swapping the `speciesnet-cli` part to `cargo run` instead, for example, this is the command used to run the detector.
 
 ```bash
-speciesnet-cli --instance-json ./instance.json --predictions_json ./predictions.json --detector-only
+speciesnet-cli --instances-json ./instances.json --predictions-json ./predictions.json --detector-only
 ```
 
 While developing, you can run the command inside `speciesnet-cli` like this
 
 ```bash
 cd speciesnet-cli
-cargo run -- --instance-json ./instance.json --predictions_json ./predictions.json --detector-only
+cargo run -- --instances-json ./instances.json --predictions-json ./predictions.json --detector-only
 ```
 
 ### Running the examples
