@@ -1,9 +1,8 @@
 use std::path::PathBuf;
 
-use fast_image_resize::images::Image;
-use fast_image_resize::{PixelType, ResizeAlg, ResizeOptions, Resizer};
 use image::{DynamicImage, RgbImage};
 use ndarray::Array4;
+use speciesnet_core::image::bilinear_resize;
 use speciesnet_core::{detector::BoundingBox, load_image};
 
 use crate::{error::Error, input::ClassifierInput};
@@ -54,26 +53,8 @@ pub fn preprocess_impl(
         None => decoded_image.to_rgb8(),
     };
 
-    // Resize the image to 480 by 480 (classifier's accept input size).
-    let mut resizer = Resizer::new();
-
-    let src_image = Image::from_vec_u8(
-        cropped_image.width(),
-        cropped_image.height(),
-        cropped_image.into_raw(),
-        PixelType::U8x3,
-    )?;
-    let mut dest_image = Image::new(480, 480, PixelType::U8x3);
-
-    let options = ResizeOptions::new().resize_alg(ResizeAlg::Interpolation(
-        fast_image_resize::FilterType::Bilinear,
-    ));
-
-    resizer.resize(&src_image, &mut dest_image, Some(&options))?;
-
-    // Creates the image back.
-    let image = RgbImage::from_raw(480, 480, dest_image.into_vec()).unwrap();
+    let resized_image = bilinear_resize(cropped_image, 480, 480, false);
 
     // Returns the image back.
-    Ok(image)
+    Ok(resized_image)
 }
