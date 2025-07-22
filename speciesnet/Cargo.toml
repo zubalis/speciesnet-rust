@@ -19,16 +19,16 @@ download-model = ["dep:serde", "dep:serde_json", "dep:ureq", "dep:directories", 
 
 [dependencies]
 directories = { version = "6", optional = true }
-image = "0.25"
-num_cpus = "1"
+image = { workspace = true }
+num_cpus = { workspace = true }
 rayon = "1"
-serde = { version = "1.0", features = ["derive"], optional = true }
-serde_json = { version = "1.0", optional = true }
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
 speciesnet-core = { path = "../core" }
 speciesnet-detector = { path = "../detector" }
 speciesnet-classifier = { path = "../classifier" }
 speciesnet-ensemble = { path = "../ensemble" }
-thiserror = "2"
-tracing = "0.1"
+thiserror = { workspace = true }
+tracing = { workspace = true }
 ureq = { version = "3", optional = true }
 zip = { version = "4.0", optional = true }

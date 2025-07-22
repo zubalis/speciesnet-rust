@@ -17,10 +17,10 @@ name = "speciesnet_ensemble"
 path = "src/lib.rs"
 
 [dependencies]
-csv = "1"
+csv = { workspace = true }
 indexmap = "2.9"
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
+serde_json = { workspace = true }
+serde = { workspace = true }
 speciesnet-core = { path = "../core" }
-thiserror = "2.0"
-tracing = "0.1"
+thiserror = { workspace = true }
+tracing = { workspace = true }

@@ -13,10 +13,10 @@ license = "APACHE"
 edition = "2024"
 
 [dependencies]
-image = "0.25"
-ndarray = "0.16"
-num_cpus = "1"
+image = { workspace = true }
+ndarray = { workspace = true }
+num_cpus = { workspace = true } 
 ort = { version = "=2.0.0-rc.9", default-features = false, features = ["ndarray", "copy-dylibs"] }
 speciesnet-core = { path = "../core" }
-thiserror = "2.0"
-tracing = "0.1"
+thiserror = { workspace = true }
+tracing = { workspace = true }
