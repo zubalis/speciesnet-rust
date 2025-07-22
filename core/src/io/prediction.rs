@@ -41,9 +41,9 @@ pub struct Prediction {
     #[serde(skip_serializing_if = "Option::is_none")]
     admin1_region: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    detections: Option<Vec<Detection>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     classifications: Option<ClassificationBundle>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    detections: Option<Vec<Detection>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     prediction: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
