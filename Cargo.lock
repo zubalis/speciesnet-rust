@@ -705,6 +705,7 @@ dependencies = [
  "anyhow",
  "font-kit",
  "image",
+ "ort",
  "raqote",
  "show-image",
  "speciesnet",
