@@ -8,7 +8,6 @@
 //!
 //! ```bash
 //! cargo add --git https://github.com/zubalis/speciesnet-rust.git --path speciesnet
-//! cargo add --git https://github.com/zubalis/speciesnet-rust.git --path core
 //! cargo add ort@=2.0.0-rc.9 -F download-binaries
 //! ```
 //!
@@ -42,8 +41,7 @@
 //! ```rust
 //! use std::path::PathBuf;
 //!
-//! use speciesnet_core::io::Instance;
-//! use speciesnet::SpeciesNet;
+//! use speciesnet::{SpeciesNet, Instance};
 //!
 //! let instances = vec![
 //!     Instance::from_path_buf(PathBuf::from("./img1.jpeg")),
@@ -59,8 +57,7 @@
 //! ```rust
 //! use std::path::PathBuf;
 //!
-//! use speciesnet_core::io::Instance;
-//! use speciesnet::SpeciesNet;
+//! use speciesnet::{SpeciesNet, Instance};
 //!
 //! let instances = vec![
 //!     Instance::from_path_buf(PathBuf::from("./img1.jpeg")),
@@ -79,8 +76,7 @@
 //! ```rust
 //! use std::path::PathBuf;
 //!
-//! use speciesnet_core::io::Instance;
-//! use speciesnet::SpeciesNet;
+//! use speciesnet::{SpeciesNet, Instance};
 //!
 //! let instances = vec![
 //!     Instance::from_path_buf(PathBuf::from("./img1.jpeg")),
@@ -99,11 +95,7 @@
 //! ```rust
 //! use std::path::PathBuf;
 //!
-//! use speciesnet_core::{
-//!     classifier::ClassificationBundle,
-//!     detector::{BoundingBox, Category, Detection},
-//! };
-//! use speciesnet::SpeciesNet;
+//! use speciesnet::{SpeciesNet, ClassificationBundle, BoundingBox, Category, Detection};
 //!
 //! let instances_json_path = "./instances.json";
 //! let detector_file_path = "./output_detector.json";
@@ -126,5 +118,13 @@
 pub mod error;
 pub mod model_info;
 pub mod speciesnet;
+
+pub use speciesnet_core::{
+    classifier::{Classification, ClassificationBundle},
+    detector::{BoundingBox, Category, Detection},
+    ensemble::GeofenceResult,
+    io::{Instance, Instances, Prediction, Predictions},
+    shape::Shape,
+};
 
 pub use speciesnet::SpeciesNet;
