@@ -17,6 +17,7 @@ image = { workspace = true }
 ndarray = { workspace = true }
 num_cpus = { workspace = true } 
 ort = { version = "=2.0.0-rc.9", default-features = false, features = ["ndarray", "copy-dylibs"] }
+ort-sys = "=2.0.0-rc.9"
 speciesnet-core = { path = "../core" }
 thiserror = { workspace = true }
 tracing = { workspace = true }
