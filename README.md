@@ -15,8 +15,8 @@ The [speciesnet](./speciesnet/) library can be installed to other crates for run
 
 ```bash
 cargo add --git https://github.com/zubalis/speciesnet-rust.git --path speciesnet
-cargo add --git https://github.com/zubalis/speciesnet-rust.git --path core
 cargo add ort@=2.0.0-rc.9 -F download-binaries
+cargo add ort-sys@=2.0.0-rc.9
 ```
 
 inside your rust program.

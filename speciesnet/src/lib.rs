@@ -125,6 +125,7 @@ pub use speciesnet_core::{
     ensemble::GeofenceResult,
     io::{Instance, Instances, Prediction, Predictions},
     shape::Shape,
+    load_image,
 };
 
 pub use speciesnet::SpeciesNet;
