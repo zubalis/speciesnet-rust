@@ -3001,7 +3001,7 @@ dependencies = [
 
 [[package]]
 name = "speciesnet"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "directories",
  "image",
@@ -3021,7 +3021,7 @@ dependencies = [
 
 [[package]]
 name = "speciesnet-classifier"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "csv",
  "fast_image_resize",
@@ -3038,7 +3038,7 @@ dependencies = [
 
 [[package]]
 name = "speciesnet-cli"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "anyhow",
  "clap",
@@ -3054,7 +3054,7 @@ dependencies = [
 
 [[package]]
 name = "speciesnet-core"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "image",
  "mozjpeg",
@@ -3068,7 +3068,7 @@ dependencies = [
 
 [[package]]
 name = "speciesnet-detector"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "image",
  "ndarray",
@@ -3082,7 +3082,7 @@ dependencies = [
 
 [[package]]
 name = "speciesnet-ensemble"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "csv",
  "indexmap 2.10.0",

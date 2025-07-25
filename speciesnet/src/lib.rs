@@ -121,6 +121,7 @@ pub mod speciesnet;
 
 pub use speciesnet_core::{
     classifier::{Classification, ClassificationBundle},
+    constants::classification::{ANIMAL, BLANK, HUMAN, UNKNOWN, VEHICLE},
     detector::{BoundingBox, Category, Detection},
     ensemble::GeofenceResult,
     io::{Instance, Instances, Prediction, Predictions},
