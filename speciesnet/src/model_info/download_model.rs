@@ -83,6 +83,8 @@ impl ModelInfo {
         let extract_dir = model_dir.join(DEFAULT_MODEL_FOLDER);
         zip_file.extract(&extract_dir)?;
 
+        // TODO: We might delete the zip file later on.
+
         ModelInfo::from_path(extract_dir)
     }
 }

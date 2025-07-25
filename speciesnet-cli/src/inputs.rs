@@ -3,7 +3,7 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-use speciesnet_core::io::{Instance, Instances};
+use speciesnet::{Instance, Instances};
 use tracing::{debug, info};
 use walkdir::WalkDir;
 
@@ -56,13 +56,12 @@ pub fn prepare_image_inputs(input_type: &InputType) -> anyhow::Result<Vec<Instan
 
         let joint_path_instances = instance_json_value.instances().iter().map(|instance| {
             let joint_image_path = instances_file_folder.join(instance.file_path());
-            let new_instance = Instance::new(
+
+            Instance::new(
                 joint_image_path,
                 instance.country().map(str::to_string),
                 instance.admin1_region().map(str::to_string),
-            );
-
-            new_instance
+            )
         });
 
         for instance in joint_path_instances {

@@ -8,7 +8,6 @@
 //!
 //! ```bash
 //! cargo add --git https://github.com/zubalis/speciesnet-rust.git --path speciesnet
-//! cargo add --git https://github.com/zubalis/speciesnet-rust.git --path core
 //! cargo add ort@=2.0.0-rc.9 -F download-binaries
 //! ```
 //!
@@ -39,11 +38,10 @@
 //!
 //! Running the entire pipeline (detector + classifier + ensemble).
 //!
-//! ```rust
+//! ```rust,no_run
 //! use std::path::PathBuf;
 //!
-//! use speciesnet_core::io::Instance;
-//! use speciesnet::SpeciesNet;
+//! use speciesnet::{SpeciesNet, Instance};
 //!
 //! let instances = vec![
 //!     Instance::from_path_buf(PathBuf::from("./img1.jpeg")),
@@ -56,11 +54,10 @@
 //!
 //! Running the detector pipeline.
 //!
-//! ```rust
+//! ```rust,no_run
 //! use std::path::PathBuf;
 //!
-//! use speciesnet_core::io::Instance;
-//! use speciesnet::SpeciesNet;
+//! use speciesnet::{SpeciesNet, Instance};
 //!
 //! let instances = vec![
 //!     Instance::from_path_buf(PathBuf::from("./img1.jpeg")),
@@ -76,11 +73,10 @@
 //!
 //! Running the classifier pipeline.
 //!  
-//! ```rust
+//! ```rust,no_run
 //! use std::path::PathBuf;
 //!
-//! use speciesnet_core::io::Instance;
-//! use speciesnet::SpeciesNet;
+//! use speciesnet::{SpeciesNet, Instance};
 //!
 //! let instances = vec![
 //!     Instance::from_path_buf(PathBuf::from("./img1.jpeg")),
@@ -93,17 +89,13 @@
 //!
 //! Running the ensemble and geofence of the pipeline.
 //!
-//! NOTE: This function differs from other functions where it operates on each instance of
+//!  NOTE: This function differs from other functions where it operates on each instance of
 //! prediction, instead of taking the vector of predictions or instance like other API.
 //!
-//! ```rust
+//! ```rust,no_run
 //! use std::path::PathBuf;
 //!
-//! use speciesnet_core::{
-//!     classifier::ClassificationBundle,
-//!     detector::{BoundingBox, Category, Detection},
-//! };
-//! use speciesnet::SpeciesNet;
+//! use speciesnet::{SpeciesNet, ClassificationBundle, BoundingBox, Category, Detection};
 //!
 //! let instances_json_path = "./instances.json";
 //! let detector_file_path = "./output_detector.json";
@@ -126,5 +118,14 @@
 pub mod error;
 pub mod model_info;
 pub mod speciesnet;
+
+pub use speciesnet_core::{
+    classifier::{Classification, ClassificationBundle},
+    detector::{BoundingBox, Category, Detection},
+    ensemble::GeofenceResult,
+    io::{Instance, Instances, Prediction, Predictions},
+    load_image,
+    shape::Shape,
+};
 
 pub use speciesnet::SpeciesNet;
