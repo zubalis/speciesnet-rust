@@ -1,6 +1,6 @@
 [package]
 name = "speciesnet-ensemble"
-version = "0.0.1" # Please bump this when doing a release
+version = "0.0.2" # Please bump this when doing a release
 authors = [
   "Bhattarapong Somwong <art@zubalis.com>",
   "Antony Harfield <antony@zubalis.com>",
