@@ -38,7 +38,7 @@
 //!
 //! Running the entire pipeline (detector + classifier + ensemble).
 //!
-//! ```rust
+//! ```rust,no_run
 //! use std::path::PathBuf;
 //!
 //! use speciesnet::{SpeciesNet, Instance};
@@ -54,7 +54,7 @@
 //!
 //! Running the detector pipeline.
 //!
-//! ```rust
+//! ```rust,no_run
 //! use std::path::PathBuf;
 //!
 //! use speciesnet::{SpeciesNet, Instance};
@@ -73,7 +73,7 @@
 //!
 //! Running the classifier pipeline.
 //!  
-//! ```rust
+//! ```rust,no_run
 //! use std::path::PathBuf;
 //!
 //! use speciesnet::{SpeciesNet, Instance};
@@ -89,10 +89,10 @@
 //!
 //! Running the ensemble and geofence of the pipeline.
 //!
-//! NOTE: This function differs from other functions where it operates on each instance of
+//!  NOTE: This function differs from other functions where it operates on each instance of
 //! prediction, instead of taking the vector of predictions or instance like other API.
 //!
-//! ```rust
+//! ```rust,no_run
 //! use std::path::PathBuf;
 //!
 //! use speciesnet::{SpeciesNet, ClassificationBundle, BoundingBox, Category, Detection};
@@ -124,8 +124,8 @@ pub use speciesnet_core::{
     detector::{BoundingBox, Category, Detection},
     ensemble::GeofenceResult,
     io::{Instance, Instances, Prediction, Predictions},
-    shape::Shape,
     load_image,
+    shape::Shape,
 };
 
 pub use speciesnet::SpeciesNet;
