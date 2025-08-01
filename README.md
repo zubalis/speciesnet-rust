@@ -82,8 +82,7 @@ speciesnet-cli --instances-json ./instances.json --predictions-json ./prediction
 While developing, you can run the command inside `speciesnet-cli` like this
 
 ```bash
-cd speciesnet-cli
-cargo run -- --instances-json ./instances.json --predictions-json ./predictions.json --detector-only
+cargo run --bin speciesnet-cli -- --instances-json ./instances.json --predictions-json ./predictions.json --detector-only
 ```
 
 ### Running the examples

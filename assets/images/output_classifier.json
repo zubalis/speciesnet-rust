@@ -1,42 +1,105 @@
 {
-    "predictions": [
-        {
-            "filepath": "african_elephants.jpg",
-            "classifications": {
-                "classes": [
-                    "55631055-3e0e-4b7a-9612-dedebe9f78b0;mammalia;proboscidea;elephantidae;loxodonta;africana;african elephant",
-                    "dc5dbe17-a8ca-40a6-ac6a-3b6b1d63e6d6;mammalia;cetartiodactyla;bovidae;eudorcas;thomsonii;thomson's gazelle",
-                    "8c48ed75-e275-4188-a6b1-55929d298e85;mammalia;cetartiodactyla;bovidae;nanger;granti;grant's gazelle",
-                    "9732cefb-6a08-49f6-b61e-b9a9054368c4;mammalia;cetartiodactyla;bovidae;syncerus;caffer;african buffalo",
-                    "ccd7d6d7-8eb2-4fdb-a6d6-f1970847e449;mammalia;cetartiodactyla;suidae;phacochoerus;africanus;common warthog"
-                ],
-                "scores": [
-                    0.9922401905059814,
-                    0.0009239429491572082,
-                    0.0008468334563076496,
-                    0.0005627183709293604,
-                    0.0003995113947894424
-                ]
-            }
-        },
-        {
-            "filepath": "bear.jpg",
-            "classifications": {
-                "classes": [
-                    "436ddfdd-bc43-44c3-a25d-34671d3430a0;mammalia;carnivora;ursidae;ursus;americanus;american black bear",
-                    "330bb1e9-84d6-4e41-afa9-938aee17ea29;mammalia;carnivora;ursidae;ursus;arctos;brown bear",
-                    "ec1a70f4-41c0-4aba-9150-292fb2b7a324;mammalia;carnivora;ursidae;;;bear family",
-                    "febff896-db40-4ac8-bcfe-5bb99a600950;mammalia;cetartiodactyla;cervidae;odocoileus;hemionus;mule deer",
-                    "ee8d5a89-f82e-4323-80e2-0ffc9487ebaf;mammalia;carnivora;canidae;canis;lupus;grey wolf"
-                ],
-                "scores": [
-                    0.9938981533050537,
-                    0.001804668572731316,
-                    0.0017977870302274823,
-                    0.0007998028304427862,
-                    0.000216640968574211
-                ]
-            }
-        }
-    ]
+  "predictions": [
+    {
+      "filepath": "african_elephants.jpg",
+      "classifications": {
+        "classes": [
+          "55631055-3e0e-4b7a-9612-dedebe9f78b0;mammalia;proboscidea;elephantidae;loxodonta;africana;african elephant",
+          "dc5dbe17-a8ca-40a6-ac6a-3b6b1d63e6d6;mammalia;cetartiodactyla;bovidae;eudorcas;thomsonii;thomson's gazelle",
+          "8c48ed75-e275-4188-a6b1-55929d298e85;mammalia;cetartiodactyla;bovidae;nanger;granti;grant's gazelle",
+          "9732cefb-6a08-49f6-b61e-b9a9054368c4;mammalia;cetartiodactyla;bovidae;syncerus;caffer;african buffalo",
+          "ccd7d6d7-8eb2-4fdb-a6d6-f1970847e449;mammalia;cetartiodactyla;suidae;phacochoerus;africanus;common warthog"
+        ],
+        "scores": [
+          0.9931444467034336,
+          0.0007312072609781381,
+          0.0006866379475818291,
+          0.00042627246592516076,
+          0.0003163761024730802
+        ]
+      }
+    },
+    {
+      "filepath": "bear.jpg",
+      "classifications": {
+        "classes": [
+          "436ddfdd-bc43-44c3-a25d-34671d3430a0;mammalia;carnivora;ursidae;ursus;americanus;american black bear",
+          "ec1a70f4-41c0-4aba-9150-292fb2b7a324;mammalia;carnivora;ursidae;;;bear family",
+          "330bb1e9-84d6-4e41-afa9-938aee17ea29;mammalia;carnivora;ursidae;ursus;arctos;brown bear",
+          "febff896-db40-4ac8-bcfe-5bb99a600950;mammalia;cetartiodactyla;cervidae;odocoileus;hemionus;mule deer",
+          "ee8d5a89-f82e-4323-80e2-0ffc9487ebaf;mammalia;carnivora;canidae;canis;lupus;grey wolf"
+        ],
+        "scores": [
+          0.9931260414961053,
+          0.0023010314224247348,
+          0.0020818182911618538,
+          0.0005439528167100544,
+          0.00024365774118701185
+        ]
+      }
+    },
+    {
+      "filepath": "corrupt.jpg",
+      "failures": [
+        "CLASSIFIER"
+      ]
+    },
+    {
+      "filepath": "redfox.jpg",
+      "classifications": {
+        "classes": [
+          "ac0e8ba7-7261-4d17-8645-11ed3d02165a;mammalia;carnivora;canidae;vulpes;vulpes;red fox",
+          "aaf3b049-36e6-46dd-9a07-8a580e9618b7;mammalia;carnivora;canidae;canis;latrans;coyote",
+          "f33491f9-621d-4870-8276-4f16d3d0b898;mammalia;carnivora;canidae;vulpes;velox;swift fox",
+          "ffe603fc-4920-4302-96d0-65f708bd5b2d;mammalia;carnivora;canidae;urocyon;cinereoargenteus;grey fox",
+          "9212982e-8a58-4775-a6ac-e9a43110d8f5;mammalia;carnivora;felidae;felis;catus;domestic cat"
+        ],
+        "scores": [
+          0.7578820801046967,
+          0.07006983706579913,
+          0.06689761999795964,
+          0.04753030616731648,
+          0.006406294558557462
+        ]
+      }
+    },
+    {
+      "filepath": "squirrel.jpg",
+      "classifications": {
+        "classes": [
+          "86f5b978-4f30-40cc-bd08-be9e3fba27a0;mammalia;rodentia;sciuridae;sciurus;carolinensis;eastern gray squirrel",
+          "16ec4010-f175-4de7-8a99-85aadec3963b;mammalia;rodentia;sciuridae;sciurus;griseus;western gray squirrel",
+          "e4d1e892-0e4b-475a-a8ac-b5c3502e0d55;mammalia;rodentia;sciuridae;;;sciuridae family",
+          "b3f3e9e3-440d-44df-9a89-081f276c8bdd;mammalia;rodentia;sciuridae;tamiasciurus;hudsonicus;red squirrel",
+          "f1856211-cfb7-4a5b-9158-c0f72fd09ee6;;;;;;blank"
+        ],
+        "scores": [
+          0.8486322583828653,
+          0.0300755212207595,
+          0.015297867326872877,
+          0.014343515030640975,
+          0.01387459620018643
+        ]
+      }
+    },
+    {
+      "filepath": "weird-bb.jpg",
+      "classifications": {
+        "classes": [
+          "990ae9dd-7a59-4344-afcb-1b7b21368000;mammalia;primates;hominidae;homo;sapiens;human",
+          "f1856211-cfb7-4a5b-9158-c0f72fd09ee6;;;;;;blank",
+          "3d80f1d6-b1df-4966-9ff4-94053c7a902a;mammalia;carnivora;canidae;canis;familiaris;domestic dog",
+          "90d950db-2106-4bd9-a4c1-777604c3eada;mammalia;rodentia;;;;rodent",
+          "b1352069-a39c-4a84-a949-60044271c0c1;aves;;;;;bird"
+        ],
+        "scores": [
+          0.9998553458123213,
+          0.00007581808052347021,
+          0.00003402280623760482,
+          2.5157285763839272e-6,
+          2.0761324378969212e-6
+        ]
+      }
+    }
+  ]
 }

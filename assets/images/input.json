@@ -9,6 +9,26 @@
             "filepath": "bear.jpg",
             "country": "USA",
             "admin1_region": "CA"
+        },
+        {
+            "filepath": "corrupt.jpg",
+            "country": null,
+            "admin1_region": null
+        },
+        {
+            "filepath": "redfox.jpg",
+            "country": "GBR",
+            "admin1_region": null
+        },
+        {
+            "filepath": "squirrel.jpg",
+            "country": "USA",
+            "admin1_region": null
+        },
+        {
+            "filepath": "weird-bb.jpg",
+            "country": null,
+            "admin1_region": null
         }
     ]
 }

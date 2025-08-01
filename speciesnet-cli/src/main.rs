@@ -70,12 +70,14 @@ use std::{fs::File, io::BufWriter, path::PathBuf};
 
 use clap::{Args, CommandFactory, Parser, error::ErrorKind};
 use inputs::prepare_image_inputs;
-use speciesnet::{Predictions, SpeciesNet};
+use outputs::CliPredictions;
+use speciesnet::SpeciesNet;
 use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
 
 mod file_extension;
 mod inputs;
+mod outputs;
 
 /// The name of the environment variable that can be set to specify the log level of speciesnet.
 const SPECIESNET_LOG_ENV_NAME: &str = "SPECIESNET_LOG";
@@ -190,8 +192,8 @@ fn main() -> anyhow::Result<()> {
     let speciesnet = SpeciesNet::new()?;
 
     if args.run_type.detector_only {
-        let detector_results = speciesnet.detect(&images)?;
-        let predictions = Predictions::from(detector_results);
+        let detector_results = speciesnet.detect(&images);
+        let predictions = CliPredictions::from((images.clone(), detector_results));
 
         info!(
             "Saving the detected results to {}.",
@@ -199,7 +201,7 @@ fn main() -> anyhow::Result<()> {
         );
 
         let writer = BufWriter::new(File::create(&args.predictions_json)?);
-        serde_json::to_writer(writer, &predictions)?;
+        serde_json::to_writer_pretty(writer, &predictions)?;
 
         info!(
             "Predictions file has been successfully saved to {}.",
@@ -210,7 +212,7 @@ fn main() -> anyhow::Result<()> {
     if args.run_type.classifier_only {
         let output_detection_path = args.additional_config.detections_json.clone();
         let classifier_results = speciesnet.classify(&output_detection_path.unwrap())?; // assumed labels is in the same folder as model
-        let predictions = Predictions::from(classifier_results);
+        let predictions = CliPredictions::from((images.clone(), classifier_results));
 
         info!(
             "Saving the classified results to {}.",
@@ -218,7 +220,7 @@ fn main() -> anyhow::Result<()> {
         );
 
         let writer = BufWriter::new(File::create(&args.predictions_json)?);
-        serde_json::to_writer(writer, &predictions)?;
+        serde_json::to_writer_pretty(writer, &predictions)?;
 
         info!(
             "Predictions file has been successfully saved to {}.",
@@ -235,7 +237,7 @@ fn main() -> anyhow::Result<()> {
             &output_detection_path.unwrap(),
             &output_classification_path.unwrap(),
         )?;
-        let predictions = Predictions::from(ensemble_results);
+        let predictions = CliPredictions::from((images.clone(), ensemble_results));
 
         info!(
             "Saving the classified results to {}.",
@@ -243,7 +245,7 @@ fn main() -> anyhow::Result<()> {
         );
 
         let writer = BufWriter::new(File::create(&args.predictions_json)?);
-        serde_json::to_writer(writer, &predictions)?;
+        serde_json::to_writer_pretty(writer, &predictions)?;
 
         info!(
             "Predictions file has been successfully saved to {}.",
@@ -256,8 +258,8 @@ fn main() -> anyhow::Result<()> {
         && !args.run_type.classifier_only
         && !args.run_type.ensemble_only
     {
-        let full_results = speciesnet.predict(&images)?;
-        let predictions = Predictions::from(full_results);
+        let full_results = speciesnet.predict(&images.clone());
+        let predictions = CliPredictions::from((images, full_results));
 
         info!(
             "Saving the detected results to {}.",
