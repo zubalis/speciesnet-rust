@@ -32,6 +32,7 @@ struct DetectorOutputs {
 struct DetectorOutput {
     #[serde(rename = "filepath")]
     pub file_path: String,
+    #[serde(default)]
     pub detections: Vec<Detection>,
 }
 

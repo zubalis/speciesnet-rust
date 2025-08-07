@@ -23,7 +23,13 @@ fn main() -> anyhow::Result<()> {
         "Running detector on the example image {}.",
         image_path.display()
     );
-    let results = speciesnet.detect(&[Instance::from_path_buf(image_path.clone())])?;
+    let instance = Instance::from_path_buf(image_path.clone());
+    let result = speciesnet
+        .detect(&[instance])
+        .into_iter()
+        .next()
+        .expect("Failed to return 1 result")
+        .expect("Failed to get prediction");
 
     info!("Loading the original image {}.", image_path.display());
     let loaded_image = load_image(&image_path)?;
@@ -36,7 +42,7 @@ fn main() -> anyhow::Result<()> {
     info!("Drawing the image with result bounding boxes.");
     let mut draw_target = DrawTarget::new(image_width as i32, image_height as i32);
 
-    for detection in results.first().unwrap().detections().clone().unwrap() {
+    for detection in result.detections().clone().unwrap() {
         let mut path_builder = PathBuilder::new();
 
         let (x1, y1, x2, y2) = detection.bounding_box().as_xyxy_bounding_box();
