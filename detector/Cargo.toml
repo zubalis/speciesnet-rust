@@ -21,3 +21,7 @@ ort-sys = "=2.0.0-rc.9"
 speciesnet-core = { path = "../core" }
 thiserror = { workspace = true }
 tracing = { workspace = true }
+
+[features]
+coreml = ["ort/coreml"]
+cuda = ["ort/cuda"]

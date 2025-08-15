@@ -3,6 +3,7 @@ use std::{path::Path, sync::Arc};
 use image::DynamicImage;
 use ndarray::Ix3;
 use ort::{
+    execution_providers::ExecutionProviderDispatch,
     session::{Session, builder::GraphOptimizationLevel},
     value::Tensor,
 };
@@ -38,6 +39,24 @@ impl SpeciesNetDetector {
 
         Ok(Self {
             model: Arc::new(model),
+        })
+    }
+
+    pub fn with_execution_providers<P>(
+        model_path: P,
+        execution_providers: Vec<ExecutionProviderDispatch>,
+    ) -> Result<Self, Error>
+    where
+        P: AsRef<Path>,
+    {
+        let session = Session::builder()?
+            .with_optimization_level(GraphOptimizationLevel::Level3)?
+            .with_execution_providers(execution_providers)?
+            .with_intra_threads(2)?
+            .commit_from_file(model_path)?;
+
+        Ok(Self {
+            model: Arc::new(session),
         })
     }
 
