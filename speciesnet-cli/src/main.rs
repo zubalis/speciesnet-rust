@@ -70,6 +70,7 @@ use std::{fs::File, io::BufWriter, path::PathBuf};
 
 use clap::{Args, CommandFactory, Parser, error::ErrorKind};
 use inputs::prepare_image_inputs;
+use ort::execution_providers::{CUDAExecutionProvider, CoreMLExecutionProvider};
 use speciesnet::{Predictions, SpeciesNet};
 use tracing::info;
 use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::SubscriberInitExt};
@@ -187,7 +188,10 @@ fn main() -> anyhow::Result<()> {
 
     // Parse the input files into list of files.
     let images = prepare_image_inputs(&args.input_type)?;
-    let speciesnet = SpeciesNet::new()?;
+    let speciesnet = SpeciesNet::from_downloaded_model()
+        .with_coreml(CoreMLExecutionProvider::default())
+        .with_cuda(CUDAExecutionProvider::default())
+        .build()?;
 
     if args.run_type.detector_only {
         let detector_results = speciesnet.detect(&images)?;
