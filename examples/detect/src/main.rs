@@ -1,6 +1,7 @@
 use std::{fs::File, path::PathBuf};
 
 use font_kit::loader::Loader;
+use ort::execution_providers::{CUDAExecutionProvider, CoreMLExecutionProvider};
 use raqote::{DrawOptions, DrawTarget, LineJoin, PathBuilder, Point, Source, StrokeStyle};
 use show_image::{
     AsImageView, WindowOptions,
@@ -17,7 +18,10 @@ fn main() -> anyhow::Result<()> {
         .init();
 
     let image_path = PathBuf::from("../../assets/images/african_elephants.jpg");
-    let speciesnet = SpeciesNet::new()?;
+    let speciesnet = SpeciesNet::from_downloaded_model()
+        .with_coreml(CoreMLExecutionProvider::default())
+        .with_cuda(CUDAExecutionProvider::default())
+        .build()?;
 
     info!(
         "Running detector on the example image {}.",
