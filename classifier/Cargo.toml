@@ -27,4 +27,7 @@ serde_json = { workspace = true }
 serde = { workspace = true }
 csv = { workspace = true }
 speciesnet-core = { path = "../core" }
-fast_image_resize = "5"
+
+[features]
+coreml = ["ort/coreml"]
+cuda = ["ort/cuda"]

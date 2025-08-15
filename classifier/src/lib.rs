@@ -3,6 +3,7 @@ use std::sync::Arc;
 
 use ::image::DynamicImage;
 use ndarray::{Array1, Array4, Ix2};
+use ort::execution_providers::ExecutionProviderDispatch;
 use ort::session::Session;
 use ort::session::builder::GraphOptimizationLevel;
 use ort::value::Tensor;
@@ -29,6 +30,24 @@ impl SpeciesNetClassifier {
     {
         let session = Session::builder()?
             .with_optimization_level(GraphOptimizationLevel::Level3)?
+            .with_intra_threads(2)?
+            .commit_from_file(model_path)?;
+
+        Ok(Self {
+            model: Arc::new(session),
+        })
+    }
+
+    pub fn with_execution_providers<P>(
+        model_path: P,
+        execution_providers: Vec<ExecutionProviderDispatch>,
+    ) -> Result<Self, Error>
+    where
+        P: AsRef<Path>,
+    {
+        let session = Session::builder()?
+            .with_optimization_level(GraphOptimizationLevel::Level3)?
+            .with_execution_providers(execution_providers)?
             .with_intra_threads(2)?
             .commit_from_file(model_path)?;
 
