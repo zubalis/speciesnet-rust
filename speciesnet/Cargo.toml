@@ -16,8 +16,12 @@ readme = "../README.md"
 [features]
 default = ["download-model"]
 download-model = ["dep:serde", "dep:serde_json", "dep:ureq", "dep:directories", "dep:zip"]
+cuda = ["speciesnet-detector/cuda", "speciesnet-classifier/cuda", "ort/cuda"]
+coreml = ["speciesnet-detector/coreml", "speciesnet-classifier/coreml", "ort/coreml"]
 
 [dependencies]
+ort = { version = "=2.0.0-rc.9", default-features = false, features = ["copy-dylibs"] }
+ort-sys = "=2.0.0-rc.9"
 directories = { version = "6", optional = true }
 image = { workspace = true }
 num_cpus = { workspace = true }

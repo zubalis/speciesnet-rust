@@ -3,6 +3,9 @@ use std::{
     sync::Arc,
 };
 
+use ort::execution_providers::{
+    CPUExecutionProvider, CUDAExecutionProvider, CoreMLExecutionProvider, ExecutionProviderDispatch,
+};
 use rayon::prelude::*;
 use speciesnet_classifier::{
     SpeciesNetClassifier,
@@ -27,6 +30,62 @@ use tracing::{debug, error, info};
 
 use crate::{error::Error, model_info::ModelInfo};
 
+#[derive(Debug, Default, Clone)]
+pub enum ModelInfoBuildMethod {
+    Folder(PathBuf),
+    #[default]
+    DownloadedModel,
+}
+
+#[derive(Debug, Clone)]
+pub struct SpeciesNetBuilder {
+    build_method: ModelInfoBuildMethod,
+    coreml_ep_config: Option<CoreMLExecutionProvider>,
+    cuda_ep_config: Option<CUDAExecutionProvider>,
+}
+
+impl SpeciesNetBuilder {
+    fn new(method: ModelInfoBuildMethod) -> Self {
+        Self {
+            build_method: method,
+            coreml_ep_config: None,
+            cuda_ep_config: None,
+        }
+    }
+
+    pub fn with_coreml(mut self, provider: CoreMLExecutionProvider) -> Self {
+        self.coreml_ep_config = Some(provider);
+        self
+    }
+
+    pub fn with_cuda(mut self, provider: CUDAExecutionProvider) -> Self {
+        self.cuda_ep_config = Some(provider);
+        self
+    }
+
+    pub fn build(self) -> Result<SpeciesNet, Error> {
+        let mut execution_providers: Vec<ExecutionProviderDispatch> =
+            vec![CPUExecutionProvider::default().into()];
+
+        if let Some(coreml_ep_config) = &self.coreml_ep_config {
+            execution_providers.insert(0, coreml_ep_config.clone().into());
+        }
+
+        if let Some(cuda_ep_config) = &self.cuda_ep_config {
+            execution_providers.insert(0, cuda_ep_config.clone().into());
+        }
+
+        let model_info = match &self.build_method {
+            #[cfg(feature = "download-model")]
+            ModelInfoBuildMethod::DownloadedModel => ModelInfo::from_default_url()?,
+
+            ModelInfoBuildMethod::Folder(f) => ModelInfo::from_path(f)?,
+        };
+
+        SpeciesNet::from_model_info_with_execution_providers(model_info, execution_providers)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct SpeciesNet {
     model_info: ModelInfo,
@@ -36,28 +95,31 @@ pub struct SpeciesNet {
 }
 
 impl SpeciesNet {
-    /// Initialize the detector, classifier, and ensemble by loading them into memory.
     #[cfg(feature = "download-model")]
-    pub fn new() -> Result<Self, Error> {
-        let model_info = ModelInfo::from_default_url()?;
-        Self::from_model_info(model_info)
+    pub fn from_downloaded_model() -> SpeciesNetBuilder {
+        SpeciesNetBuilder::new(ModelInfoBuildMethod::DownloadedModel)
     }
 
-    /// Initialize the detector, classifier, and ensemble from a given folder of extracted model
-    /// file.
-    pub fn from_model_folder<P>(model_folder: P) -> Result<Self, Error>
-    where
-        P: AsRef<Path>,
-    {
-        let model_info = ModelInfo::from_path(&model_folder)?;
-        Self::from_model_info(model_info)
+    pub fn from_model_folder<P: AsRef<Path>>(model_folder: P) -> SpeciesNetBuilder {
+        SpeciesNetBuilder::new(ModelInfoBuildMethod::Folder(
+            model_folder.as_ref().to_path_buf(),
+        ))
     }
 
-    fn from_model_info(model_info: ModelInfo) -> Result<Self, Error> {
-        let classifier = SpeciesNetClassifier::new(model_info.classifier())?;
+    pub fn from_model_info_with_execution_providers(
+        model_info: ModelInfo,
+        execution_providers: Vec<ExecutionProviderDispatch>,
+    ) -> Result<Self, Error> {
+        let classifier = SpeciesNetClassifier::with_execution_providers(
+            model_info.classifier(),
+            execution_providers.clone(),
+        )?;
         info!("Classifier initialized.");
 
-        let detector = SpeciesNetDetector::new(model_info.detector())?;
+        let detector = SpeciesNetDetector::with_execution_providers(
+            model_info.detector(),
+            execution_providers,
+        )?;
         info!("Detector initialized.");
 
         let ensemble = SpeciesNetEnsemble::new(model_info.geofence(), model_info.taxonomy(), None)?;
@@ -206,14 +268,10 @@ impl SpeciesNet {
 
                 let detector_results = self.detector.predict(detector_image)?;
                 let bounding_boxes = match detector_results.detections() {
-                    Some(det) => {
-                        let binding = det
-                            .iter()
-                            .map(|d| *d.bounding_box())
-                            .collect::<Vec<BoundingBox>>();
-
-                        binding
-                    }
+                    Some(det) => det
+                        .iter()
+                        .map(|d| *d.bounding_box())
+                        .collect::<Vec<BoundingBox>>(),
                     None => vec![],
                 };
 
