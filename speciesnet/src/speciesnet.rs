@@ -4,7 +4,8 @@ use std::{
 };
 
 use ort::execution_providers::{
-    CPUExecutionProvider, CUDAExecutionProvider, CoreMLExecutionProvider, ExecutionProviderDispatch,
+    CPUExecutionProvider, CUDAExecutionProvider, CoreMLExecutionProvider, ExecutionProvider,
+    ExecutionProviderDispatch,
 };
 use rayon::prelude::*;
 use speciesnet_classifier::{
@@ -26,9 +27,9 @@ use speciesnet_detector::{
 use speciesnet_ensemble::{
     SpeciesNetEnsemble, error::Error::NoneDetectionOrClassification, input::EnsembleInput,
 };
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 
-use crate::{error::Error, model_info::ModelInfo};
+use crate::{error::Error, execution_info::ExecutionInfo, model_info::ModelInfo};
 
 #[derive(Debug, Default, Clone)]
 pub enum ModelInfoBuildMethod {
@@ -66,14 +67,30 @@ impl SpeciesNetBuilder {
     pub fn build(self) -> Result<SpeciesNet, Error> {
         let mut execution_providers: Vec<ExecutionProviderDispatch> =
             vec![CPUExecutionProvider::default().into()];
+        let mut coreml_enabled = false;
+        let mut cuda_enabled = false;
 
         if let Some(coreml_ep_config) = &self.coreml_ep_config {
-            execution_providers.insert(0, coreml_ep_config.clone().into());
+            if coreml_ep_config.is_available().unwrap_or(false) {
+                info!("CoreML execution provider is configured and available.");
+                execution_providers.insert(0, coreml_ep_config.clone().into());
+                coreml_enabled = true;
+            } else {
+                warn!("CoreML execution provider is configured but not available.");
+            }
         }
 
         if let Some(cuda_ep_config) = &self.cuda_ep_config {
-            execution_providers.insert(0, cuda_ep_config.clone().into());
+            if cuda_ep_config.is_available().unwrap_or(false) {
+                info!("CUDA execution provider is configured and available.");
+                execution_providers.insert(0, cuda_ep_config.clone().into());
+                cuda_enabled = true;
+            } else {
+                warn!("CUDA execution provider is configured but not available.");
+            }
         }
+
+        let execution_info = ExecutionInfo::new(coreml_enabled, cuda_enabled);
 
         let model_info = match &self.build_method {
             #[cfg(feature = "download-model")]
@@ -82,12 +99,17 @@ impl SpeciesNetBuilder {
             ModelInfoBuildMethod::Folder(f) => ModelInfo::from_path(f)?,
         };
 
-        SpeciesNet::from_model_info_with_execution_providers(model_info, execution_providers)
+        SpeciesNet::from_model_info_with_execution_providers(
+            model_info,
+            execution_info,
+            execution_providers,
+        )
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct SpeciesNet {
+    execution_info: ExecutionInfo,
     model_info: ModelInfo,
     detector: SpeciesNetDetector,
     classifier: SpeciesNetClassifier,
@@ -108,6 +130,7 @@ impl SpeciesNet {
 
     pub fn from_model_info_with_execution_providers(
         model_info: ModelInfo,
+        execution_info: ExecutionInfo,
         execution_providers: Vec<ExecutionProviderDispatch>,
     ) -> Result<Self, Error> {
         let classifier = SpeciesNetClassifier::with_execution_providers(
@@ -126,11 +149,17 @@ impl SpeciesNet {
         info!("Ensemble initialized.");
 
         Ok(Self {
+            execution_info,
             model_info,
             classifier,
             detector,
             ensemble,
         })
+    }
+
+    // Get information on how the model is executed (e.g. whether gpu will be used)
+    pub fn execution_info(&self) -> &ExecutionInfo {
+        &self.execution_info
     }
 
     /// Performs the detection by MegaDetector Model from given file or folder. Returns a list of

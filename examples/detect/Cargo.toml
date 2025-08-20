@@ -12,6 +12,6 @@ raqote = { version = "0.8", default-features = false, features = ["text"] }
 ort = { version = "=2.0.0-rc.9", features = ["download-binaries"] }
 ort-sys = "=2.0.0-rc.9"
 show-image = { version = "=0.14.0", features = ["image", "raqote"] }
-speciesnet = { path = "../../speciesnet" }
+speciesnet = { path = "../../speciesnet", features = ["coreml", "cuda"] }
 tracing = { workspace = true }
 tracing-subscriber = { version = "0.3", default-features = false, features = ["env-filter", "fmt", "ansi"] }

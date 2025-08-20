@@ -14,6 +14,10 @@ use tracing_subscriber::{prelude::__tracing_subscriber_SubscriberExt, util::Subs
 #[show_image::main]
 fn main() -> anyhow::Result<()> {
     tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_env("SPECIESNET_LOG")
+                .unwrap_or_else(|_| "debug,ort=info".into()),
+        )
         .with(tracing_subscriber::fmt::layer().with_ansi(true))
         .init();
 
@@ -22,6 +26,12 @@ fn main() -> anyhow::Result<()> {
         .with_coreml(CoreMLExecutionProvider::default())
         .with_cuda(CUDAExecutionProvider::default())
         .build()?;
+
+    if speciesnet.execution_info().is_gpu_enabled() {
+        info!("SpeciesNet GPU support is enabled.");
+    } else {
+        info!("SpeciesNet GPU support is disabled.");
+    }
 
     info!(
         "Running detector on the example image {}.",

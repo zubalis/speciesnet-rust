@@ -116,6 +116,7 @@
 //! [ort]: https://docs.rs/ort
 
 pub mod error;
+pub mod execution_info;
 pub mod model_info;
 pub mod speciesnet;
 
