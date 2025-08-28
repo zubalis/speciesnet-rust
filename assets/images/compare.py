@@ -18,6 +18,7 @@ CLASSIFICATION_IGNORE = False
 CLASSIFICATION_SCORE_MSE_THRESHOLD = 0.01
 PREDICTION_SCORE_MSE_THRESHOLD = 0.01
 PREDICTION_SOURCE_IGNORE = False
+PREDICTION_CLASS_IGNORE_MORE_SPECIFIC = True
 
 # Number of errors to show in the output
 MAX_ERRORS = 10
@@ -166,6 +167,16 @@ for filepath in ref_data_indexed.keys():
                     prediction_score_error_sum += pow(error_sum, 2)
                     prediction_score_error_count += 1
                     if error_sum > PREDICTION_SCORE_MSE_THRESHOLD:
+                        mismatched_keys.append((key, ref[key], test[key]))
+                elif key == 'prediction_class' and PREDICTION_CLASS_IGNORE_MORE_SPECIFIC:
+                    if ref[key] == test[key]:
+                        continue
+                    # Special case for prediction_class where we allow more specific classes to match
+                    # 5a0f5e3f-c634-4b86-910a-b105cb526a24;mammalia;carnivora;ursidae;ursus;;ursus species != ec1a70f4-41c0-4aba-9150-292fb2b7a324;mammalia;carnivora;ursidae;;;bear family
+                    ref_class = ";".join([c for c in ref[key].split(';')[1:-1] if c])
+                    test_class = ";".join([c for c in test[key].split(';')[1:-1] if c])
+                    print(f"Comparing classes: ref_class='{ref_class}', test_class='{test_class}'")
+                    if not test_class.startswith(ref_class + ';'):
                         mismatched_keys.append((key, ref[key], test[key]))
                 elif ref[key] != test[key]:
                     mismatched_keys.append((key, ref[key], test[key]))

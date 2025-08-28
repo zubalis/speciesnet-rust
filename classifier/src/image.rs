@@ -8,12 +8,12 @@ use speciesnet_core::{detector::BoundingBox, load_image};
 use crate::{error::Error, input::ClassifierInput};
 
 #[derive(Debug)]
-pub struct ProceededImage {
+pub struct PreprocessedImage {
     pub path: PathBuf,
     pub image_tensor: Array4<f32>,
 }
 
-pub fn preprocess(classifier_input: &ClassifierInput) -> Result<ProceededImage, Error> {
+pub fn preprocess(classifier_input: &ClassifierInput) -> Result<PreprocessedImage, Error> {
     let decoded_img = load_image(&classifier_input.file_path)?;
 
     let proceeded_image = preprocess_impl(decoded_img.into(), classifier_input.bbox.as_ref())?;
@@ -29,7 +29,7 @@ pub fn preprocess(classifier_input: &ClassifierInput) -> Result<ProceededImage, 
         tensor[[0, y, x, 2]] = (b as f32) / 255.;
     }
 
-    Ok(ProceededImage {
+    Ok(PreprocessedImage {
         path: classifier_input.file_path.clone(),
         image_tensor: tensor,
     })
