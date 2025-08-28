@@ -27,7 +27,7 @@ use speciesnet_detector::{
 use speciesnet_ensemble::{
     SpeciesNetEnsemble, error::Error::NoneDetectionOrClassification, input::EnsembleInput,
 };
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 use crate::{error::Error, execution_info::ExecutionInfo, model_info::ModelInfo};
 
