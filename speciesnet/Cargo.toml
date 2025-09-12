@@ -35,4 +35,4 @@ speciesnet-ensemble = { path = "../ensemble" }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 ureq = { version = "3", optional = true }
-zip = { version = "4.0", optional = true }
+zip = { version = "5.0", optional = true }
