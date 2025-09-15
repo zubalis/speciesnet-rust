@@ -9,5 +9,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions-deps:
+        patterns:
+          - "*"
     ignore:
       - dependency-name: "show-image"
