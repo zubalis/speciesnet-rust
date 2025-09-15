@@ -21,7 +21,7 @@ coreml = ["speciesnet-detector/coreml", "speciesnet-classifier/coreml", "ort/cor
 
 [dependencies]
 ort = { version = "=2.0.0-rc.9", default-features = false, features = ["copy-dylibs"] }
-ort-sys = "=2.0.0-rc.9"
+ort-sys = "=2.0.0-rc.10"
 directories = { version = "6", optional = true }
 image = { workspace = true }
 num_cpus = { workspace = true }
@@ -35,4 +35,4 @@ speciesnet-ensemble = { path = "../ensemble" }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 ureq = { version = "3", optional = true }
-zip = { version = "5.0", optional = true }
+zip = { version = "5.1", optional = true }
