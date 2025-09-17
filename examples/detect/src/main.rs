@@ -27,7 +27,7 @@ fn main() -> anyhow::Result<()> {
         .with_cuda(CUDAExecutionProvider::default())
         .build()?;
 
-    if speciesnet.execution_info().is_gpu_enabled() {
+    if speciesnet.detector().coreml_enabled() || speciesnet.detector().cuda_enabled() {
         info!("SpeciesNet GPU support is enabled.");
     } else {
         info!("SpeciesNet GPU support is disabled.");
