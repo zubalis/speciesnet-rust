@@ -3,10 +3,7 @@ use std::{
     sync::Arc,
 };
 
-use ort::execution_providers::{
-    CPUExecutionProvider, CUDAExecutionProvider, CoreMLExecutionProvider, ExecutionProvider,
-    ExecutionProviderDispatch,
-};
+use ort::execution_providers::{CUDAExecutionProvider, CoreMLExecutionProvider};
 use rayon::prelude::*;
 use speciesnet_classifier::{
     SpeciesNetClassifier,
@@ -29,7 +26,7 @@ use speciesnet_ensemble::{
 };
 use tracing::{debug, info, warn};
 
-use crate::{error::Error, execution_info::ExecutionInfo, model_info::ModelInfo};
+use crate::{error::Error, model_info::ModelInfo};
 
 #[derive(Debug, Default, Clone)]
 pub enum ModelInfoBuildMethod {
@@ -65,33 +62,6 @@ impl SpeciesNetBuilder {
     }
 
     pub fn build(self) -> Result<SpeciesNet, Error> {
-        let mut execution_providers: Vec<ExecutionProviderDispatch> =
-            vec![CPUExecutionProvider::default().into()];
-        let mut coreml_enabled = false;
-        let mut cuda_enabled = false;
-
-        if let Some(coreml_ep_config) = &self.coreml_ep_config {
-            if coreml_ep_config.is_available().unwrap_or(false) {
-                info!("CoreML execution provider is configured and available.");
-                execution_providers.insert(0, coreml_ep_config.clone().into());
-                coreml_enabled = true;
-            } else {
-                warn!("CoreML execution provider is configured but not available.");
-            }
-        }
-
-        if let Some(cuda_ep_config) = &self.cuda_ep_config {
-            if cuda_ep_config.is_available().unwrap_or(false) {
-                info!("CUDA execution provider is configured and available.");
-                execution_providers.insert(0, cuda_ep_config.clone().into());
-                cuda_enabled = true;
-            } else {
-                warn!("CUDA execution provider is configured but not available.");
-            }
-        }
-
-        let execution_info = ExecutionInfo::new(coreml_enabled, cuda_enabled);
-
         let model_info = match &self.build_method {
             #[cfg(feature = "download-model")]
             ModelInfoBuildMethod::DownloadedModel => ModelInfo::from_default_url()?,
@@ -101,15 +71,14 @@ impl SpeciesNetBuilder {
 
         SpeciesNet::from_model_info_with_execution_providers(
             model_info,
-            execution_info,
-            execution_providers,
+            self.coreml_ep_config,
+            self.cuda_ep_config,
         )
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct SpeciesNet {
-    execution_info: ExecutionInfo,
     model_info: ModelInfo,
     detector: SpeciesNetDetector,
     classifier: SpeciesNetClassifier,
@@ -131,12 +100,13 @@ impl SpeciesNet {
 
     pub fn from_model_info_with_execution_providers(
         model_info: ModelInfo,
-        execution_info: ExecutionInfo,
-        execution_providers: Vec<ExecutionProviderDispatch>,
+        coreml_ep_config: Option<CoreMLExecutionProvider>,
+        cuda_ep_config: Option<CUDAExecutionProvider>,
     ) -> Result<Self, Error> {
         let classifier = SpeciesNetClassifier::with_execution_providers(
             model_info.classifier(),
-            execution_providers.clone(),
+            coreml_ep_config.clone(),
+            cuda_ep_config.clone(),
         )?;
         info!("Classifier initialized.");
 
@@ -145,7 +115,8 @@ impl SpeciesNet {
 
         let detector = SpeciesNetDetector::with_execution_providers(
             model_info.detector(),
-            execution_providers,
+            coreml_ep_config.clone(),
+            cuda_ep_config.clone(),
         )?;
         info!("Detector initialized.");
 
@@ -153,7 +124,6 @@ impl SpeciesNet {
         info!("Ensemble initialized.");
 
         Ok(Self {
-            execution_info,
             model_info,
             classifier,
             classifier_labels,
@@ -162,9 +132,12 @@ impl SpeciesNet {
         })
     }
 
-    // Get information on how the model is executed (e.g. whether gpu will be used)
-    pub fn execution_info(&self) -> &ExecutionInfo {
-        &self.execution_info
+    pub fn detector(&self) -> &SpeciesNetDetector {
+        &self.detector
+    }
+
+    pub fn classifier(&self) -> &SpeciesNetClassifier {
+        &self.classifier
     }
 
     /// Performs the detection by MegaDetector Model from given file or folder. Returns a list of

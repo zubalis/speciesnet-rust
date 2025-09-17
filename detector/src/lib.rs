@@ -3,7 +3,7 @@ use std::{path::Path, sync::Arc};
 use image::DynamicImage;
 use ndarray::Ix3;
 use ort::{
-    execution_providers::ExecutionProviderDispatch,
+    execution_providers::{CUDAExecutionProvider, CoreMLExecutionProvider, ExecutionProvider},
     session::{Session, builder::GraphOptimizationLevel},
     value::Tensor,
 };
@@ -12,7 +12,7 @@ use speciesnet_core::{
     detector::{BoundingBox, Category, Detection},
     io::Prediction,
 };
-use tracing::info;
+use tracing::{info, warn};
 use yolo::non_max_suppression;
 
 use crate::error::Error;
@@ -25,6 +25,8 @@ pub mod yolo;
 #[derive(Debug, Clone)]
 pub struct SpeciesNetDetector {
     model: Arc<Session>,
+    coreml_enabled: bool,
+    cuda_enabled: bool,
 }
 
 impl SpeciesNetDetector {
@@ -39,24 +41,56 @@ impl SpeciesNetDetector {
 
         Ok(Self {
             model: Arc::new(model),
+            coreml_enabled: false,
+            cuda_enabled: false,
         })
     }
 
     pub fn with_execution_providers<P>(
         model_path: P,
-        execution_providers: Vec<ExecutionProviderDispatch>,
+        coreml_ep_config: Option<CoreMLExecutionProvider>,
+        cuda_ep_config: Option<CUDAExecutionProvider>,
     ) -> Result<Self, Error>
     where
         P: AsRef<Path>,
     {
-        let session = Session::builder()?
+        let mut coreml_enabled: bool = false;
+        let mut cuda_enabled: bool = false;
+
+        let mut builder = Session::builder()?
             .with_optimization_level(GraphOptimizationLevel::Level3)?
-            .with_execution_providers(execution_providers)?
-            .with_intra_threads(2)?
-            .commit_from_file(model_path)?;
+            .with_intra_threads(2)?;
+
+        if let Some(coreml_config) = coreml_ep_config {
+            match coreml_config.register(&mut builder) {
+                Ok(()) => {
+                    info!("CoreML execution provider has been enabled.");
+                    coreml_enabled = true;
+                }
+                Err(e) => {
+                    warn!("An error happened during the CoreML registration: {}", e);
+                }
+            }
+        }
+
+        if let Some(cuda_config) = cuda_ep_config {
+            match cuda_config.register(&mut builder) {
+                Ok(()) => {
+                    info!("CUDA execution provider has been enabled.");
+                    cuda_enabled = true;
+                }
+                Err(e) => {
+                    warn!("An error happened during the CUDA registration: {}", e);
+                }
+            }
+        }
+
+        let session = builder.commit_from_file(model_path)?;
 
         Ok(Self {
             model: Arc::new(session),
+            coreml_enabled,
+            cuda_enabled,
         })
     }
 
@@ -117,5 +151,13 @@ impl SpeciesNetDetector {
         }
 
         Ok(Prediction::from_detections(path, detections))
+    }
+
+    pub fn coreml_enabled(&self) -> bool {
+        self.coreml_enabled
+    }
+
+    pub fn cuda_enabled(&self) -> bool {
+        self.cuda_enabled
     }
 }
