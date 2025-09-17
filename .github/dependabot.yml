@@ -15,3 +15,5 @@ updates:
           - "*"
     ignore:
       - dependency-name: "show-image"
+      - dependency-name: "ort"
+      - dependency-name: "ort-sys"
