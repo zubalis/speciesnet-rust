@@ -133,12 +133,11 @@ fn main() -> anyhow::Result<()> {
 
     info!("Registering the event channel for escape events or closing events.");
     for event in window.event_channel()? {
-        if let WindowEvent::KeyboardInput(event) = event {
-            if event.input.key_code == Some(VirtualKeyCode::Escape)
-                && event.input.state.is_pressed()
-            {
-                break;
-            }
+        if let WindowEvent::KeyboardInput(event) = event
+            && event.input.key_code == Some(VirtualKeyCode::Escape)
+            && event.input.state.is_pressed()
+        {
+            break;
         }
     }
 
