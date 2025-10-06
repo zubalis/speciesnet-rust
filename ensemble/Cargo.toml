@@ -18,7 +18,7 @@ path = "src/lib.rs"
 
 [dependencies]
 csv = { workspace = true }
-indexmap = "2.9"
+indexmap = "2.11"
 serde_json = { workspace = true }
 serde = { workspace = true }
 speciesnet-core = { path = "../core" }
